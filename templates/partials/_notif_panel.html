@@ -1,0 +1,18 @@
+<div id="notif-panel"
+     class="hidden fixed left-4 top-16 w-[20rem] sm:w-[24rem] bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-xl shadow-xl overflow-hidden z-50 border border-gray-200 dark:border-gray-700"
+     role="dialog" aria-label="اعلان‌های سیگنال">
+  <div class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+    <div class="text-sm font-semibold">اعلان‌های سیگنال</div>
+    <div class="flex items-center gap-2">
+      <label class="flex items-center gap-1 text-xs cursor-pointer select-none">
+        <input id="sound-toggle" type="checkbox" class="w-3.5 h-3.5" checked />
+        <span>صدای اعلان</span>
+      </label>
+      <button id="notif-clear" class="text-xs text-red-600 hover:text-red-700">پاک‌کردن همه</button>
+    </div>
+  </div>
+  <ul id="notif-list" class="max-h-72 overflow-auto divide-y divide-gray-200 dark:divide-gray-700 text-sm" aria-live="polite"></ul>
+  <div class="px-3 py-2 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/40">
+    برای بستن، بیرون پانل کلیک کنید یا ESC بزنید.
+  </div>
+</div>

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="space-y-4">
+
+    <!-- انتخاب ارز -->
+    <section class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
+      <div class="flex items-center justify-between gap-2">
+        <h2 class="text-base font-semibold">انتخاب ارزها</h2>
+        <label class="flex items-center gap-2 text-sm">
+          <input id="select-all" type="checkbox" class="w-4 h-4" />
+          <span>انتخاب همه</span>
+        </label>
+      </div>
+
+      <div class="mt-3">
+        <input id="coin-search" type="text" inputmode="latin" autocomplete="off"
+               placeholder="جستجوی نماد (مثلاً BTC)…"
+               class="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/30 bg-white dark:bg-gray-900 placeholder-gray-400 dark:placeholder-gray-400">
+      </div>
+
+      <ul id="coin-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mt-3 text-sm"></ul>
+
+      <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">با تیک‌زدن/برداشتن، کارت آن ارز اضافه/حذف می‌شود.</p>
+    </section>
+
+    <!-- تنظیمات -->
+    <section class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
+      <h2 class="text-base font-semibold mb-3 text-center">تنظیمات سیگنال</h2>
+      <form id="settings-form" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <label class="block">
+          <span class="block text-sm font-medium mb-1">درصد کاهش برای خرید (%)</span>
+          <input type="number" step="0.1" id="buy-threshold"
+                 class="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/30 bg-white dark:bg-gray-900">
+        </label>
+        <label class="block">
+          <span class="block text-sm font-medium mb-1">درصد افزایش برای فروش (%)</span>
+          <input type="number" step="0.1" id="sell-threshold"
+                 class="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/30 bg-white dark:bg-gray-900">
+        </label>
+        <div class="flex items-end">
+          <button type="submit"
+                  class="w-full bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 transition text-white px-4 py-2 rounded-lg">
+            ذخیره تنظیمات
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- کارت‌ها -->
+    <section id="coins-container" class="space-y-4"></section>
+  </section>
+{% endblock %}

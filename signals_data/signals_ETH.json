@@ -1,0 +1,16 @@
+[
+  {
+    "symbol": "ETH",
+    "type": "buy",
+    "price": 4527.31,
+    "time": "2025-08-26 19:03:41",
+    "profit": 0
+  },
+  {
+    "symbol": "ETH",
+    "type": "buy",
+    "price": 4545.89,
+    "time": "2025-08-26 18:52:04",
+    "profit": 0
+  }
+]

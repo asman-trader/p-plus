@@ -1,0 +1,3 @@
+.card{border-radius:16px}
+.backdrop{position:fixed;inset:0;background:transparent}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}

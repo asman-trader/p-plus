@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fa" dir="rtl" class="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}داشبورد سیگنال ارزهای دیجیتال{% endblock %}</title>
+
+  <!-- Tailwind با دارک‌مود کلاس -->
+  <script>
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = { darkMode: 'class' };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- جلوگیری از فِلَش تم + تم اولیه -->
+  <script>
+    (function () {
+      try {
+        const saved = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const useDark = saved ? saved === 'dark' : prefersDark;
+        document.documentElement.classList.toggle('dark', useDark);
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 selection:bg-blue-200/60">
+  {% include 'partials/_header.html' %}
+
+  <main class="max-w-5xl mx-auto p-4">
+    {% block content %}{% endblock %}
+  </main>
+
+  <audio id="alert-sound" src="{{ url_for('static', filename='alert.mp3') }}" preload="auto"></audio>
+
+  {% include 'partials/_notif_panel.html' %}
+
+  {% block scripts %}
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% endblock %}
+</body>
+</html>

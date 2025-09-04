@@ -1,0 +1,16 @@
+[
+  {
+    "symbol": "BTC",
+    "type": "buy",
+    "price": 110032.63,
+    "time": "2025-08-26 19:03:31",
+    "profit": 0
+  },
+  {
+    "symbol": "BTC",
+    "type": "buy",
+    "price": 110442.44,
+    "time": "2025-08-26 18:08:03",
+    "profit": 0
+  }
+]
