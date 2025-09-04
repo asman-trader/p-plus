@@ -6,7 +6,7 @@ title Push p_plus-dashboard
 set "REPO_DIR=C:\Users\Aseman\OneDrive\Desktop\py-code\p-plus"
 
 :: ریموت و شاخه
-set "REMOTE_URL=https://github.com/asman-trader/p_plus-dashboard.git"
+set "REMOTE_URL=https://github.com/asman-trader/p-plus.git"
 set "BRANCH=main"
 
 :: الگوهای فایل‌هایی که نباید پوش بشن
