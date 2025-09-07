@@ -1,0 +1,23 @@
+# .cpanel.yml
+---
+deployment:
+  tasks:
+    - export APP_ROOT=/home/bztypnws/myapp
+    - export REPO_ROOT=/home/bztypnws/repositories/p-plus
+    - export VENV=/home/bztypnws/virtualenv/myapp/3.11/bin/activate
+
+    # ایجاد مسیر اپ اگر نبود
+    - mkdir -p $APP_ROOT
+
+    # کپی تمیز سورس از ریپو به مسیر اپ
+    - rsync -av --delete "$REPO_ROOT"/ "$APP_ROOT"/
+
+    # نصب وابستگی‌ها داخل ویرچوال‌اِنوی اپ
+    - . $VENV
+    - cd $APP_ROOT
+    - pip install -U pip
+    - if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    # اطمینان از وجود passenger_wsgi.py و لمس برای ری‌استارت
+    - mkdir -p $APP_ROOT/tmp
+    - touch $APP_ROOT/tmp/restart.txt

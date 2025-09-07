@@ -1,4 +1,5 @@
 {
-  "buy_threshold": 0.1,
-  "sell_threshold": 0.1
+  "first_buy_threshold": 1.0,
+  "next_buy_threshold": 1.0,
+  "sell_threshold": 1.0
 }

@@ -1,19 +1,18 @@
-# routes/signals_routes.py
+# -*- coding: utf-8 -*-
 from flask import Blueprint, jsonify, request, Response
 from datetime import datetime
 from ._utils import read_json, write_json, DATA_SIGNALS
 
-signals_bp = Blueprint("signals", __name__)
+# مهم: prefix تا /signals/<symbol> برقرار باشد
+signals_bp = Blueprint("signals", __name__, url_prefix="/signals")
 
 # ساختار فایل signals.json:
 # {
-#   "open_trades": {"BTC": 50000.0, ...},   # آخرین خرید باز هر نماد
+#   "open_trades": {"BTC": 50000.0, ...},   # آخرین خریدِ باز هر نماد
 #   "history": {"BTC": [{"type":"buy","price":50000,"time":"...","profit":0}, ...]},
 #   "total_profit": {"BTC": 12.34, ...}
 # }
-
 DEFAULT = {"open_trades": {}, "history": {}, "total_profit": {}}
-
 
 # ---------- کمکـی ----------
 def _ensure_symbol(data: dict, sym: str) -> None:
@@ -21,13 +20,11 @@ def _ensure_symbol(data: dict, sym: str) -> None:
     data["history"].setdefault(sym, [])
     data["total_profit"].setdefault(sym, 0.0)
 
-
 def _to_float(x, default=0.0):
     try:
         return float(x)
     except Exception:
         return float(default)
-
 
 # ---------- خواندن سیگنال‌های یک نماد ----------
 @signals_bp.get("/<symbol>")
@@ -48,7 +45,7 @@ def get_symbol_signals(symbol):
     symbol = symbol.upper()
     limit = request.args.get("limit", default=200, type=int)
     order = (request.args.get("order") or "desc").lower()
-    if limit is None or limit <= 0:
+    if not isinstance(limit, int) or limit <= 0:
         limit = 200
     if order not in ("asc", "desc"):
         order = "desc"
@@ -57,9 +54,7 @@ def get_symbol_signals(symbol):
     _ensure_symbol(data, symbol)
 
     rows = data["history"][symbol]
-    # ترتیب
     rows_iter = rows if order == "asc" else list(reversed(rows))
-    # محدودیت
     rows_out = list(rows_iter)[:limit]
 
     return jsonify({
@@ -68,7 +63,6 @@ def get_symbol_signals(symbol):
         "total_profit": float(data["total_profit"].get(symbol, 0.0)),
         "last_open_buy": float(data["open_trades"][symbol]) if symbol in data["open_trades"] else None
     })
-
 
 # ---------- افزودن سیگنال (خرید/فروش) ----------
 @signals_bp.post("/<symbol>")
@@ -97,19 +91,16 @@ def add_signal(symbol):
     try:
         time_str = str(payload.get("time")) if payload.get("time") else None
         if time_str:
-            # اعتبارسنجی فرمت
-            datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+            datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")  # validate
         else:
             time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     except Exception:
         time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     profit = 0.0
-
     if s_type == "buy":
         # ثبت خرید باز
         data["open_trades"][symbol] = round(price, 8)
-
     else:  # sell
         last_buy = data["open_trades"].get(symbol)
         if last_buy is not None:
@@ -138,7 +129,6 @@ def add_signal(symbol):
         "last_open_buy": float(data["open_trades"][symbol]) if symbol in data["open_trades"] else None,
         "total_profit": float(data["total_profit"].get(symbol, 0.0))
     })
-
 
 # ---------- خروجی CSV ----------
 @signals_bp.get("/<symbol>/csv")

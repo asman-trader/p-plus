@@ -1,0 +1,89 @@
+<section class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
+  <h2 class="text-base font-semibold mb-3 text-center">تنظیمات سیگنال</h2>
+  <form id="settings-form" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+    <!-- خرید اول -->
+    <label class="block">
+      <span class="block text-sm font-medium mb-1">درصد کاهش برای خرید اول (%)</span>
+      <input type="number" step="0.1" id="first-buy-threshold"
+             class="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/30 bg-white dark:bg-gray-900">
+    </label>
+
+    <!-- خریدهای بعدی -->
+    <label class="block">
+      <span class="block text-sm font-medium mb-1">درصد کاهش خریدهای بعدی از آخرین خرید (%)</span>
+      <input type="number" step="0.1" id="next-buy-threshold"
+             class="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/30 bg-white dark:bg-gray-900">
+    </label>
+
+    <!-- فروش -->
+    <label class="block">
+      <span class="block text-sm font-medium mb-1">درصد افزایش برای فروش (%)</span>
+      <input type="number" step="0.1" id="sell-threshold"
+             class="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/30 bg-white dark:bg-gray-900">
+    </label>
+
+    <!-- دکمه ذخیره -->
+    <div class="flex items-end">
+      <button type="submit"
+              class="w-full bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 transition text-white px-4 py-2 rounded-lg">
+        ذخیره تنظیمات
+      </button>
+    </div>
+  </form>
+
+  <!-- پیام وضعیت -->
+  <p id="settings-status" class="text-center text-sm mt-3 hidden"></p>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("settings-form");
+  const status = document.getElementById("settings-status");
+
+  const firstBuyInput = document.getElementById("first-buy-threshold");
+  const nextBuyInput = document.getElementById("next-buy-threshold");
+  const sellInput = document.getElementById("sell-threshold");
+
+  // دریافت تنظیمات فعلی از API
+  fetch("/settings/")
+    .then(res => res.json())
+    .then(data => {
+      firstBuyInput.value = data.first_buy_threshold;
+      nextBuyInput.value = data.next_buy_threshold;
+      sellInput.value = data.sell_threshold;
+    });
+
+  // ذخیره تنظیمات
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const payload = {
+      first_buy_threshold: parseFloat(firstBuyInput.value),
+      next_buy_threshold: parseFloat(nextBuyInput.value),
+      sell_threshold: parseFloat(sellInput.value),
+    };
+
+    fetch("/settings/", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload),
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.ok) {
+        status.textContent = "✅ تنظیمات با موفقیت ذخیره شد";
+        status.className = "text-green-600 text-center text-sm mt-3";
+      } else {
+        status.textContent = "❌ خطا در ذخیره تنظیمات";
+        status.className = "text-red-600 text-center text-sm mt-3";
+      }
+      status.classList.remove("hidden");
+    })
+    .catch(() => {
+      status.textContent = "❌ خطای ارتباط با سرور";
+      status.className = "text-red-600 text-center text-sm mt-3";
+      status.classList.remove("hidden");
+    });
+  });
+});
+</script>

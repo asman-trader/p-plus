@@ -1,19 +1,39 @@
 <header class="bg-blue-600 dark:bg-blue-700 text-white px-4 py-3 shadow-sm">
   <div class="max-w-5xl mx-auto flex items-center justify-between gap-3">
-    <h1 class="text-base sm:text-lg font-bold tracking-tight">داشبورد سیگنال ارزهای دیجیتال</h1>
+    <!-- عنوان -->
+    <h1 class="text-base sm:text-lg font-bold tracking-tight">
+      داشبورد سیگنال ارزهای دیجیتال
+    </h1>
+
+    <!-- دکمه‌ها -->
     <div class="flex items-center gap-2">
+      <!-- دکمه تغییر تم -->
       <button id="theme-toggle"
               class="flex items-center gap-1 bg-white/10 hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 px-3 py-1.5 rounded-lg text-xs"
               type="button" aria-pressed="false">
         <span id="theme-icon" aria-hidden="true">🌙</span>
         <span id="theme-label">دارک</span>
       </button>
+
+      <!-- دکمه اعلان‌ها -->
       <button id="notif-btn"
               class="relative flex items-center gap-2 bg-white/10 hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 px-3 py-1.5 rounded-lg text-xs"
               aria-expanded="false" aria-controls="notif-panel" type="button">
-        <span aria-hidden="true">🔔</span><span>اعلان‌ها</span>
+        <span aria-hidden="true">🔔</span>
+        <span>اعلان‌ها</span>
         <span id="notif-badge"
               class="hidden absolute -top-2 -left-2 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] leading-none flex items-center justify-center">0</span>
+      </button>
+
+      <!-- دکمه منوی سمت راست -->
+      <button id="drawerToggle"
+              class="flex items-center justify-center w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              type="button" aria-label="باز کردن منو"
+              onclick="window.openDrawer()">
+        <!-- آیکن همبرگر -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
       </button>
     </div>
   </div>
