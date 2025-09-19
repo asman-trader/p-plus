@@ -113,7 +113,6 @@ export function initCoinsUI(addCoinCb, removeCoinCb, persistCb){
     });
     $$('.coin-checkbox').forEach(cb=>{
       // ابتدا چک‌باکس را غیرفعال کن
-      cb.checked = false;
       cb.addEventListener('change', (e)=>{
         const sym = e.target.value;
         console.log('Checkbox changed for:', sym, 'checked:', e.target.checked);

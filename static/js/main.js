@@ -89,7 +89,7 @@ function updateUIFromState(){
   $('#sell-threshold').value = state.sellThreshold;
   
   // ابتدا تمام چک‌باکس‌ها را غیرفعال کن
-  document.querySelectorAll('.coin-checkbox').forEach(cb => cb.checked = false);
+  // document.querySelectorAll('.coin-checkbox').forEach(cb => cb.checked = false);
   
   // ایجاد کارت‌های ارزهای فعال
   Object.keys(state.activeCoins).forEach(symbol => {
@@ -157,7 +157,10 @@ window.debugState = () => {
   console.log('Current state:', state);
   console.log('LocalStorage:', localStorage.getItem('p-plus-state'));
   console.log('Active coins:', Object.keys(state.activeCoins));
-  console.log('Checkboxes:', document.querySelectorAll('.coin-checkbox:checked').length);
+  console.log('Checkboxes checked:');
+  document.querySelectorAll('.coin-checkbox').forEach(cb => {
+    console.log(`  ${cb.value}: ${cb.checked}`);
+  });
 };
 
 // ---------- Settings ----------
@@ -203,6 +206,7 @@ async function loadPrefs(){
       saved.forEach(sym=>{
         state.activeCoins[sym] = { lastBuy: null };
       });
+      saveState(); // Save after loading from API
     }
   }catch(e){
     console.error('Error loading prefs:', e);
@@ -304,12 +308,12 @@ setInterval(()=>{
 (async function boot(){
   console.log('Starting boot process...');
   
-  // ابتدا UI را initialize کن
-  initCoinsUI(addCoin, removeCoin, persistCoinSelection);
-  
-  // سپس state را بارگذاری کن
+  // ابتدا state را بارگذاری کن
   await loadSettings();
   await loadPrefs();
+  
+  // سپس UI را initialize کن
+  initCoinsUI(addCoin, removeCoin, persistCoinSelection);
   
   console.log('Boot process completed');
 })();
