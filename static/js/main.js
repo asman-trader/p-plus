@@ -23,6 +23,13 @@ function addCoin(symbol){
     onRefreshAnalysis: ()=> updateAnalysis(symbol),
   });
 
+  // چک‌باکس مربوطه را فعال کن
+  const cb = document.querySelector(`.coin-checkbox[value="${symbol}"]`);
+  if(cb) {
+    cb.checked = true;
+    console.log('Checked checkbox for:', symbol);
+  }
+
   loadSignals(symbol);
   updatePrice(symbol);
   updateAnalysis(symbol);
@@ -31,8 +38,17 @@ function addCoin(symbol){
   console.log('Coin added, current state:', state);
 }
 function removeCoin(symbol){
+  console.log('Removing coin:', symbol);
   delete state.activeCoins[symbol];
   document.getElementById('card-'+symbol)?.remove();
+  
+  // چک‌باکس مربوطه را غیرفعال کن
+  const cb = document.querySelector(`.coin-checkbox[value="${symbol}"]`);
+  if(cb) {
+    cb.checked = false;
+    console.log('Unchecked checkbox for:', symbol);
+  }
+  
   saveState();
 }
 function persistCoinSelection(){
@@ -66,6 +82,8 @@ function loadState(){
 
 // Update UI from loaded state
 function updateUIFromState(){
+  console.log('Updating UI from state:', state);
+  
   // به‌روزرسانی تنظیمات
   $('#buy-threshold').value = state.buyThreshold;
   $('#sell-threshold').value = state.sellThreshold;
@@ -75,9 +93,13 @@ function updateUIFromState(){
   
   // ایجاد کارت‌های ارزهای فعال
   Object.keys(state.activeCoins).forEach(symbol => {
+    console.log('Processing coin:', symbol);
+    
     if(!document.getElementById('card-'+symbol)) {
+      console.log('Creating card for:', symbol);
       createCoinCard(symbol, {
         onRemove: ()=>{
+          console.log('Removing coin:', symbol);
           delete state.activeCoins[symbol];
           document.getElementById('card-'+symbol)?.remove();
           persistCoinSelection();
@@ -90,7 +112,12 @@ function updateUIFromState(){
     
     // چک‌باکس مربوطه را فعال کن
     const cb = document.querySelector(`.coin-checkbox[value="${symbol}"]`);
-    if(cb) cb.checked = true;
+    if(cb) {
+      cb.checked = true;
+      console.log('Checked checkbox for:', symbol);
+    } else {
+      console.warn('Checkbox not found for:', symbol);
+    }
   });
   
   // به‌روزرسانی select-all checkbox
@@ -99,7 +126,10 @@ function updateUIFromState(){
     const allCoins = document.querySelectorAll('.coin-checkbox');
     const checkedCoins = document.querySelectorAll('.coin-checkbox:checked');
     selectAll.checked = allCoins.length > 0 && allCoins.length === checkedCoins.length;
+    console.log('Select all updated:', selectAll.checked);
   }
+  
+  console.log('UI update completed');
 }
 
 // Clear all state (for debugging)
@@ -157,6 +187,8 @@ document.getElementById('settings-form')?.addEventListener('submit', async (e)=>
 
 // ---------- Prefs (coins + sound) ----------
 async function loadPrefs(){
+  console.log('Loading prefs...');
+  
   // ابتدا state را از localStorage بارگذاری کن
   loadState();
   
@@ -166,12 +198,17 @@ async function loadPrefs(){
     
     // اگر state خالی است، از API استفاده کن
     if(Object.keys(state.activeCoins).length === 0) {
+      console.log('State is empty, loading from API...');
       const saved = Array.isArray(data.selected_coins) ? data.selected_coins : ['BTC','ETH','BNB'];
       saved.forEach(sym=>{
         state.activeCoins[sym] = { lastBuy: null };
       });
     }
-  }catch{}
+  }catch(e){
+    console.error('Error loading prefs:', e);
+  }
+  
+  console.log('State after loadPrefs:', state);
   
   // UI را با state بارگذاری شده به‌روزرسانی کن
   updateUIFromState();
@@ -265,8 +302,14 @@ setInterval(()=>{
 
 // ---------- Boot ----------
 (async function boot(){
+  console.log('Starting boot process...');
+  
+  // ابتدا UI را initialize کن
+  initCoinsUI(addCoin, removeCoin, persistCoinSelection);
+  
+  // سپس state را بارگذاری کن
   await loadSettings();
   await loadPrefs();
-  // حالا UI را initialize کن
-  initCoinsUI(addCoin, removeCoin, persistCoinSelection);
+  
+  console.log('Boot process completed');
 })();

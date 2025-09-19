@@ -112,9 +112,11 @@ export function initCoinsUI(addCoinCb, removeCoinCb, persistCb){
       coinListEl.appendChild(li);
     });
     $$('.coin-checkbox').forEach(cb=>{
-      cb.checked = !!state.activeCoins[cb.value];
+      // ابتدا چک‌باکس را غیرفعال کن
+      cb.checked = false;
       cb.addEventListener('change', (e)=>{
         const sym = e.target.value;
+        console.log('Checkbox changed for:', sym, 'checked:', e.target.checked);
         if(e.target.checked) addCoinCb(sym); else removeCoinCb(sym);
         updateSelectAllState(); persistCb();
       });
