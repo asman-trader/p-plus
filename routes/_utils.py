@@ -19,9 +19,21 @@ def read_json(path: Path, default: dict):
     for _ in range(3):
         try:
             with path.open("r", encoding="utf-8") as f:
-                return json.load(f)
-        except json.JSONDecodeError:
-            time.sleep(0.05)
+                data = json.load(f)
+                # بررسی نوع داده - باید dict باشد
+                if not isinstance(data, dict):
+                    print(f"Warning: {path} contains invalid data type, resetting to default")
+                    _atomic_write(path, default)
+                    return default
+                return data
+        except json.JSONDecodeError as e:
+            print(f"Warning: {path} contains invalid JSON, resetting to default: {e}")
+            _atomic_write(path, default)
+            return default
+        except Exception as e:
+            print(f"Warning: Error reading {path}, resetting to default: {e}")
+            _atomic_write(path, default)
+            return default
     return default
 
 def write_json(path: Path, data: dict):
