@@ -117,7 +117,10 @@ export function initCoinsUI(addCoinCb, removeCoinCb, persistCb){
         const sym = e.target.value;
         console.log('Checkbox changed for:', sym, 'checked:', e.target.checked);
         if(e.target.checked) addCoinCb(sym); else removeCoinCb(sym);
-        updateSelectAllState(); persistCb();
+        updateSelectAllState(); 
+        persistCb();
+        // Auto-save to localStorage
+        if(window.saveState) window.saveState();
       });
     });
     updateSelectAllState();

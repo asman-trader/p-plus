@@ -169,6 +169,14 @@ window.saveSelection = async function() {
 // Add event listener for save button
 document.getElementById('save-selection')?.addEventListener('click', saveSelection);
 
+// Auto-save on checkbox change (backup)
+document.addEventListener('change', (e) => {
+  if (e.target.classList.contains('coin-checkbox')) {
+    console.log('Checkbox changed, auto-saving...');
+    saveState();
+  }
+});
+
 // تابع debug
 window.debugState = () => {
   console.log('Current state:', state);
@@ -180,6 +188,27 @@ window.debugState = () => {
   });
 };
 
+// تابع تست کامل
+window.testPersistence = () => {
+  console.log('=== Testing Persistence ===');
+  console.log('1. Current state:', state);
+  console.log('2. LocalStorage:', localStorage.getItem('p-plus-state'));
+  console.log('3. Active coins count:', Object.keys(state.activeCoins).length);
+  console.log('4. Checkboxes count:', document.querySelectorAll('.coin-checkbox').length);
+  console.log('5. Checked checkboxes:', document.querySelectorAll('.coin-checkbox:checked').length);
+  
+  // Test save
+  saveState();
+  console.log('6. After save - LocalStorage:', localStorage.getItem('p-plus-state'));
+  
+  // Test load
+  const testState = { ...state };
+  state.activeCoins = {};
+  loadState();
+  console.log('7. After load - Active coins:', Object.keys(state.activeCoins));
+  console.log('8. State restored:', JSON.stringify(state) === JSON.stringify(testState));
+};
+
 // ---------- Settings ----------
 async function loadSettings(){
   try{
@@ -189,7 +218,7 @@ async function loadSettings(){
   }catch{}
   $('#buy-threshold').value  = state.buyThreshold;
   $('#sell-threshold').value = state.sellThreshold;
-  saveState();
+  // saveState(); // حذف شد تا state قبلی حفظ شود
 }
 document.getElementById('settings-form')?.addEventListener('submit', async (e)=>{
   e.preventDefault();
@@ -224,6 +253,8 @@ async function loadPrefs(){
         state.activeCoins[sym] = { lastBuy: null };
       });
       saveState(); // Save after loading from API
+    } else {
+      console.log('State loaded from localStorage:', Object.keys(state.activeCoins));
     }
   }catch(e){
     console.error('Error loading prefs:', e);
