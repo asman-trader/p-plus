@@ -7,10 +7,13 @@ const { addNotification } = initNotifications();
 
 function addCoin(symbol){
   if(state.activeCoins[symbol]) return;
+  
+  console.log('Adding coin:', symbol);
   state.activeCoins[symbol] = { lastBuy: null };
 
   createCoinCard(symbol, {
     onRemove: ()=>{
+      console.log('Removing coin:', symbol);
       delete state.activeCoins[symbol];
       document.getElementById('card-'+symbol)?.remove();
       persistCoinSelection();
@@ -24,6 +27,8 @@ function addCoin(symbol){
   updatePrice(symbol);
   updateAnalysis(symbol);
   saveState();
+  
+  console.log('Coin added, current state:', state);
 }
 function removeCoin(symbol){
   delete state.activeCoins[symbol];
@@ -37,19 +42,26 @@ function persistCoinSelection(){
 
 // Save state to localStorage
 function saveState(){
-  storage.save('p-plus-state', {
+  const stateToSave = {
     buyThreshold: state.buyThreshold,
     sellThreshold: state.sellThreshold,
     activeCoins: state.activeCoins
-  });
+  };
+  
+  storage.save('p-plus-state', stateToSave);
+  console.log('State saved:', stateToSave);
 }
 
 // Load state from localStorage
 function loadState(){
   const saved = storage.load('p-plus-state', {});
+  console.log('Loading state from localStorage:', saved);
+  
   if(saved.buyThreshold) state.buyThreshold = saved.buyThreshold;
   if(saved.sellThreshold) state.sellThreshold = saved.sellThreshold;
   if(saved.activeCoins) state.activeCoins = saved.activeCoins;
+  
+  console.log('State loaded:', state);
 }
 
 // Update UI from loaded state
@@ -57,6 +69,9 @@ function updateUIFromState(){
   // به‌روزرسانی تنظیمات
   $('#buy-threshold').value = state.buyThreshold;
   $('#sell-threshold').value = state.sellThreshold;
+  
+  // ابتدا تمام چک‌باکس‌ها را غیرفعال کن
+  document.querySelectorAll('.coin-checkbox').forEach(cb => cb.checked = false);
   
   // ایجاد کارت‌های ارزهای فعال
   Object.keys(state.activeCoins).forEach(symbol => {
@@ -72,13 +87,19 @@ function updateUIFromState(){
         onRefreshAnalysis: ()=> updateAnalysis(symbol),
       });
     }
-  });
-  
-  // به‌روزرسانی چک‌باکس‌ها
-  Object.keys(state.activeCoins).forEach(symbol => {
+    
+    // چک‌باکس مربوطه را فعال کن
     const cb = document.querySelector(`.coin-checkbox[value="${symbol}"]`);
     if(cb) cb.checked = true;
   });
+  
+  // به‌روزرسانی select-all checkbox
+  const selectAll = document.getElementById('select-all');
+  if(selectAll) {
+    const allCoins = document.querySelectorAll('.coin-checkbox');
+    const checkedCoins = document.querySelectorAll('.coin-checkbox:checked');
+    selectAll.checked = allCoins.length > 0 && allCoins.length === checkedCoins.length;
+  }
 }
 
 // Clear all state (for debugging)
@@ -101,7 +122,13 @@ window.getState = () => state;
 window.saveState = saveState;
 window.loadState = loadState;
 
-initCoinsUI(addCoin, removeCoin, persistCoinSelection);
+// تابع debug
+window.debugState = () => {
+  console.log('Current state:', state);
+  console.log('LocalStorage:', localStorage.getItem('p-plus-state'));
+  console.log('Active coins:', Object.keys(state.activeCoins));
+  console.log('Checkboxes:', document.querySelectorAll('.coin-checkbox:checked').length);
+};
 
 // ---------- Settings ----------
 async function loadSettings(){
@@ -136,14 +163,14 @@ async function loadPrefs(){
   try{
     const data = await Api.prefs();
     document.getElementById('sound-toggle').checked = !!data.notif_sound;
-    // ساخت چک‌باکس‌ها قبلاً انجام شده؛ فقط تیک‌ها را اعمال می‌کنیم:
-    const saved = Array.isArray(data.selected_coins) ? data.selected_coins : ['BTC','ETH','BNB'];
-    saved.forEach(sym=>{
-      const already = state.activeCoins[sym];
-      if(!already) addCoin(sym);
-      const cb = document.querySelector(`.coin-checkbox[value="${sym}"]`);
-      if(cb && !cb.checked){ cb.checked=true; }
-    });
+    
+    // اگر state خالی است، از API استفاده کن
+    if(Object.keys(state.activeCoins).length === 0) {
+      const saved = Array.isArray(data.selected_coins) ? data.selected_coins : ['BTC','ETH','BNB'];
+      saved.forEach(sym=>{
+        state.activeCoins[sym] = { lastBuy: null };
+      });
+    }
   }catch{}
   
   // UI را با state بارگذاری شده به‌روزرسانی کن
@@ -239,6 +266,7 @@ setInterval(()=>{
 // ---------- Boot ----------
 (async function boot(){
   await loadSettings();
-  // ساخت چک‌باکس‌ها و UI در initCoinsUI انجام شده
   await loadPrefs();
+  // حالا UI را initialize کن
+  initCoinsUI(addCoin, removeCoin, persistCoinSelection);
 })();
