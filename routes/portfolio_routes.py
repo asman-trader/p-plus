@@ -15,7 +15,9 @@ try:
     from ._utils import DATA_TRADES
 except Exception:
     # مسیر پیش‌فرض JSON ذخیره معاملات
-    DATA_TRADES = "app/data/trades.json"
+    from pathlib import Path
+    BASE_DIR = Path(__file__).resolve().parents[1]
+    DATA_TRADES = BASE_DIR / "trades.json"
 
 portfolio_bp = Blueprint("portfolio", __name__, url_prefix="/portfolio")
 
