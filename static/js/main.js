@@ -152,6 +152,23 @@ window.getState = () => state;
 window.saveState = saveState;
 window.loadState = loadState;
 
+// Save selection to file
+window.saveSelection = async function() {
+  try {
+    const coins = Object.keys(state.activeCoins);
+    await Api.savePrefs({ selected_coins: coins });
+    saveState();
+    console.log('Selection saved to file:', coins);
+    addNotification({ text: '✅ انتخاب‌ها در فایل ذخیره شد', type: 'info' });
+  } catch (e) {
+    console.error('Error saving selection:', e);
+    addNotification({ text: '❌ خطا در ذخیره انتخاب‌ها', type: 'error' });
+  }
+};
+
+// Add event listener for save button
+document.getElementById('save-selection')?.addEventListener('click', saveSelection);
+
 // تابع debug
 window.debugState = () => {
   console.log('Current state:', state);
