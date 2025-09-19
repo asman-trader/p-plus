@@ -7,10 +7,15 @@
     <section class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
       <div class="flex items-center justify-between gap-2">
         <h2 class="text-base font-semibold">انتخاب ارزها</h2>
-        <label class="flex items-center gap-2 text-sm">
-          <input id="select-all" type="checkbox" class="w-4 h-4" />
-          <span>انتخاب همه</span>
-        </label>
+        <div class="flex items-center gap-2">
+          <label class="flex items-center gap-2 text-sm">
+            <input id="select-all" type="checkbox" class="w-4 h-4" />
+            <span>انتخاب همه</span>
+          </label>
+          <button id="clear-state" class="text-xs px-2 py-1 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 rounded hover:bg-red-200 dark:hover:bg-red-800 transition-colors">
+            پاک کردن همه
+          </button>
+        </div>
       </div>
 
       <div class="mt-3">
