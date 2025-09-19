@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint, jsonify, request, Response
+from flask import Blueprint, jsonify, request, Response, current_app
 from datetime import datetime
 from ._utils import read_json, write_json, DATA_SIGNALS
 
@@ -77,11 +77,14 @@ def add_signal(symbol):
               سپس وضعیت خریدِ باز پاک می‌شود.
     """
     symbol = symbol.upper()
+    current_app.logger.info(f'Signal request for {symbol}')
+    
     payload = request.get_json(silent=True) or {}
     s_type = str(payload.get("type", "")).lower().strip()   # buy | sell
     price = _to_float(payload.get("price"), 0)
 
     if s_type not in ("buy", "sell") or price <= 0:
+        current_app.logger.warning(f'Invalid signal input for {symbol}: type={s_type}, price={price}')
         return jsonify({"ok": False, "error": "bad input"}), 400
 
     data = read_json(DATA_SIGNALS, DEFAULT.copy())

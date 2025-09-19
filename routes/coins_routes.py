@@ -1,5 +1,5 @@
 # routes/coins_routes.py
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 import os, time, random
 import requests
 
@@ -63,18 +63,24 @@ def _fetch_cmc_price(symbol: str) -> float:
 @coins_bp.get("/price/<symbol>")
 def price(symbol):
     sym = symbol.upper()
+    current_app.logger.info(f'Price request for symbol: {sym}')
+    
     # 1) کش
     p = _from_cache(sym)
     if p is not None:
+        current_app.logger.debug(f'Price from cache for {sym}: {p}')
         return jsonify({"symbol": sym, "price": p, "source": "cache"})
 
     # 2) API واقعی
     try:
+        current_app.logger.info(f'Fetching price from CMC for {sym}')
         p = _fetch_cmc_price(sym)
         _save_cache(sym, p)
+        current_app.logger.info(f'Successfully fetched price for {sym}: {p}')
         return jsonify({"symbol": sym, "price": p, "source": "coinmarketcap"})
     except Exception as e:
         # 3) fallback امن
+        current_app.logger.warning(f'CMC API failed for {sym}: {str(e)}. Using fallback.')
         p = _fallback_price(sym)
         return jsonify({"symbol": sym, "price": p, "source": "fallback", "error": str(e)[:120]}), 200
 
