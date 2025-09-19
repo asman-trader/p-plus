@@ -17,7 +17,8 @@ if exist "host-config.bat" (
   set "HOST_USER=bztypmws"
   set "HOST_SERVER=pendar"
   set "HOST_PATH=/home/bztypmws/myapp"
-  set "HOST_SSH_KEY="
+  set "GIT_REMOTE_URL=https://github.com/asman-trader/p-plus.git"
+  set "GIT_BRANCH=main"
   set "HOST_VENV_PATH=/home/bztypmws/virtualenv/myapp/3.10/bin/activate"
   set "HOST_POST_PULL_COMMANDS="
 )
@@ -124,20 +125,17 @@ if %errorlevel% NEQ 0 (
 echo [*] Connecting to host and pulling changes...
 echo [*] Host: %HOST_USER%@%HOST_SERVER%
 echo [*] Path: %HOST_PATH%
+echo [*] Git URL: %GIT_REMOTE_URL%
 
 :: ساخت دستور کامل
-set "SSH_COMMAND=cd %HOST_PATH% && source %HOST_VENV_PATH% && git pull origin %BRANCH%"
+set "SSH_COMMAND=cd %HOST_PATH% && source %HOST_VENV_PATH% && git remote set-url origin %GIT_REMOTE_URL% && git pull origin %GIT_BRANCH%"
 if not "%HOST_POST_PULL_COMMANDS%"=="" (
   set "SSH_COMMAND=%SSH_COMMAND% && %HOST_POST_PULL_COMMANDS%"
 )
 set "SSH_COMMAND=%SSH_COMMAND% && echo 'Host updated successfully'"
 
 :: اجرای دستور SSH
-if "%HOST_SSH_KEY%"=="" (
-  ssh %HOST_USER%@%HOST_SERVER% "%SSH_COMMAND%"
-) else (
-  ssh -i "%HOST_SSH_KEY%" %HOST_USER%@%HOST_SERVER% "%SSH_COMMAND%"
-)
+ssh %HOST_USER%@%HOST_SERVER% "%SSH_COMMAND%"
 
 if %errorlevel% NEQ 0 (
   echo [!] خطا در اتصال به هاست یا پول کردن.

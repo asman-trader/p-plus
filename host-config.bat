@@ -7,8 +7,9 @@ set "HOST_USER=bztypmws"
 set "HOST_SERVER=pendar"
 set "HOST_PATH=/home/bztypmws/myapp"
 
-:: مسیر SSH key (اختیاری - اگر خالی باشد از password استفاده می‌کند)
-set "HOST_SSH_KEY="
+:: تنظیمات Git (HTTPS)
+set "GIT_REMOTE_URL=https://github.com/asman-trader/p-plus.git"
+set "GIT_BRANCH=main"
 
 :: مسیر virtual environment روی هاست
 set "HOST_VENV_PATH=/home/bztypmws/virtualenv/myapp/3.10/bin/activate"
@@ -20,6 +21,7 @@ echo Host configuration loaded:
 echo   User: %HOST_USER%
 echo   Server: %HOST_SERVER%
 echo   Path: %HOST_PATH%
-echo   SSH Key: %HOST_SSH_KEY%
+echo   Git URL: %GIT_REMOTE_URL%
+echo   Branch: %GIT_BRANCH%
 echo   VEnv: %HOST_VENV_PATH%
 echo.

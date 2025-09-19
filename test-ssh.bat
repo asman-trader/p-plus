@@ -11,6 +11,12 @@ if exist "host-config.bat" (
   exit /b
 )
 
+:: تنظیمات پیش‌فرض اگر فایل config وجود نداشت
+if not defined GIT_REMOTE_URL (
+  set "GIT_REMOTE_URL=https://github.com/asman-trader/p-plus.git"
+  set "GIT_BRANCH=main"
+)
+
 echo.
 echo ================================
 echo   Testing SSH Connection
@@ -52,16 +58,34 @@ if %errorlevel% NEQ 0 (
   echo [*] Testing project directory...
   
   :: تست دسترسی به پروژه
-  if "%HOST_SSH_KEY%"=="" (
-    ssh %HOST_USER%@%HOST_SERVER% "cd %HOST_PATH% && pwd && ls -la"
-  ) else (
-    ssh -i "%HOST_SSH_KEY%" %HOST_USER%@%HOST_SERVER% "cd %HOST_PATH% && pwd && ls -la"
-  )
+  ssh %HOST_USER%@%HOST_SERVER% "cd %HOST_PATH% && pwd && ls -la"
   
   if %errorlevel% NEQ 0 (
     echo [!] Cannot access project directory: %HOST_PATH%
   ) else (
     echo ✅ Project directory accessible!
+    echo.
+    echo [*] Testing Git configuration...
+    
+    :: تست تنظیمات Git
+    ssh %HOST_USER%@%HOST_SERVER% "cd %HOST_PATH% && git remote -v && git status"
+    
+    if %errorlevel% NEQ 0 (
+      echo [!] Git configuration issue
+    ) else (
+      echo ✅ Git configuration OK!
+      echo.
+      echo [*] Testing Git pull...
+      
+      :: تست Git pull
+      ssh %HOST_USER%@%HOST_SERVER% "cd %HOST_PATH% && git remote set-url origin %GIT_REMOTE_URL% && git pull origin %GIT_BRANCH% --dry-run"
+      
+      if %errorlevel% NEQ 0 (
+        echo [!] Git pull test failed
+      ) else (
+        echo ✅ Git pull test successful!
+      )
+    )
   )
 )
 

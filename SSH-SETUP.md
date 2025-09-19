@@ -1,6 +1,6 @@
-# راهنمای تنظیم SSH برای Deploy خودکار
+# راهنمای تنظیم Deploy خودکار با HTTPS
 
-## 🔧 تنظیم SSH
+## 🔧 تنظیم Deploy
 
 ### 1. نصب OpenSSH (اگر نصب نیست)
 ```bash
@@ -9,30 +9,32 @@
 # Settings > Apps > Optional Features > Add Feature > OpenSSH Client
 ```
 
-### 2. تولید SSH Key (اختیاری - برای امنیت بیشتر)
-```bash
-# تولید کلید SSH
-ssh-keygen -t rsa -b 4096 -C "your-email@example.com"
-
-# کپی کردن کلید عمومی به هاست
-ssh-copy-id bztypmws@pendar
-```
-
-### 3. تنظیم فایل host-config.bat
+### 2. تنظیم فایل host-config.bat
 ```batch
 :: اطلاعات هاست
 set "HOST_USER=bztypmws"
 set "HOST_SERVER=pendar"
 set "HOST_PATH=/home/bztypmws/myapp"
 
-:: مسیر SSH key (اختیاری)
-set "HOST_SSH_KEY=C:\Users\Aseman\.ssh\id_rsa"
+:: تنظیمات Git (HTTPS)
+set "GIT_REMOTE_URL=https://github.com/asman-trader/p-plus.git"
+set "GIT_BRANCH=main"
 
 :: مسیر virtual environment
 set "HOST_VENV_PATH=/home/bztypmws/virtualenv/myapp/3.10/bin/activate"
 
 :: دستورات اضافی بعد از pull
 set "HOST_POST_PULL_COMMANDS=pip install -r requirements.txt"
+```
+
+### 3. تنظیم Git روی هاست (یک بار)
+```bash
+# روی هاست
+ssh bztypmws@pendar
+cd /home/bztypmws/myapp
+git remote set-url origin https://github.com/asman-trader/p-plus.git
+git config --global user.name "Your Name"
+git config --global user.email "your-email@example.com"
 ```
 
 ## 🚀 استفاده
@@ -42,7 +44,12 @@ set "HOST_POST_PULL_COMMANDS=pip install -r requirements.txt"
 push-p-plus.bat
 ```
 
-### تست اتصال SSH
+### تست اتصال و Git
+```batch
+test-ssh.bat
+```
+
+### تست اتصال SSH دستی
 ```bash
 ssh bztypmws@pendar
 ```
@@ -51,6 +58,14 @@ ssh bztypmws@pendar
 
 ### مشکل: SSH not found
 **راه حل:** OpenSSH را نصب کنید یا Git for Windows را استفاده کنید
+
+### مشکل: Git authentication failed
+**راه حل:** 
+1. روی هاست Git credentials را تنظیم کنید:
+   ```bash
+   git config --global credential.helper store
+   git pull origin main  # وارد کردن username/password
+   ```
 
 ### مشکل: Permission denied
 **راه حل:** 
@@ -70,6 +85,7 @@ ssh bztypmws@pendar
 ssh bztypmws@pendar
 cd /home/bztypmws/myapp
 source /home/bztypmws/virtualenv/myapp/3.10/bin/activate
+git remote set-url origin https://github.com/asman-trader/p-plus.git
 git pull origin main
 pip install -r requirements.txt
 ```
