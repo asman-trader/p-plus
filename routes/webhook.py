@@ -35,4 +35,14 @@ def update():
 	except subprocess.CalledProcessError as e:
 		return f"❌ خطا هنگام آپدیت: {e}", 500
 
+# Alias to support GitHub pointing to /webhook
+@webhook_bp.route("/webhook", methods=["POST"])
+def webhook_alias():
+	return update()
+
+# Health check for GET /webhook (useful for testing in browser)
+@webhook_bp.get("/webhook")
+def webhook_health():
+	return "ok", 200
+
 
