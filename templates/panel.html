@@ -133,7 +133,7 @@
         <h1>پنل شخصی خرید بیت‌کوین</h1>
         <div class="actions">
           <div class="price-pill">قیمت لحظه‌ای BTC: <strong id="btc_usd">...</strong> $ <span class="muted" id="btc_toman"></span></div>
-          <button type="button" class="btn btn-outline" id="themeBtn" title="تغییر تم">تغییر تم</button>
+          <button type="button" class="menu-btn" id="themeBtn" title="تغییر تم"><span id="themeIcon">🌙</span></button>
           <button type="button" class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" title="منو">☰</button>
           <div class="menu" id="menu">
             <a href="#deposit">واریزی</a>
@@ -313,9 +313,13 @@
       var holdUsdEl = document.getElementById('hold_usd');
       var holdTmnEl = document.getElementById('hold_toman');
       var themeBtn = document.getElementById('themeBtn');
+      var themeIcon = document.getElementById('themeIcon');
 
       function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
+        if (themeIcon) {
+          themeIcon.textContent = theme === 'light' ? '🌙' : '☀️';
+        }
         try { localStorage.setItem('theme', theme); } catch (e) {}
       }
       function toggleTheme() {
