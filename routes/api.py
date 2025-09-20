@@ -19,7 +19,7 @@ def list_purchases():
 	conn = get_db_connection()
 	cur = conn.cursor()
 	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM purchases ORDER BY id DESC")
-	rows = conn.cursor().fetchall() if False else cur.fetchall()
+	rows = cur.fetchall()
 	conn.close()
 	purchases = []
 	for r in rows:

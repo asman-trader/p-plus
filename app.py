@@ -3,8 +3,9 @@ import os
 import sqlite3
 from datetime import datetime
 from db import get_db_connection, ensure_db
-from webhook import webhook_bp
-from api import api_bp
+from routes.panel import panel_bp
+from routes.api import api_bp
+from routes.webhook import webhook_bp
 
 # ----------------------------------------------------------------------------
 # App factory and config
@@ -17,6 +18,7 @@ ensure_db()
 # Register blueprints
 app.register_blueprint(webhook_bp)
 app.register_blueprint(api_bp)
+app.register_blueprint(panel_bp)
 
 
 # ----------------------------------------------------------------------------

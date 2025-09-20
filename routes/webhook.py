@@ -34,3 +34,5 @@ def update():
 		return "✅ پروژه با موفقیت آپدیت شد.", 200
 	except subprocess.CalledProcessError as e:
 		return f"❌ خطا هنگام آپدیت: {e}", 500
+
+

@@ -54,10 +54,12 @@
     <div class="card">
       <h1>پنل شخصی خرید بیت‌کوین</h1>
       <div class="totals">
-        <div class="pill">جمع کل دلاری: <strong>{{ '%.2f' % total_usd }}</strong> $</div>
-        <div class="pill">نرخ تبدیل: <strong>{{ '%.0f' % usd_to_toman }}</strong> تومان/دلار</div>
-        <div class="pill">جمع کل تومانی: <strong>{{ '{:,.0f}'.format(total_toman) }}</strong> تومان</div>
+        <div class="pill">واریزی کل (USD): <strong>{{ '%.2f' % total_usd }}</strong> $</div>
+        <div class="pill">واریزی کل (تومان): <strong>{{ '{:,.0f}'.format(total_toman) }}</strong></div>
+        <div class="pill">موجودی BTC: <strong id="hold_btc">{{ '%.8f' % total_btc }}</strong> BTC</div>
         <div class="pill">قیمت لحظه‌ای BTC: <strong id="btc_usd">...</strong> $ <span class="muted" id="btc_toman"></span></div>
+        <div class="pill">ارزش فعلی (USD): <strong id="hold_usd">...</strong> $</div>
+        <div class="pill">ارزش فعلی (تومان): <strong id="hold_toman">...</strong></div>
       </div>
     </div>
 
@@ -147,6 +149,9 @@
       var usdToToman = {{ '%.0f' % usd_to_toman }};
       var usdEl = document.getElementById('btc_usd');
       var tomanEl = document.getElementById('btc_toman');
+      var totalBtc = Number("{{ '%.8f' % total_btc }}");
+      var holdUsdEl = document.getElementById('hold_usd');
+      var holdTmnEl = document.getElementById('hold_toman');
       async function fetchPrice() {
         try {
           var res = await fetch('/api/price/btcusd', { cache: 'no-store' });
@@ -157,9 +162,16 @@
           usdEl.textContent = price.toFixed(2);
           var toman = Math.round(price * usdToToman);
           tomanEl.textContent = '(' + toman.toLocaleString('fa-IR') + ' تومان)';
+          // holdings now
+          var holdUsd = totalBtc * price;
+          var holdTmn = Math.round(holdUsd * usdToToman);
+          holdUsdEl.textContent = holdUsd.toFixed(2);
+          holdTmnEl.textContent = holdTmn.toLocaleString('fa-IR');
         } catch (e) {
           usdEl.textContent = '—';
           tomanEl.textContent = '';
+          holdUsdEl.textContent = '—';
+          holdTmnEl.textContent = '—';
         }
       }
       fetchPrice();
