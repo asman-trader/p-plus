@@ -53,13 +53,23 @@
   <div class="container">
     <div class="card">
       <h1>پنل شخصی خرید بیت‌کوین</h1>
-      <div class="totals">
-        <div class="pill">واریزی کل (USD): <strong>{{ '%.2f' % total_usd }}</strong> $</div>
-        <div class="pill">واریزی کل (تومان): <strong>{{ '{:,.0f}'.format(total_toman) }}</strong></div>
-        <div class="pill">موجودی BTC: <strong id="hold_btc">{{ '%.8f' % total_btc }}</strong> BTC</div>
-        <div class="pill">قیمت لحظه‌ای BTC: <strong id="btc_usd">...</strong> $ <span class="muted" id="btc_toman"></span></div>
-        <div class="pill">ارزش فعلی (USD): <strong id="hold_usd">...</strong> $</div>
-        <div class="pill">ارزش فعلی (تومان): <strong id="hold_toman">...</strong></div>
+      <div class="row">
+        <div class="col">
+          <h2>واریزی</h2>
+          <div class="totals">
+            <div class="pill">واریزی کل (USD): <strong>{{ '%.2f' % total_usd }}</strong> $</div>
+            <div class="pill">واریزی کل (تومان): <strong>{{ '{:,.0f}'.format(total_toman) }}</strong></div>
+          </div>
+        </div>
+        <div class="col">
+          <h2>موجودی</h2>
+          <div class="totals">
+            <div class="pill">موجودی BTC: <strong id="hold_btc">{{ '%.8f' % total_btc }}</strong> BTC</div>
+            <div class="pill">قیمت لحظه‌ای BTC: <strong id="btc_usd">...</strong> $ <span class="muted" id="btc_toman"></span></div>
+            <div class="pill">ارزش فعلی (USD): <strong id="hold_usd">...</strong> $</div>
+            <div class="pill">ارزش فعلی (تومان): <strong id="hold_toman">...</strong></div>
+          </div>
+        </div>
       </div>
     </div>
 
