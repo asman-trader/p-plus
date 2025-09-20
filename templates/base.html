@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>پنل خرید بیت‌کوین</title>
+  <title>{% block title %}داشبورد{% endblock %}</title>
   <style>
     :root {
       --bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -136,7 +136,7 @@
   <div class="container">
     <div class="card" id="top">
       <div class="header-bar">
-        <h1>داشبورد</h1>
+        <h1><a href="{{ url_for('panel_bp.panel_index') }}" style="text-decoration: none; color: inherit;">داشبورد</a></h1>
         <div class="actions">
           <button type="button" class="menu-btn" id="themeBtn" title="تغییر تم"><span id="themeIcon">🌙</span></button>
           <button type="button" class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" title="منو">☰</button>
@@ -145,7 +145,7 @@
             <a href="{{ url_for('panel_bp.withdrawals_page') }}">برداشت</a>
             <a href="{{ url_for('panel_bp.balance_page') }}">موجودی</a>
             <a href="{{ url_for('panel_bp.purchases_page') }}">خریدها</a>
-            <a href="#rate">نرخ دلار → تومان</a>
+            <a href="{{ url_for('panel_bp.panel_index') }}">نرخ دلار → تومان</a>
           </div>
         </div>
       </div>
@@ -161,19 +161,6 @@
       </div>
     </div>
 
-    <div class="row">
-      <div class="card col">
-        <h2>خلاصه عملکرد</h2>
-        <div class="totals">
-          <div class="pill">واریزی کل: <strong>{{ '%.2f' % total_usd }}</strong> $ / <strong>{{ '{:,.0f}'.format(total_toman) }}</strong> تومان</div>
-          <div class="pill">برداشت کل: <strong>{{ '%.2f' % total_withdraw_usd }}</strong> $ / <strong>{{ '{:,.0f}'.format(total_withdraw_toman) }}</strong> تومان</div>
-          <div class="pill">موجودی BTC: <strong id="hold_btc">{{ '%.8f' % total_btc }}</strong> BTC</div>
-          <div class="pill">ارزش فعلی: <strong id="hold_usd">...</strong> $ / <strong id="hold_toman">...</strong> تومان</div>
-        </div>
-      </div>
-    </div>
-    </div>
-
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="card" id="flashBox">
@@ -184,85 +171,7 @@
       {% endif %}
     {% endwith %}
 
-    <div class="row">
-      <div class="card col" id="rate">
-        <h2>تنظیم نرخ تبدیل دلار → تومان</h2>
-        <form method="post" action="{{ url_for('panel_bp.panel_update_rate') }}">
-          <label>
-            نرخ (تومان برای هر دلار)
-            <input type="number" step="1" min="1" name="usd_to_toman" value="{{ '%.0f' % usd_to_toman }}" required inputmode="numeric" placeholder="مثلاً 60000">
-          </label>
-          <div style="margin-top:12px; display:flex; gap:10px;">
-            <button type="submit" class="btn btn-outline">ذخیره نرخ</button>
-          </div>
-          <div class="muted" style="margin-top:8px;">این مقدار برای محاسبه جمع کل به تومان استفاده می‌شود.</div>
-        </form>
-      </div>
-    </div>
-    <div class="divider"></div>
-
-    <div class="card" id="purchases">
-      <h2>لیست خریدها</h2>
-      <div class="table-scroll">
-        <table class="responsive">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>تاریخ</th>
-              <th>BTC</th>
-              <th>قیمت واحد (USD)</th>
-              <th>مبلغ (USD)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if purchases %}
-              {% for p in purchases %}
-                <tr>
-                  <td data-label="#">{{ p["id"] }}</td>
-                  <td class="muted" data-label="تاریخ">{{ p["created_at"] }}</td>
-                  <td data-label="BTC">{{ '%.8f' % p["amount_btc"] }}</td>
-                  <td data-label="قیمت واحد (USD)">{{ '%.2f' % p["price_usd_per_btc"] }}</td>
-                  <td data-label="مبلغ (USD)">{{ '%.2f' % (p["amount_btc"] * p["price_usd_per_btc"]) }}</td>
-                </tr>
-              {% endfor %}
-            {% else %}
-              <tr><td colspan="5" class="muted">هنوز خریدی ثبت نشده است.</td></tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="card" id="withdrawals">
-      <h2>لیست برداشت‌ها</h2>
-      <div class="table-scroll">
-        <table class="responsive">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>تاریخ</th>
-              <th>BTC</th>
-              <th>قیمت واحد (USD)</th>
-              <th>مبلغ (USD)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if withdrawals %}
-              {% for w in withdrawals %}
-                <tr>
-                  <td data-label="#">{{ w["id"] }}</td>
-                  <td class="muted" data-label="تاریخ">{{ w["created_at"] }}</td>
-                  <td data-label="BTC">{{ '%.8f' % w["amount_btc"] }}</td>
-                  <td data-label="قیمت واحد (USD)">{{ '%.2f' % w["price_usd_per_btc"] }}</td>
-                  <td data-label="مبلغ (USD)">{{ '%.2f' % (w["amount_btc"] * w["price_usd_per_btc"]) }}</td>
-                </tr>
-              {% endfor %}
-            {% else %}
-              <tr><td colspan="5" class="muted">برداشتی ثبت نشده است.</td></tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    {% block content %}{% endblock %}
   </div>
   
   <a href="#top" class="fab" aria-label="بازگشت به بالا">↑</a>
@@ -275,10 +184,10 @@
 
   <script>
     (function () {
-      var usdToToman = {{ '%.0f' % usd_to_toman }};
+      var usdToToman = {{ usd_to_toman if usd_to_toman is defined else 60000 }};
       var usdEl = document.getElementById('btc_usd');
       var tomanEl = document.getElementById('btc_toman');
-      var totalBtc = Number("{{ '%.8f' % total_btc }}");
+      var totalBtc = Number("{{ total_btc if total_btc is defined else 0 }}");
       var holdUsdEl = document.getElementById('hold_usd');
       var holdTmnEl = document.getElementById('hold_toman');
       var themeBtn = document.getElementById('themeBtn');
@@ -311,15 +220,19 @@
           usdEl.textContent = price.toFixed(2);
           var toman = Math.round(price * usdToToman);
           tomanEl.textContent = '(' + toman.toLocaleString('fa-IR') + ' تومان)';
-          var holdUsd = totalBtc * price;
-          var holdTmn = Math.round(holdUsd * usdToToman);
-          holdUsdEl.textContent = holdUsd.toFixed(2);
-          holdTmnEl.textContent = holdTmn.toLocaleString('fa-IR');
+          if (holdUsdEl && holdTmnEl) {
+            var holdUsd = totalBtc * price;
+            var holdTmn = Math.round(holdUsd * usdToToman);
+            holdUsdEl.textContent = holdUsd.toFixed(2);
+            holdTmnEl.textContent = holdTmn.toLocaleString('fa-IR');
+          }
         } catch (e) {
           usdEl.textContent = '—';
           tomanEl.textContent = '';
-          holdUsdEl.textContent = '—';
-          holdTmnEl.textContent = '—';
+          if (holdUsdEl && holdTmnEl) {
+            holdUsdEl.textContent = '—';
+            holdTmnEl.textContent = '—';
+          }
         }
       }
       fetchPrice();

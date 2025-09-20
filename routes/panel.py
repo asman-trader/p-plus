@@ -47,11 +47,11 @@ def panel_add():
 		price_usd_per_btc = float(request.form.get("price_usd_per_btc", "0").strip())
 	except ValueError:
 		flash("مقادیر وارد شده نامعتبر است.", "error")
-		return redirect(url_for("panel_bp.panel_index"))
+		return redirect(url_for("panel_bp.deposits_page"))
 
 	if amount_btc <= 0 or price_usd_per_btc <= 0:
 		flash("مقادیر باید بزرگ‌تر از صفر باشند.", "error")
-		return redirect(url_for("panel_bp.panel_index"))
+		return redirect(url_for("panel_bp.deposits_page"))
 
 	conn = get_db_connection()
 	cur = conn.cursor()
@@ -59,7 +59,7 @@ def panel_add():
 	conn.commit()
 	conn.close()
 	flash("خرید با موفقیت ثبت شد.", "success")
-	return redirect(url_for("panel_bp.panel_index"))
+	return redirect(url_for("panel_bp.deposits_page"))
 
 
 @panel_bp.post("/panel/withdraw")
@@ -69,11 +69,11 @@ def panel_withdraw():
 		price_usd_per_btc = float(request.form.get("price_usd_per_btc", "0").strip())
 	except ValueError:
 		flash("مقادیر وارد شده نامعتبر است.", "error")
-		return redirect(url_for("panel_bp.panel_index"))
+		return redirect(url_for("panel_bp.withdrawals_page"))
 
 	if amount_btc <= 0 or price_usd_per_btc <= 0:
 		flash("مقادیر باید بزرگ‌تر از صفر باشند.", "error")
-		return redirect(url_for("panel_bp.panel_index"))
+		return redirect(url_for("panel_bp.withdrawals_page"))
 
 	conn = get_db_connection()
 	cur = conn.cursor()
@@ -81,7 +81,7 @@ def panel_withdraw():
 	conn.commit()
 	conn.close()
 	flash("برداشت با موفقیت ثبت شد.", "success")
-	return redirect(url_for("panel_bp.panel_index"))
+	return redirect(url_for("panel_bp.withdrawals_page"))
 
 
 @panel_bp.post("/panel/rate")
@@ -113,5 +113,58 @@ def home():
 @panel_bp.get("/healthz")
 def healthz():
 	return "ok", 200
+
+
+@panel_bp.get("/deposits")
+def deposits_page():
+	conn = get_db_connection()
+	cur = conn.cursor()
+	cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM purchases")
+	total_usd = cur.fetchone()[0] or 0
+	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+	usd_to_toman = float(cur.fetchone()[0])
+	total_toman = total_usd * usd_to_toman
+	conn.close()
+	return render_template("deposits.html", total_usd=total_usd, usd_to_toman=usd_to_toman, total_toman=total_toman)
+
+
+@panel_bp.get("/withdrawals")
+def withdrawals_page():
+	conn = get_db_connection()
+	cur = conn.cursor()
+	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM withdrawals ORDER BY id DESC")
+	withdrawals = cur.fetchall()
+	cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM withdrawals")
+	total_withdraw_usd = cur.fetchone()[0] or 0
+	cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM withdrawals")
+	total_withdraw_btc = float(cur.fetchone()[0] or 0)
+	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+	usd_to_toman = float(cur.fetchone()[0])
+	conn.close()
+	return render_template("withdrawals.html", withdrawals=withdrawals, total_withdraw_usd=total_withdraw_usd, total_withdraw_btc=total_withdraw_btc, total_withdraw_toman=total_withdraw_usd * usd_to_toman, usd_to_toman=usd_to_toman)
+
+
+@panel_bp.get("/balance")
+def balance_page():
+	conn = get_db_connection()
+	cur = conn.cursor()
+	cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM purchases")
+	total_btc = float(cur.fetchone()[0] or 0)
+	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+	usd_to_toman = float(cur.fetchone()[0])
+	conn.close()
+	return render_template("balance.html", total_btc=total_btc, usd_to_toman=usd_to_toman)
+
+
+@panel_bp.get("/purchases")
+def purchases_page():
+	conn = get_db_connection()
+	cur = conn.cursor()
+	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM purchases ORDER BY id DESC")
+	purchases = cur.fetchall()
+	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+	usd_to_toman = float(cur.fetchone()[0])
+	conn.close()
+	return render_template("purchases.html", purchases=purchases, usd_to_toman=usd_to_toman)
 
 

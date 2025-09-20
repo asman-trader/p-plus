@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}خریدها - داشبورد{% endblock %}
+
+{% block content %}
+<div class="card" id="purchases">
+  <h2>لیست خریدها</h2>
+  <div class="table-scroll">
+    <table class="responsive">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>تاریخ</th>
+          <th>BTC</th>
+          <th>قیمت واحد (USD)</th>
+          <th>مبلغ (USD)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if purchases %}
+          {% for p in purchases %}
+            <tr>
+              <td data-label="#">{{ p["id"] }}</td>
+              <td class="muted" data-label="تاریخ">{{ p["created_at"] }}</td>
+              <td data-label="BTC">{{ '%.8f' % p["amount_btc"] }}</td>
+              <td data-label="قیمت واحد (USD)">{{ '%.2f' % p["price_usd_per_btc"] }}</td>
+              <td data-label="مبلغ (USD)">{{ '%.2f' % (p["amount_btc"] * p["price_usd_per_btc"]) }}</td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="5" class="muted">هنوز خریدی ثبت نشده است.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

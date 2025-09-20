@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}موجودی - داشبورد{% endblock %}
+
+{% block content %}
+<div class="card" id="balance">
+  <h2>موجودی</h2>
+  <div class="totals">
+    <div class="pill">موجودی BTC: <strong id="hold_btc">{{ '%.8f' % total_btc }}</strong> BTC</div>
+    <div class="pill">ارزش فعلی (USD): <strong id="hold_usd">...</strong> $</div>
+    <div class="pill">ارزش فعلی (تومان): <strong id="hold_toman">...</strong></div>
+  </div>
+</div>
+{% endblock %}
