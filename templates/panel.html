@@ -43,6 +43,8 @@
       .totals { gap:16px; }
       .totals .pill { padding:10px 14px; }
     }
+    .header-bar { display:flex; justify-content: space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    .price-pill { background:#0b1220; border:1px solid #334155; border-radius:999px; padding:8px 12px; }
   </style>
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn/Vazirmatn-font-face.css" rel="stylesheet">
   <meta name="color-scheme" content="dark light">
@@ -52,7 +54,10 @@
 <body>
   <div class="container">
     <div class="card">
-      <h1>پنل شخصی خرید بیت‌کوین</h1>
+      <div class="header-bar">
+        <h1>پنل شخصی خرید بیت‌کوین</h1>
+        <div class="price-pill">قیمت لحظه‌ای BTC: <strong id="btc_usd">...</strong> $ <span class="muted" id="btc_toman"></span></div>
+      </div>
       <div class="row">
         <div class="col">
           <h2>واریزی</h2>
@@ -65,7 +70,6 @@
           <h2>موجودی</h2>
           <div class="totals">
             <div class="pill">موجودی BTC: <strong id="hold_btc">{{ '%.8f' % total_btc }}</strong> BTC</div>
-            <div class="pill">قیمت لحظه‌ای BTC: <strong id="btc_usd">...</strong> $ <span class="muted" id="btc_toman"></span></div>
             <div class="pill">ارزش فعلی (USD): <strong id="hold_usd">...</strong> $</div>
             <div class="pill">ارزش فعلی (تومان): <strong id="hold_toman">...</strong></div>
           </div>
