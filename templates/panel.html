@@ -5,25 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>پنل خرید بیت‌کوین</title>
   <style>
-    body { font-family: Vazirmatn, Tahoma, sans-serif; margin: 24px; background:#0f172a; color:#e2e8f0; }
+    body { font-family: Vazirmatn, Tahoma, sans-serif; margin: 0; background:#0f172a; color:#e2e8f0; }
     a,button,input { font-family: inherit; }
-    .container { max-width: 880px; margin: 0 auto; }
-    .card { background:#111827; border:1px solid #1f2937; border-radius:12px; padding:20px; margin-bottom:24px; }
-    h1 { margin: 0 0 16px; font-size: 22px; }
-    h2 { margin: 0 0 12px; font-size: 18px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 10px; border-bottom: 1px solid #1f2937; text-align: right; }
-    th { color:#93c5fd; }
-    .row { display:flex; gap:16px; flex-wrap:wrap; }
+    .container { max-width: 880px; margin: 0 auto; padding: 12px; }
+    .card { background:#111827; border:1px solid #1f2937; border-radius:12px; padding:16px; margin-bottom:16px; }
+    h1 { margin: 0 0 12px; font-size: 20px; }
+    h2 { margin: 0 0 10px; font-size: 16px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
     .row .col { flex:1 1 260px; }
-    input[type="number"], input[type="text"] { width: 100%; padding:10px; border-radius:10px; border:1px solid #334155; background:#0b1220; color:#e2e8f0; }
-    button { padding:10px 14px; border-radius:10px; border:1px solid #334155; background:#1e293b; color:#fff; cursor:pointer; }
+    input[type="number"], input[type="text"] { width: 100%; padding:12px; border-radius:10px; border:1px solid #334155; background:#0b1220; color:#e2e8f0; font-size:16px; min-height:44px; }
+    button { padding:12px 16px; border-radius:10px; border:1px solid #334155; background:#1e293b; color:#fff; cursor:pointer; font-size:16px; min-height:44px; width:100%; }
     .muted { color:#94a3b8; }
     .success { color:#10b981; }
     .error { color:#ef4444; }
-    .totals { display:flex; gap:16px; flex-wrap:wrap; }
-    .totals .pill { background:#0b1220; border:1px solid #334155; border-radius:999px; padding:10px 14px; }
+    .totals { display:flex; gap:8px; flex-wrap:wrap; }
+    .totals .pill { background:#0b1220; border:1px solid #334155; border-radius:999px; padding:8px 12px; }
     .flash { margin-bottom: 8px; }
+
+    /* Mobile-first form grid */
+    .form-grid { display:grid; gap:10px; grid-template-columns:1fr; }
+    @media (min-width: 640px) { .form-grid { grid-template-columns:1fr 1fr; } }
+
+    /* Scrollable table for small screens */
+    .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid #1f2937; border-radius:12px; }
+    table { width: 100%; border-collapse: collapse; min-width: 560px; }
+    th, td { padding: 10px; border-bottom: 1px solid #1f2937; text-align: right; }
+    th { color:#93c5fd; position: sticky; top: 0; background:#111827; }
+
+    /* Larger spacing on wider screens */
+    @media (min-width: 640px) {
+      body { margin: 24px; }
+      .container { padding: 0; }
+      .card { padding:20px; margin-bottom:24px; }
+      h1 { font-size: 22px; margin-bottom: 16px; }
+      h2 { font-size: 18px; margin-bottom: 12px; }
+      button { width:auto; }
+      .totals { gap:16px; }
+      .totals .pill { padding:10px 14px; }
+    }
   </style>
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn/Vazirmatn-font-face.css" rel="stylesheet">
   <meta name="color-scheme" content="dark light">
@@ -38,6 +57,7 @@
         <div class="pill">جمع کل دلاری: <strong>{{ '%.2f' % total_usd }}</strong> $</div>
         <div class="pill">نرخ تبدیل: <strong>{{ '%.0f' % usd_to_toman }}</strong> تومان/دلار</div>
         <div class="pill">جمع کل تومانی: <strong>{{ '{:,.0f}'.format(total_toman) }}</strong> تومان</div>
+        <div class="pill">قیمت لحظه‌ای BTC: <strong id="btc_usd">...</strong> $ <span class="muted" id="btc_toman"></span></div>
       </div>
     </div>
 
@@ -55,7 +75,7 @@
       <div class="card col">
         <h2>ثبت خرید جدید</h2>
         <form method="post" action="{{ url_for('panel_add') }}">
-          <div style="display:grid; gap:10px; grid-template-columns:1fr 1fr;">
+          <div class="form-grid">
             <label>
               مقدار BTC
               <input type="number" step="0.00000001" min="0" name="amount_btc" required>
@@ -65,7 +85,7 @@
               <input type="number" step="0.01" min="0" name="price_usd_per_btc" required>
             </label>
           </div>
-          <div style="margin-top:12px;">
+          <div style="margin-top:12px; display:flex; gap:10px;">
             <button type="submit">افزودن خرید</button>
           </div>
         </form>
@@ -88,35 +108,61 @@
 
     <div class="card">
       <h2>لیست خریدها</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>تاریخ</th>
-            <th>BTC</th>
-            <th>قیمت واحد (USD)</th>
-            <th>مبلغ (USD)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% if purchases %}
-            {% for p in purchases %}
-              <tr>
-                <td>{{ p["id"] }}</td>
-                <td class="muted">{{ p["created_at"] }}</td>
-                <td>{{ '%.8f' % p["amount_btc"] }}</td>
-                <td>{{ '%.2f' % p["price_usd_per_btc"] }}</td>
-                <td>{{ '%.2f' % (p["amount_btc"] * p["price_usd_per_btc"]) }}</td>
-              </tr>
-            {% endfor %}
-          {% else %}
-            <tr><td colspan="5" class="muted">هنوز خریدی ثبت نشده است.</td></tr>
-          {% endif %}
-        </tbody>
-      </table>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>تاریخ</th>
+              <th>BTC</th>
+              <th>قیمت واحد (USD)</th>
+              <th>مبلغ (USD)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if purchases %}
+              {% for p in purchases %}
+                <tr>
+                  <td>{{ p["id"] }}</td>
+                  <td class="muted">{{ p["created_at"] }}</td>
+                  <td>{{ '%.8f' % p["amount_btc"] }}</td>
+                  <td>{{ '%.2f' % p["price_usd_per_btc"] }}</td>
+                  <td>{{ '%.2f' % (p["amount_btc"] * p["price_usd_per_btc"]) }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="5" class="muted">هنوز خریدی ثبت نشده است.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
   
 </body>
 </html>
-
+  
+  <script>
+    (function () {
+      var usdToToman = {{ '%.0f' % usd_to_toman }};
+      var usdEl = document.getElementById('btc_usd');
+      var tomanEl = document.getElementById('btc_toman');
+      async function fetchPrice() {
+        try {
+          var res = await fetch('/api/price/btcusd', { cache: 'no-store' });
+          if (!res.ok) throw new Error('bad status');
+          var data = await res.json();
+          var price = Number(data && data.price_usd);
+          if (!isFinite(price)) throw new Error('bad price');
+          usdEl.textContent = price.toFixed(2);
+          var toman = Math.round(price * usdToToman);
+          tomanEl.textContent = '(' + toman.toLocaleString('fa-IR') + ' تومان)';
+        } catch (e) {
+          usdEl.textContent = '—';
+          tomanEl.textContent = '';
+        }
+      }
+      fetchPrice();
+      setInterval(fetchPrice, 20000);
+    })();
+  </script>

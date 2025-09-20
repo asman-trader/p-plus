@@ -7,5 +7,5 @@ if APP_DIR not in sys.path:
     sys.path.insert(0, APP_DIR)
 
 # Import the Flask app object
-from webhook import app as application
+from app import app as application
 
