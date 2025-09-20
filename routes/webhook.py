@@ -2,14 +2,15 @@ from flask import Blueprint, request, abort  # pyright: ignore[reportMissingImpo
 import subprocess
 import hmac
 import hashlib
+import os
 
 webhook_bp = Blueprint("webhook_bp", __name__)
 
-# توکن امنیتی ساده
-SECRET = b"my-secret-token"
+# توکن امنیتی از ENV یا مقدار پیش‌فرض
+SECRET = (os.environ.get("WEBHOOK_SECRET") or "my-secret-token").encode()
 
-# مسیر پروژه روی هاست
-PROJECT_DIR = "/home/bztypmws/myapp"
+# مسیر پروژه روی هاست از ENV یا مقدار نمونه
+PROJECT_DIR = os.environ.get("PROJECT_DIR", "/home/bztypmws/myapp")
 
 
 def verify_signature(data: bytes, signature: str | None) -> bool:
