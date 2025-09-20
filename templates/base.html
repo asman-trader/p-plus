@@ -126,6 +126,16 @@
     @media (min-width: 640px) { .bottom-nav, .fab { display: none; } }
     html { scroll-behavior: smooth; }
     .divider { height: 2px; background: linear-gradient(90deg, transparent, var(--card-border), transparent); margin: 20px 0; border-radius: 2px; }
+
+    /* Drawer menu (Telegram-like) */
+    .drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); opacity: 0; pointer-events: none; transition: opacity .25s ease; z-index: 79; }
+    .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+    .drawer { position: fixed; inset-block: 0; inset-inline-end: 0; width: 300px; max-width: 85vw; background: var(--card); border-inline-start: 1px solid var(--card-border); box-shadow: var(--shadow); transform: translateX(100%); transition: transform .25s ease; z-index: 80; display: flex; flex-direction: column; }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header { padding: 16px; border-bottom: 1px solid var(--card-border); display:flex; align-items:center; gap:10px; }
+    .drawer-nav { display: flex; flex-direction: column; }
+    .drawer-nav a { display:flex; align-items:center; gap:12px; padding:12px 16px; text-decoration:none; color: var(--text); border-bottom: 1px solid var(--card-border); }
+    .drawer-nav a:hover { background: var(--pill-bg); }
   </style>
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn/Vazirmatn-font-face.css" rel="stylesheet">
   <meta name="color-scheme" content="dark light">
@@ -140,12 +150,20 @@
         <div class="actions">
           <button type="button" class="menu-btn" id="themeBtn" title="تغییر تم"><span id="themeIcon">🌙</span></button>
           <button type="button" class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" title="منو">☰</button>
-          <div class="menu" id="menu">
-            <a href="{{ url_for('panel_bp.deposits_page') }}">واریزی</a>
-            <a href="{{ url_for('panel_bp.withdrawals_page') }}">برداشت</a>
-            <a href="{{ url_for('panel_bp.balance_page') }}">موجودی</a>
-            <a href="{{ url_for('panel_bp.purchases_page') }}">خریدها</a>
-            <a href="{{ url_for('panel_bp.settings_page') }}">تنظیمات</a>
+          <div class="drawer-backdrop" id="drawerBackdrop"></div>
+          <div class="drawer" id="drawer">
+            <div class="drawer-header">
+              <div class="icon">📋</div>
+              <strong>منو</strong>
+            </div>
+            <nav class="drawer-nav">
+              <a href="{{ url_for('panel_bp.panel_index') }}">🏠 داشبورد</a>
+              <a href="{{ url_for('panel_bp.deposits_page') }}">💰 واریزی</a>
+              <a href="{{ url_for('panel_bp.withdrawals_page') }}">💸 برداشت</a>
+              <a href="{{ url_for('panel_bp.balance_page') }}">💎 موجودی</a>
+              <a href="{{ url_for('panel_bp.purchases_page') }}">📊 خریدها</a>
+              <a href="{{ url_for('panel_bp.settings_page') }}">⚙️ تنظیمات</a>
+            </nav>
           </div>
         </div>
       </div>
@@ -248,22 +266,28 @@
         }, 3000);
       }
 
-      // Hamburger menu toggle
+      // Drawer menu toggle (Telegram-like)
       var menuBtn = document.getElementById('menuBtn');
-      var menu = document.getElementById('menu');
-      if (menuBtn && menu) {
-        function closeMenu() { menu.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }
-        function openMenu() { menu.classList.add('open'); menuBtn.setAttribute('aria-expanded', 'true'); }
-        menuBtn.addEventListener('click', function (e) {
+      var drawer = document.getElementById('drawer');
+      var drawerBackdrop = document.getElementById('drawerBackdrop');
+      function closeDrawer(){
+        if (drawer) drawer.classList.remove('open');
+        if (drawerBackdrop) drawerBackdrop.classList.remove('open');
+        if (menuBtn) menuBtn.setAttribute('aria-expanded','false');
+      }
+      function openDrawer(){
+        if (drawer) drawer.classList.add('open');
+        if (drawerBackdrop) drawerBackdrop.classList.add('open');
+        if (menuBtn) menuBtn.setAttribute('aria-expanded','true');
+      }
+      if (menuBtn && drawer && drawerBackdrop){
+        menuBtn.addEventListener('click', function(e){
           e.stopPropagation();
-          if (menu.classList.contains('open')) closeMenu(); else openMenu();
+          if (drawer.classList.contains('open')) closeDrawer(); else openDrawer();
         });
-        document.addEventListener('click', function (e) {
-          if (!menu.contains(e.target) && e.target !== menuBtn) closeMenu();
-        });
-        menu.querySelectorAll('a').forEach(function (a) {
-          a.addEventListener('click', closeMenu);
-        });
+        drawerBackdrop.addEventListener('click', closeDrawer);
+        drawer.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', closeDrawer); });
+        document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeDrawer(); });
       }
     })();
   </script>
