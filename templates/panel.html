@@ -169,6 +169,7 @@
           <div class="pill">برداشت کل: <strong>{{ '%.2f' % total_withdraw_usd }}</strong> $ / <strong>{{ '{:,.0f}'.format(total_withdraw_toman) }}</strong> تومان</div>
           <div class="pill">موجودی BTC: <strong id="hold_btc">{{ '%.8f' % total_btc }}</strong> BTC</div>
           <div class="pill">ارزش فعلی: <strong id="hold_usd">...</strong> $ / <strong id="hold_toman">...</strong> تومان</div>
+          <div class="pill" id="pl_wrap">سود/زیان: <strong id="pl_usd">...</strong> $ <span class="muted" id="pl_tmn"></span></div>
         </div>
       </div>
     </div>
@@ -281,6 +282,8 @@
       var totalBtc = Number("{{ '%.8f' % total_btc }}");
       var holdUsdEl = document.getElementById('hold_usd');
       var holdTmnEl = document.getElementById('hold_toman');
+      var plUsdEl = document.getElementById('pl_usd');
+      var plTmnEl = document.getElementById('pl_tmn');
       var themeBtn = document.getElementById('themeBtn');
       var themeIcon = document.getElementById('themeIcon');
 
@@ -315,11 +318,21 @@
           var holdTmn = Math.round(holdUsd * usdToToman);
           holdUsdEl.textContent = holdUsd.toFixed(2);
           holdTmnEl.textContent = holdTmn.toLocaleString('fa-IR');
+
+          // Compute P/L using deposits (total_usd) and withdrawals deducted
+          var totalDepositsUsd = Number("{{ '%.2f' % total_usd }}");
+          var totalWithdrawUsd = Number("{{ '%.2f' % total_withdraw_usd }}");
+          var netInvestedUsd = Math.max(0, totalDepositsUsd - totalWithdrawUsd);
+          var plUsd = holdUsd - netInvestedUsd;
+          if (plUsdEl) plUsdEl.textContent = plUsd.toFixed(2);
+          if (plTmnEl) plTmnEl.textContent = '(' + Math.round(plUsd * usdToToman).toLocaleString('fa-IR') + ' تومان)';
         } catch (e) {
           usdEl.textContent = '—';
           tomanEl.textContent = '';
           holdUsdEl.textContent = '—';
           holdTmnEl.textContent = '—';
+          if (plUsdEl) plUsdEl.textContent = '—';
+          if (plTmnEl) plTmnEl.textContent = '';
         }
       }
       fetchPrice();
