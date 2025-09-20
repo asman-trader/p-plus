@@ -162,9 +162,11 @@ def purchases_page():
 	cur = conn.cursor()
 	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM purchases ORDER BY id DESC")
 	purchases = cur.fetchall()
+	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM withdrawals ORDER BY id ASC")
+	withdrawals = cur.fetchall()
 	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
 	usd_to_toman = float(cur.fetchone()[0])
 	conn.close()
-	return render_template("purchases.html", purchases=purchases, usd_to_toman=usd_to_toman)
+	return render_template("purchases.html", purchases=purchases, withdrawals=withdrawals, usd_to_toman=usd_to_toman)
 
 

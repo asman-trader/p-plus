@@ -4,34 +4,119 @@
 
 {% block content %}
 <div class="card" id="purchases">
-  <h2>لیست خریدها</h2>
-  <div class="table-scroll">
-    <table class="responsive">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>تاریخ</th>
-          <th>BTC</th>
-          <th>قیمت واحد (USD)</th>
-          <th>مبلغ (USD)</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% if purchases %}
-          {% for p in purchases %}
+  <h2>معاملات</h2>
+  <div class="row">
+    <div class="col">
+      <h3 style="margin-bottom:8px;">باز</h3>
+      <div class="table-scroll">
+        <table class="responsive">
+          <thead>
             <tr>
-              <td data-label="#">{{ p["id"] }}</td>
-              <td class="muted" data-label="تاریخ">{{ p["created_at"] }}</td>
-              <td data-label="BTC">{{ '%.8f' % p["amount_btc"] }}</td>
-              <td data-label="قیمت واحد (USD)">{{ '%.2f' % p["price_usd_per_btc"] }}</td>
-              <td data-label="مبلغ (USD)">{{ '%.2f' % (p["amount_btc"] * p["price_usd_per_btc"]) }}</td>
+              <th>#</th>
+              <th>تاریخ</th>
+              <th>BTC باقیمانده</th>
+              <th>میانگین قیمت (USD)</th>
+              <th>ارزش فعلی</th>
+              <th>سود/زیان</th>
             </tr>
-          {% endfor %}
-        {% else %}
-          <tr><td colspan="5" class="muted">هنوز خریدی ثبت نشده است.</td></tr>
-        {% endif %}
-      </tbody>
-    </table>
+          </thead>
+          <tbody id="open_trades_body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col">
+      <h3 style="margin-bottom:8px;">بسته</h3>
+      <div class="table-scroll">
+        <table class="responsive">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>خرید</th>
+              <th>خروج</th>
+              <th>BTC</th>
+              <th>میانگین خرید</th>
+              <th>میانگین خروج</th>
+              <th>سود/زیان</th>
+            </tr>
+          </thead>
+          <tbody id="closed_trades_body">
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
+<script>
+  (function(){
+    var purchases = {{ purchases|tojson }};
+    var withdrawals = {{ withdrawals|tojson }};
+    var openBody = document.getElementById('open_trades_body');
+    var closedBody = document.getElementById('closed_trades_body');
+    var usdToToman = {{ usd_to_toman }};
+    var priceEl = document.getElementById('btc_usd');
+
+    function toNum(x){ return typeof x === 'number' ? x : Number(x); }
+
+    // FIFO match
+    var queue = purchases.map(function(p){
+      return { id:p.id, date:p.created_at, amount: toNum(p.amount_btc), price: toNum(p.price_usd_per_btc) };
+    }).reverse(); // oldest first
+    withdrawals.slice().forEach(function(w){
+      var remain = toNum(w.amount_btc);
+      var wPrice = toNum(w.price_usd_per_btc);
+      while(remain > 1e-12 && queue.length){
+        var lot = queue[0];
+        var take = Math.min(remain, lot.amount);
+        // record closed trade row
+        var buyCost = take * lot.price;
+        var sellVal = take * wPrice;
+        var pl = sellVal - buyCost;
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td data-label="#">'+lot.id+'</td>'+
+                       '<td data-label="خرید">'+lot.date+'</td>'+
+                       '<td data-label="خروج">'+w.created_at+'</td>'+
+                       '<td data-label="BTC">'+take.toFixed(8)+'</td>'+
+                       '<td data-label="میانگین خرید">'+lot.price.toFixed(2)+'</td>'+
+                       '<td data-label="میانگین خروج">'+wPrice.toFixed(2)+'</td>'+
+                       '<td data-label="سود/زیان">'+pl.toFixed(2)+' $</td>';
+        closedBody.appendChild(tr);
+        lot.amount -= take;
+        remain -= take;
+        if(lot.amount <= 1e-12) queue.shift();
+      }
+    });
+
+    function renderOpen(currentPrice){
+      openBody.innerHTML='';
+      queue.forEach(function(lot){
+        var cost = lot.amount * lot.price;
+        var curVal = lot.amount * currentPrice;
+        var pl = curVal - cost;
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td data-label="#">'+lot.id+'</td>'+
+                       '<td data-label="تاریخ">'+lot.date+'</td>'+
+                       '<td data-label="BTC باقیمانده">'+lot.amount.toFixed(8)+'</td>'+
+                       '<td data-label="میانگین قیمت (USD)">'+lot.price.toFixed(2)+'</td>'+
+                       '<td data-label="ارزش فعلی">'+curVal.toFixed(2)+' $</td>'+
+                       '<td data-label="سود/زیان">'+pl.toFixed(2)+' $</td>';
+        openBody.appendChild(tr);
+      });
+    }
+
+    function readPrice(){
+      var p = Number(priceEl && priceEl.textContent && priceEl.textContent.replace(/[^0-9.]/g,''));
+      if (!isFinite(p) || p<=0) return null;
+      return p;
+    }
+
+    var initial = readPrice();
+    if (initial) renderOpen(initial);
+    var obs = new MutationObserver(function(){
+      var p = readPrice();
+      if (p) renderOpen(p);
+    });
+    if (priceEl) obs.observe(priceEl, { childList:true });
+  })();
+</script>
 {% endblock %}
