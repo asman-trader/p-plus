@@ -51,8 +51,23 @@ def perform_update():
 
 @webhook_bp.route("/update", methods=["POST"])
 def update():
+    # Debug headers/body size
+    ua = request.headers.get("User-Agent")
+    evt = request.headers.get("X-GitHub-Event")
+    delivery = request.headers.get("X-GitHub-Delivery")
+    print("[webhook] UA=", ua)
+    print("[webhook] event=", evt, "delivery=", delivery)
+    print("[webhook] PROJECT_DIR=", PROJECT_DIR)
+    print("[webhook] payload_length=", len(request.data or b""))
+
     signature = request.headers.get("X-Hub-Signature-256")
+    print("[webhook] signature=", signature)
     if not verify_signature(request.data, signature):
+        try:
+            expected = "sha256=" + hmac.new(SECRET, request.data, hashlib.sha256).hexdigest()
+            print("[webhook] expected_sig_prefix=", expected[:12])
+        except Exception:
+            pass
         abort(403)
     return perform_update()
 
