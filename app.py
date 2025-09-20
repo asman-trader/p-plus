@@ -2,7 +2,11 @@
 from flask import Flask, request
 import logging
 import os
+from dotenv import load_dotenv
 from datetime import datetime
+
+# بارگذاری متغیرهای محیطی از فایل .env (اگر موجود باشد)
+load_dotenv()
 
 # --- ایمپورت بلوپرینت‌ها ---
 from routes.main_routes import main_bp
