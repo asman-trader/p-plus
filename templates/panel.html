@@ -232,18 +232,12 @@
     {% endwith %}
 
     <div class="row">
-      <div class="card col" id="rate">
-        <h2>تنظیم نرخ تبدیل دلار → تومان</h2>
-        <form method="post" action="{{ url_for('panel_bp.panel_update_rate') }}">
-          <label>
-            نرخ (تومان برای هر دلار)
-            <input type="number" step="1" min="1" name="usd_to_toman" value="{{ '%.0f' % usd_to_toman }}" required inputmode="numeric" placeholder="مثلاً 60000">
-          </label>
-          <div style="margin-top:12px; display:flex; gap:10px;">
-            <button type="submit" class="btn btn-outline">ذخیره نرخ</button>
-          </div>
-          <div class="muted" style="margin-top:8px;">این مقدار برای محاسبه جمع کل به تومان استفاده می‌شود.</div>
-        </form>
+      <div class="card col">
+        <h2>تنظیمات</h2>
+        <div class="muted">برای تغییر نرخ تبدیل دلار → تومان به صفحه تنظیمات بروید.</div>
+        <div style="margin-top:12px;">
+          <a href="{{ url_for('panel_bp.settings_page') }}" class="btn btn-outline">باز کردن تنظیمات</a>
+        </div>
       </div>
     </div>
     <div class="divider"></div>

@@ -102,7 +102,7 @@ def panel_update_rate():
 	conn.commit()
 	conn.close()
 	flash("نرخ با موفقیت به‌روزرسانی شد.", "success")
-	return redirect(url_for("panel_bp.panel_index"))
+	return redirect(url_for("panel_bp.settings_page"))
 
 
 @panel_bp.get("/")
@@ -113,6 +113,17 @@ def home():
 @panel_bp.get("/healthz")
 def healthz():
 	return "ok", 200
+@panel_bp.get("/settings")
+def settings_page():
+	# Load current rate
+	conn = get_db_connection()
+	cur = conn.cursor()
+	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+	row = cur.fetchone()
+	usd_to_toman = float(row[0]) if row else 60000.0
+	conn.close()
+	return render_template("settings.html", usd_to_toman=usd_to_toman)
+
 
 
 @panel_bp.get("/deposits")
@@ -161,12 +172,31 @@ def purchases_page():
 	conn = get_db_connection()
 	cur = conn.cursor()
 	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM purchases ORDER BY id DESC")
-	purchases = cur.fetchall()
+	rows_p = cur.fetchall()
 	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM withdrawals ORDER BY id ASC")
-	withdrawals = cur.fetchall()
+	rows_w = cur.fetchall()
 	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
 	usd_to_toman = float(cur.fetchone()[0])
 	conn.close()
+	# Convert sqlite3.Row to plain dicts for JSON serialization in template
+	purchases = [
+		{
+			"id": int(r["id"]),
+			"created_at": r["created_at"],
+			"amount_btc": float(r["amount_btc"]),
+			"price_usd_per_btc": float(r["price_usd_per_btc"]),
+		}
+		for r in rows_p
+	]
+	withdrawals = [
+		{
+			"id": int(r["id"]),
+			"created_at": r["created_at"],
+			"amount_btc": float(r["amount_btc"]),
+			"price_usd_per_btc": float(r["price_usd_per_btc"]),
+		}
+		for r in rows_w
+	]
 	return render_template("purchases.html", purchases=purchases, withdrawals=withdrawals, usd_to_toman=usd_to_toman)
 
 

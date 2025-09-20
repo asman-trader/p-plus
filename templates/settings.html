@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}تنظیمات - داشبورد{% endblock %}
+
+{% block content %}
+<div class="card" id="settings">
+  <h2>تنظیم نرخ تبدیل دلار → تومان</h2>
+  <form method="post" action="{{ url_for('panel_bp.panel_update_rate') }}">
+    <label>
+      نرخ (تومان برای هر دلار)
+      <input type="number" step="1" min="1" name="usd_to_toman" value="{{ '%.0f' % usd_to_toman }}" required inputmode="numeric" placeholder="مثلاً 60000">
+    </label>
+    <div style="margin-top:12px; display:flex; gap:10px;">
+      <button type="submit" class="btn btn-primary">ذخیره</button>
+      <a href="{{ url_for('panel_bp.panel_index') }}" class="btn btn-outline">بازگشت</a>
+    </div>
+    <div class="muted" style="margin-top:8px;">این مقدار برای تبدیل‌ها و نمایش ارزش‌ها استفاده می‌شود.</div>
+  </form>
+</div>
+{% endblock %}
+
+{
+  "cells": [],
+  "metadata": {
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 2
+}
