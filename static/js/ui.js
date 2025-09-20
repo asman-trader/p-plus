@@ -104,9 +104,10 @@ export function initCoinsUI(addCoinCb, removeCoinCb, persistCb){
     const f = filter.trim().toUpperCase();
     ALL_COINS.filter(s=>!f || s.includes(f)).forEach(sym=>{
       const li = document.createElement('li');
+      const isChecked = !!state.activeCoins[sym];
       li.innerHTML = `
         <label class="flex items-center gap-2 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/40 cursor-pointer">
-          <input type="checkbox" class="coin-checkbox w-4 h-4" value="${sym}" />
+          <input type="checkbox" class="coin-checkbox w-4 h-4" value="${sym}" ${isChecked ? 'checked' : ''} />
           <span>${sym}/USDT</span>
         </label>`;
       coinListEl.appendChild(li);

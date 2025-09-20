@@ -356,12 +356,12 @@ setInterval(()=>{
 (async function boot(){
   console.log('Starting boot process...');
   
-  // ابتدا state را بارگذاری کن
+  // ابتدا UI را بساز تا چک‌باکس‌ها موجود باشند
+  initCoinsUI(addCoin, removeCoin, persistCoinSelection);
+  
+  // سپس تنظیمات و ترجیحات را بارگذاری و UI را سینک کن
   await loadSettings();
   await loadPrefs();
-  
-  // سپس UI را initialize کن
-  initCoinsUI(addCoin, removeCoin, persistCoinSelection);
   
   console.log('Boot process completed');
 })();
