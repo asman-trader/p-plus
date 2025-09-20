@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>پنل خرید بیت‌کوین</title>
+{% extends "base.html" %}
+
+{% block title %}داشبورد{% endblock %}
+
+{% block content %}
   <style>
     :root {
       --bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -126,6 +125,15 @@
     @media (min-width: 640px) { .bottom-nav, .fab { display: none; } }
     html { scroll-behavior: smooth; }
     .divider { height: 2px; background: linear-gradient(90deg, transparent, var(--card-border), transparent); margin: 20px 0; border-radius: 2px; }
+    /* Drawer menu (Telegram-like) */
+    .drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); opacity: 0; pointer-events: none; transition: opacity .25s ease; z-index: 79; }
+    .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+    .drawer { position: fixed; inset-block: 0; inset-inline-end: 0; width: 300px; max-width: 85vw; background: var(--card); border-inline-start: 1px solid var(--card-border); box-shadow: var(--shadow); transform: translateX(100%); transition: transform .25s ease; z-index: 80; display: flex; flex-direction: column; }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header { padding: 16px; border-bottom: 1px solid var(--card-border); display:flex; align-items:center; gap:10px; }
+    .drawer-nav { display: flex; flex-direction: column; }
+    .drawer-nav a { display:flex; align-items:center; gap:12px; padding:12px 16px; text-decoration:none; color: var(--text); border-bottom: 1px solid var(--card-border); }
+    .drawer-nav a:hover { background: var(--pill-bg); }
 
     /* KPI summary */
     .kpi-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
@@ -139,39 +147,6 @@
     .kpi.positive .value { color: #10b981; }
     .kpi.negative .value { color: #ef4444; }
   </style>
-  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn/Vazirmatn-font-face.css" rel="stylesheet">
-  <meta name="color-scheme" content="dark light">
-  <meta name="robots" content="noindex,nofollow">
-  <meta name="referrer" content="same-origin">
-</head>
-<body>
-  <div class="container">
-    <div class="card" id="top">
-      <div class="header-bar">
-        <h1>داشبورد</h1>
-        <div class="actions">
-          <button type="button" class="menu-btn" id="themeBtn" title="تغییر تم"><span id="themeIcon">🌙</span></button>
-          <button type="button" class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" title="منو">☰</button>
-          <div class="menu" id="menu">
-            <a href="{{ url_for('panel_bp.deposits_page') }}">واریزی</a>
-            <a href="{{ url_for('panel_bp.withdrawals_page') }}">برداشت</a>
-            <a href="{{ url_for('panel_bp.balance_page') }}">موجودی</a>
-            <a href="{{ url_for('panel_bp.purchases_page') }}">خریدها</a>
-            <a href="#rate">نرخ دلار → تومان</a>
-          </div>
-        </div>
-      </div>
-      <div class="price-section">
-        <div class="price-card">
-          <span class="price-label">BTC/USDT</span>
-          <div class="price-value">
-            <strong id="btc_usd">...</strong>
-            <span class="price-currency">$</span>
-          </div>
-          <span class="price-toman muted" id="btc_toman">...</span>
-        </div>
-      </div>
-    </div>
 
     <div class="row">
       <div class="card col">
@@ -219,18 +194,7 @@
         </div>
       </div>
     </div>
-    </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="card" id="flashBox">
-          {% for category, message in messages %}
-            <div class="flash {{ category }}">{{ message }}</div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
-
+    
     <div class="row">
       <div class="card col">
         <h2>تنظیمات</h2>
@@ -304,19 +268,10 @@
         </table>
       </div>
     </div>
-  </div>
   
-  <a href="#top" class="fab" aria-label="بازگشت به بالا">↑</a>
-  <nav class="bottom-nav" aria-label="پیمایش">
-    <a href="{{ url_for('panel_bp.deposits_page') }}"><span class="icon">💰</span>واریزی</a>
-    <a href="{{ url_for('panel_bp.withdrawals_page') }}"><span class="icon">💸</span>برداشت</a>
-    <a href="{{ url_for('panel_bp.balance_page') }}"><span class="icon">💎</span>موجودی</a>
-    <a href="{{ url_for('panel_bp.purchases_page') }}"><span class="icon">📊</span>خریدها</a>
-  </nav>
-
   <script>
     (function () {
-      var usdToToman = {{ '%.0f' % usd_to_toman }};
+      var usdToToman = Number("{{ '%.0f' % usd_to_toman }}");
       var usdEl = document.getElementById('btc_usd');
       var tomanEl = document.getElementById('btc_toman');
       var totalBtc = Number("{{ '%.8f' % total_btc }}");
@@ -395,24 +350,7 @@
         }, 3000);
       }
 
-      // Hamburger menu toggle
-      var menuBtn = document.getElementById('menuBtn');
-      var menu = document.getElementById('menu');
-      if (menuBtn && menu) {
-        function closeMenu() { menu.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }
-        function openMenu() { menu.classList.add('open'); menuBtn.setAttribute('aria-expanded', 'true'); }
-        menuBtn.addEventListener('click', function (e) {
-          e.stopPropagation();
-          if (menu.classList.contains('open')) closeMenu(); else openMenu();
-        });
-        document.addEventListener('click', function (e) {
-          if (!menu.contains(e.target) && e.target !== menuBtn) closeMenu();
-        });
-        menu.querySelectorAll('a').forEach(function (a) {
-          a.addEventListener('click', closeMenu);
-        });
-      }
+      // Drawer logic is in base.html
     })();
   </script>
-</body>
-</html>
+{% endblock %}
