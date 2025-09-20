@@ -90,7 +90,13 @@
     }
     .header-bar { display:flex; justify-content: space-between; align-items:center; gap:12px; flex-wrap:wrap; }
     .actions { display:flex; align-items:center; gap:8px; position: relative; }
-    .price-pill { background: var(--pill-bg); border:1px solid var(--card-border); border-radius:999px; padding:10px 14px; backdrop-filter: blur(10px); font-weight: 500; }
+    .price-section { margin-top: 16px; }
+    .price-card { background: var(--pill-bg); border:1px solid var(--card-border); border-radius:16px; padding:16px; backdrop-filter: blur(10px); text-align: center; transition: all 0.3s ease; }
+    .price-card:hover { transform: translateY(-2px); box-shadow: var(--glow); }
+    .price-label { font-size: 14px; color: var(--muted); font-weight: 600; display: block; margin-bottom: 8px; }
+    .price-value { font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .price-currency { font-size: 18px; color: var(--muted); margin-right: 4px; }
+    .price-toman { font-size: 12px; display: block; }
     .menu-btn { width:44px; height:44px; border-radius:12px; border:1px solid var(--card-border); background: var(--pill-bg); color: var(--text); display:flex; align-items:center; justify-content:center; cursor:pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); }
     .menu-btn:hover { transform: scale(1.05); box-shadow: var(--glow); }
     .menu { position:absolute; inset-inline-end:0; top:52px; width:220px; background: var(--card); border:1px solid var(--card-border); border-radius:16px; box-shadow: var(--shadow); padding:8px; display:none; z-index: 70; backdrop-filter: blur(20px); }
@@ -132,7 +138,6 @@
       <div class="header-bar">
         <h1>داشبورد</h1>
         <div class="actions">
-          <div class="price-pill">قیمت لحظه‌ای BTC: <strong id="btc_usd">...</strong> $ <span class="muted" id="btc_toman"></span></div>
           <button type="button" class="menu-btn" id="themeBtn" title="تغییر تم"><span id="themeIcon">🌙</span></button>
           <button type="button" class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" title="منو">☰</button>
           <div class="menu" id="menu">
@@ -142,6 +147,16 @@
             <a href="#purchases">خریدها</a>
             <a href="#rate">نرخ دلار → تومان</a>
           </div>
+        </div>
+      </div>
+      <div class="price-section">
+        <div class="price-card">
+          <span class="price-label">BTC/USDT</span>
+          <div class="price-value">
+            <strong id="btc_usd">...</strong>
+            <span class="price-currency">$</span>
+          </div>
+          <span class="price-toman muted" id="btc_toman">...</span>
         </div>
       </div>
     </div>
