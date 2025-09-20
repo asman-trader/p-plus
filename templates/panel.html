@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>پنل خرید بیت‌کوین</title>
+  <style>
+    body { font-family: Vazirmatn, Tahoma, sans-serif; margin: 24px; background:#0f172a; color:#e2e8f0; }
+    a,button,input { font-family: inherit; }
+    .container { max-width: 880px; margin: 0 auto; }
+    .card { background:#111827; border:1px solid #1f2937; border-radius:12px; padding:20px; margin-bottom:24px; }
+    h1 { margin: 0 0 16px; font-size: 22px; }
+    h2 { margin: 0 0 12px; font-size: 18px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid #1f2937; text-align: right; }
+    th { color:#93c5fd; }
+    .row { display:flex; gap:16px; flex-wrap:wrap; }
+    .row .col { flex:1 1 260px; }
+    input[type="number"], input[type="text"] { width: 100%; padding:10px; border-radius:10px; border:1px solid #334155; background:#0b1220; color:#e2e8f0; }
+    button { padding:10px 14px; border-radius:10px; border:1px solid #334155; background:#1e293b; color:#fff; cursor:pointer; }
+    .muted { color:#94a3b8; }
+    .success { color:#10b981; }
+    .error { color:#ef4444; }
+    .totals { display:flex; gap:16px; flex-wrap:wrap; }
+    .totals .pill { background:#0b1220; border:1px solid #334155; border-radius:999px; padding:10px 14px; }
+    .flash { margin-bottom: 8px; }
+  </style>
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn/Vazirmatn-font-face.css" rel="stylesheet">
+  <meta name="color-scheme" content="dark light">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="same-origin">
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>پنل شخصی خرید بیت‌کوین</h1>
+      <div class="totals">
+        <div class="pill">جمع کل دلاری: <strong>{{ '%.2f' % total_usd }}</strong> $</div>
+        <div class="pill">نرخ تبدیل: <strong>{{ '%.0f' % usd_to_toman }}</strong> تومان/دلار</div>
+        <div class="pill">جمع کل تومانی: <strong>{{ '{:,.0f}'.format(total_toman) }}</strong> تومان</div>
+      </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="card">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="row">
+      <div class="card col">
+        <h2>ثبت خرید جدید</h2>
+        <form method="post" action="{{ url_for('panel_add') }}">
+          <div style="display:grid; gap:10px; grid-template-columns:1fr 1fr;">
+            <label>
+              مقدار BTC
+              <input type="number" step="0.00000001" min="0" name="amount_btc" required>
+            </label>
+            <label>
+              قیمت دلار هر BTC
+              <input type="number" step="0.01" min="0" name="price_usd_per_btc" required>
+            </label>
+          </div>
+          <div style="margin-top:12px;">
+            <button type="submit">افزودن خرید</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card col">
+        <h2>تنظیم نرخ تبدیل دلار → تومان</h2>
+        <form method="post" action="{{ url_for('panel_update_rate') }}">
+          <label>
+            نرخ (تومان برای هر دلار)
+            <input type="number" step="1" min="1" name="usd_to_toman" value="{{ '%.0f' % usd_to_toman }}" required>
+          </label>
+          <div style="margin-top:12px;">
+            <button type="submit">ذخیره نرخ</button>
+          </div>
+          <div class="muted" style="margin-top:8px;">این مقدار برای محاسبه جمع کل به تومان استفاده می‌شود.</div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>لیست خریدها</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>تاریخ</th>
+            <th>BTC</th>
+            <th>قیمت واحد (USD)</th>
+            <th>مبلغ (USD)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if purchases %}
+            {% for p in purchases %}
+              <tr>
+                <td>{{ p["id"] }}</td>
+                <td class="muted">{{ p["created_at"] }}</td>
+                <td>{{ '%.8f' % p["amount_btc"] }}</td>
+                <td>{{ '%.2f' % p["price_usd_per_btc"] }}</td>
+                <td>{{ '%.2f' % (p["amount_btc"] * p["price_usd_per_btc"]) }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="5" class="muted">هنوز خریدی ثبت نشده است.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+</body>
+</html>
+
