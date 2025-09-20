@@ -1,0 +1,4 @@
+open ftp://USERNAME:PASSWORD@YOUR_HOST 
+lcd C:\Users\Aseman\OneDrive\Desktop\py-code\p-plus 
+mirror -reverse -delete -verbose . /remote/path/on/host 
+exit 

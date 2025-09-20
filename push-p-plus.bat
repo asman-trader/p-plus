@@ -1,28 +1,68 @@
 @echo off
+setlocal enabledelayedexpansion
+
 :: ===========================
-:: 🚀 Push خودکار به GitHub و آپلود به هاست
+:: 🚀 Push خودکار به GitHub
 :: ===========================
 
-:: مسیر پروژه لوکال
-cd /d C:\Users\Aseman\OneDrive\Desktop\py-code\p-plus
+:: حرکت به مسیر اسکریپت
+cd /d "%~dp0"
 
-:: commit خودکار با تاریخ و ساعت
-set datetime=%date% %time%
-git add .
-git commit -m "Auto commit - %datetime%"
-git push origin main
+:: بررسی اینکه داخل مخزن گیت هستیم
+git rev-parse --is-inside-work-tree >nul 2>&1 || (
+    echo ⚠️ این مسیر یک مخزن Git نیست.
+    pause
+    exit /b 1
+)
 
-:: آپلود به هاست با WinSCP
-set script_file=%cd%\upload_script.txt
+:: شاخه فعلی
+for /f "delims=" %%b in ('git rev-parse --abbrev-ref HEAD') do set BRANCH=%%b
+if "%BRANCH%"=="" set BRANCH=main
 
-:: ساخت فایل اسکریپت WinSCP
-echo open ftp://USERNAME:PASSWORD@YOUR_HOST > %script_file%
-echo lcd %cd% >> %script_file%
-echo mirror -reverse -delete -verbose . /remote/path/on/host >> %script_file%
-echo exit >> %script_file%
+:: جلوگیری از استیج شدن فایل‌های حساس/داده
+git restore --staged app/data instance uploads logs app/static/uploads app/data/uploads *.db *.sqlite* *.log .env .env.* *.pem *.key *.crt >nul 2>&1
 
-:: اجرای WinSCP (اطمینان از مسیر نصب درست)
-"C:\Program Files (x86)\WinSCP\winscp.com" /script=%script_file%
+:: به‌روزرسانی مخزن با rebase و autostash
+git pull --rebase --autostash origin %BRANCH%
 
-:: پایان
-exit
+:: استیج کردن همه تغییرات
+git add -A
+
+:: دوباره فایل‌های حساس را از استیج خارج کن
+git reset app/data instance uploads logs app/static/uploads app/data/uploads *.db *.sqlite* *.log .env .env.* *.pem *.key *.crt >nul 2>&1
+
+:: بررسی اگر چیزی برای کامیت نیست
+git diff --cached --quiet && (
+    echo هیچ تغییری برای پوش وجود ندارد.
+    pause
+    exit /b 0
+)
+
+:: نسخه‌گذاری ساده
+set version=0
+if exist version.txt set /p version=<version.txt
+for /f "delims=0123456789" %%x in ("%version%") do set version=0
+set /a version+=1
+echo %version%>version.txt
+git add version.txt
+
+:: پیام کامیت
+set msg=
+if not "%~1"=="" (
+    set msg=%*
+) else (
+    set msg=Auto commit v%version%
+)
+
+:: نمایش خلاصه تغییرات
+echo --------------------------
+git status --short
+echo --------------------------
+
+:: کامیت و پوش به شاخه فعلی
+git commit -m "%msg%"
+git push origin %BRANCH%
+
+echo --------------------------
+echo ✅ %msg% روی شاخه %BRANCH% پوش شد.
+pause
