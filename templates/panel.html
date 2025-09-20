@@ -6,61 +6,65 @@
   <title>پنل خرید بیت‌کوین</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #111827;
+      --bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      --card: rgba(17, 24, 39, 0.8);
       --card-border: #1f2937;
       --text: #e2e8f0;
       --muted: #94a3b8;
-      --primary: #3b82f6;
+      --primary: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
       --primary-600: #2563eb;
-      --success: #10b981;
-      --error: #ef4444;
-      --input-bg: #0b1220;
+      --success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --error: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      --input-bg: rgba(11, 18, 32, 0.6);
       --input-border: #334155;
-      --pill-bg: #0b1220;
-      --shadow: 0 8px 24px rgba(0,0,0,.35);
+      --pill-bg: rgba(11, 18, 32, 0.4);
+      --shadow: 0 20px 40px rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.2);
+      --glow: 0 0 20px rgba(59, 130, 246, 0.3);
     }
     html[data-theme="light"] {
-      --bg: #f8fafc;
-      --card: #ffffff;
+      --bg: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      --card: rgba(255, 255, 255, 0.9);
       --card-border: #e5e7eb;
       --text: #0f172a;
       --muted: #475569;
-      --primary: #2563eb;
+      --primary: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
       --primary-600: #1d4ed8;
-      --success: #059669;
-      --error: #dc2626;
-      --input-bg: #ffffff;
+      --success: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      --error: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+      --input-bg: rgba(255, 255, 255, 0.8);
       --input-border: #cbd5e1;
-      --pill-bg: #f1f5f9;
-      --shadow: 0 8px 24px rgba(15,23,42,.12);
+      --pill-bg: rgba(241, 245, 249, 0.8);
+      --shadow: 0 20px 40px rgba(15,23,42,.15), 0 4px 12px rgba(15,23,42,.1);
+      --glow: 0 0 20px rgba(37, 99, 235, 0.2);
     }
-    body { font-family: Vazirmatn, Tahoma, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+    body { font-family: Vazirmatn, Tahoma, sans-serif; margin: 0; background: var(--bg); color: var(--text); backdrop-filter: blur(20px); min-height: 100vh; }
     a,button,input { font-family: inherit; }
     .container { max-width: 980px; margin: 0 auto; padding: 12px; }
-    .card { background: var(--card); border:1px solid var(--card-border); border-radius:16px; padding:18px; margin-bottom:18px; box-shadow: var(--shadow); }
-    h1 { margin: 0 0 12px; font-size: 22px; }
-    h2 { margin: 0 0 10px; font-size: 18px; }
+    .card { background: var(--card); border:1px solid var(--card-border); border-radius:20px; padding:20px; margin-bottom:20px; box-shadow: var(--shadow); backdrop-filter: blur(20px); transition: all 0.3s ease; }
+    .card:hover { transform: translateY(-2px); box-shadow: var(--shadow), var(--glow); }
+    h1 { margin: 0 0 12px; font-size: 22px; background: var(--primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    h2 { margin: 0 0 10px; font-size: 18px; font-weight: 600; }
     .row { display:flex; gap:12px; flex-wrap:wrap; }
     .row .col { flex:1 1 300px; }
-    label { display:block; font-size:14px; color: var(--muted); margin-bottom:6px; }
-    input[type="number"], input[type="text"] { width: 100%; padding:12px 14px; border-radius:12px; border:1px solid var(--input-border); background: var(--input-bg); color: var(--text); font-size:16px; min-height:44px; outline: none; transition: border-color .2s, box-shadow .2s; }
-    input[type="number"]:focus, input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 25%, transparent); }
-    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 16px; border-radius:12px; border:1px solid var(--input-border); background: #1e293b; color:#fff; cursor:pointer; font-size:16px; min-height:44px; }
-    .btn:hover { filter: brightness(1.05); }
-    .btn:active { transform: translateY(1px); }
-    .btn-primary { background: var(--primary); border-color: var(--primary-600); }
-    .btn-outline { background: transparent; color: var(--text); }
-    .btn-danger { background: var(--error); border-color: color-mix(in oklab, var(--error) 85%, black); }
+    label { display:block; font-size:14px; color: var(--muted); margin-bottom:6px; font-weight: 500; }
+    input[type="number"], input[type="text"] { width: 100%; padding:14px 16px; border-radius:14px; border:1px solid var(--input-border); background: var(--input-bg); color: var(--text); font-size:16px; min-height:48px; outline: none; transition: all 0.3s ease; backdrop-filter: blur(10px); }
+    input[type="number"]:focus, input[type="text"]:focus { border-color: var(--primary-600); box-shadow: var(--glow); transform: translateY(-1px); }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:14px 18px; border-radius:14px; border:none; background: #1e293b; color:#fff; cursor:pointer; font-size:16px; min-height:48px; font-weight: 600; transition: all 0.3s ease; position: relative; overflow: hidden; }
+    .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { background: var(--primary); box-shadow: var(--glow); }
+    .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--card-border); }
+    .btn-danger { background: var(--error); }
     .muted { color: var(--muted); }
     .success { color: var(--success); }
     .error { color: var(--error); }
-    .totals { display:flex; gap:8px; flex-wrap:wrap; }
-    .totals .pill { background: var(--pill-bg); border:1px solid var(--card-border); border-radius:999px; padding:8px 12px; }
-    .flash { margin-bottom: 8px; padding:10px 12px; border-radius:10px; border:1px solid var(--card-border); background: color-mix(in oklab, var(--pill-bg) 85%, transparent); transition: opacity .3s ease; }
-    .flash.success { border-color: color-mix(in oklab, var(--success) 50%, var(--card-border)); }
-    .flash.error { border-color: color-mix(in oklab, var(--error) 50%, var(--card-border)); }
-    .flash.hide { opacity: 0; }
+    .totals { display:flex; gap:10px; flex-wrap:wrap; }
+    .totals .pill { background: var(--pill-bg); border:1px solid var(--card-border); border-radius:999px; padding:10px 14px; backdrop-filter: blur(10px); transition: all 0.3s ease; font-weight: 500; }
+    .totals .pill:hover { transform: scale(1.02); }
+    .flash { margin-bottom: 10px; padding:12px 16px; border-radius:14px; border:1px solid var(--card-border); background: var(--pill-bg); transition: all 0.3s ease; backdrop-filter: blur(10px); }
+    .flash.success { border-color: var(--primary-600); background: color-mix(in oklab, var(--success) 10%, var(--pill-bg)); }
+    .flash.error { border-color: #dc2626; background: color-mix(in oklab, var(--error) 10%, var(--pill-bg)); }
+    .flash.hide { opacity: 0; transform: translateY(-10px); }
 
     /* Mobile-first form grid */
     .form-grid { display:grid; gap:10px; grid-template-columns:1fr; }
@@ -86,12 +90,14 @@
     }
     .header-bar { display:flex; justify-content: space-between; align-items:center; gap:12px; flex-wrap:wrap; }
     .actions { display:flex; align-items:center; gap:8px; position: relative; }
-    .price-pill { background: var(--pill-bg); border:1px solid var(--card-border); border-radius:999px; padding:8px 12px; }
-    .menu-btn { width:40px; height:40px; border-radius:10px; border:1px solid var(--card-border); background: var(--pill-bg); color: var(--text); display:flex; align-items:center; justify-content:center; cursor:pointer; }
-    .menu { position:absolute; inset-inline-end:0; top:48px; width:200px; background: var(--card); border:1px solid var(--card-border); border-radius:12px; box-shadow: var(--shadow); padding:6px; display:none; z-index: 70; }
-    .menu.open { display:block; }
-    .menu a { display:block; padding:8px 10px; color: var(--text); text-decoration:none; border-radius:8px; }
-    .menu a:hover { background: color-mix(in oklab, var(--pill-bg) 85%, transparent); }
+    .price-pill { background: var(--pill-bg); border:1px solid var(--card-border); border-radius:999px; padding:10px 14px; backdrop-filter: blur(10px); font-weight: 500; }
+    .menu-btn { width:44px; height:44px; border-radius:12px; border:1px solid var(--card-border); background: var(--pill-bg); color: var(--text); display:flex; align-items:center; justify-content:center; cursor:pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); }
+    .menu-btn:hover { transform: scale(1.05); box-shadow: var(--glow); }
+    .menu { position:absolute; inset-inline-end:0; top:52px; width:220px; background: var(--card); border:1px solid var(--card-border); border-radius:16px; box-shadow: var(--shadow); padding:8px; display:none; z-index: 70; backdrop-filter: blur(20px); }
+    .menu.open { display:block; animation: menuSlide 0.3s ease; }
+    .menu a { display:block; padding:10px 12px; color: var(--text); text-decoration:none; border-radius:10px; transition: all 0.3s ease; font-weight: 500; }
+    .menu a:hover { background: var(--pill-bg); transform: translateX(-2px); }
+    @keyframes menuSlide { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
     /* Mobile-first enhancements */
     @media (max-width: 640px) {
@@ -105,13 +111,15 @@
     }
 
     /* Bottom navigation and FAB */
-    .bottom-nav { position: fixed; bottom: 0; inset-inline: 0; background: var(--card); border-top: 1px solid var(--card-border); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); display: flex; justify-content: space-around; z-index: 50; }
-    .bottom-nav a { flex: 1; text-align: center; text-decoration: none; color: var(--muted); font-size: 12px; padding: 6px 4px; }
-    .bottom-nav a .icon { display:block; margin: 0 auto 4px; width: 22px; height: 22px; }
-    .fab { position: fixed; bottom: calc(64px + env(safe-area-inset-bottom)); inset-inline-end: 12px; width: 56px; height: 56px; border-radius: 999px; background: var(--primary); color: #fff; display:flex; align-items:center; justify-content:center; box-shadow: var(--shadow); z-index: 60; text-decoration: none; }
+    .bottom-nav { position: fixed; bottom: 0; inset-inline: 0; background: var(--card); border-top: 1px solid var(--card-border); padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); display: flex; justify-content: space-around; z-index: 50; backdrop-filter: blur(20px); }
+    .bottom-nav a { flex: 1; text-align: center; text-decoration: none; color: var(--muted); font-size: 12px; padding: 8px 6px; border-radius: 12px; transition: all 0.3s ease; font-weight: 500; }
+    .bottom-nav a:hover { color: var(--text); background: var(--pill-bg); transform: translateY(-2px); }
+    .bottom-nav a .icon { display:block; margin: 0 auto 4px; width: 20px; height: 20px; font-size: 16px; }
+    .fab { position: fixed; bottom: calc(70px + env(safe-area-inset-bottom)); inset-inline-end: 16px; width: 60px; height: 60px; border-radius: 999px; background: var(--primary); color: #fff; display:flex; align-items:center; justify-content:center; box-shadow: var(--shadow), var(--glow); z-index: 60; text-decoration: none; font-size: 24px; font-weight: bold; transition: all 0.3s ease; }
+    .fab:hover { transform: scale(1.1) translateY(-2px); }
     @media (min-width: 640px) { .bottom-nav, .fab { display: none; } }
     html { scroll-behavior: smooth; }
-    .divider { height: 1px; background: var(--card-border); margin: 16px 0; border-radius: 1px; }
+    .divider { height: 2px; background: linear-gradient(90deg, transparent, var(--card-border), transparent); margin: 20px 0; border-radius: 2px; }
   </style>
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn/Vazirmatn-font-face.css" rel="stylesheet">
   <meta name="color-scheme" content="dark light">
@@ -290,10 +298,10 @@
   
   <a href="#top" class="fab" aria-label="بازگشت به بالا">↑</a>
   <nav class="bottom-nav" aria-label="پیمایش">
-    <a href="#deposit"><span class="icon">⬇️</span>واریزی</a>
-    <a href="#withdraw"><span class="icon">📤</span>برداشت</a>
-    <a href="#balance"><span class="icon">💼</span>موجودی</a>
-    <a href="#purchases"><span class="icon">📃</span>خریدها</a>
+    <a href="#deposit"><span class="icon">💰</span>واریزی</a>
+    <a href="#withdraw"><span class="icon">💸</span>برداشت</a>
+    <a href="#balance"><span class="icon">💎</span>موجودی</a>
+    <a href="#purchases"><span class="icon">📊</span>خریدها</a>
   </nav>
 
   <script>
