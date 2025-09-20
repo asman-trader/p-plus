@@ -26,6 +26,16 @@ def ensure_db() -> None:
 	)
 	cur.execute(
 		"""
+		CREATE TABLE IF NOT EXISTS withdrawals (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			created_at TEXT NOT NULL,
+			amount_btc REAL NOT NULL,
+			price_usd_per_btc REAL NOT NULL
+		)
+		"""
+	)
+	cur.execute(
+		"""
 		CREATE TABLE IF NOT EXISTS settings (
 			key TEXT PRIMARY KEY,
 			value TEXT NOT NULL

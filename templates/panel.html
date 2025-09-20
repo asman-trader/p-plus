@@ -65,6 +65,21 @@
             <div class="pill">واریزی کل (USD): <strong>{{ '%.2f' % total_usd }}</strong> $</div>
             <div class="pill">واریزی کل (تومان): <strong>{{ '{:,.0f}'.format(total_toman) }}</strong></div>
           </div>
+          <form method="post" action="{{ url_for('panel_add') }}" style="margin-top:12px;">
+            <div class="form-grid">
+              <label>
+                مقدار BTC
+                <input type="number" step="0.00000001" min="0" name="amount_btc" required>
+              </label>
+              <label>
+                قیمت دلار هر BTC
+                <input type="number" step="0.01" min="0" name="price_usd_per_btc" required>
+              </label>
+            </div>
+            <div style="margin-top:12px; display:flex; gap:10px;">
+              <button type="submit">ثبت واریزی</button>
+            </div>
+          </form>
         </div>
         <div class="col">
           <h2>موجودی</h2>
@@ -73,6 +88,26 @@
             <div class="pill">ارزش فعلی (USD): <strong id="hold_usd">...</strong> $</div>
             <div class="pill">ارزش فعلی (تومان): <strong id="hold_toman">...</strong></div>
           </div>
+          <div class="totals" style="margin-top:8px;">
+            <div class="pill">برداشت کل (USD): <strong>{{ '%.2f' % total_withdraw_usd }}</strong> $</div>
+            <div class="pill">برداشت کل (تومان): <strong>{{ '{:,.0f}'.format(total_withdraw_toman) }}</strong></div>
+            <div class="pill">برداشت BTC: <strong>{{ '%.8f' % total_withdraw_btc }}</strong> BTC</div>
+          </div>
+          <form method="post" action="{{ url_for('panel_withdraw') }}" style="margin-top:12px;">
+            <div class="form-grid">
+              <label>
+                مقدار BTC برداشت
+                <input type="number" step="0.00000001" min="0" name="amount_btc" required>
+              </label>
+              <label>
+                قیمت دلار هر BTC (لحظه برداشت)
+                <input type="number" step="0.01" min="0" name="price_usd_per_btc" required>
+              </label>
+            </div>
+            <div style="margin-top:12px; display:flex; gap:10px;">
+              <button type="submit">ثبت برداشت</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -148,6 +183,37 @@
               {% endfor %}
             {% else %}
               <tr><td colspan="5" class="muted">هنوز خریدی ثبت نشده است.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h2>لیست برداشت‌ها</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>تاریخ</th>
+              <th>BTC</th>
+              <th>قیمت واحد (USD)</th>
+              <th>مبلغ (USD)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if withdrawals %}
+              {% for w in withdrawals %}
+                <tr>
+                  <td>{{ w["id"] }}</td>
+                  <td class="muted">{{ w["created_at"] }}</td>
+                  <td>{{ '%.8f' % w["amount_btc"] }}</td>
+                  <td>{{ '%.2f' % w["price_usd_per_btc"] }}</td>
+                  <td>{{ '%.2f' % (w["amount_btc"] * w["price_usd_per_btc"]) }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="5" class="muted">برداشتی ثبت نشده است.</td></tr>
             {% endif %}
           </tbody>
         </table>
