@@ -126,6 +126,18 @@
     @media (min-width: 640px) { .bottom-nav, .fab { display: none; } }
     html { scroll-behavior: smooth; }
     .divider { height: 2px; background: linear-gradient(90deg, transparent, var(--card-border), transparent); margin: 20px 0; border-radius: 2px; }
+
+    /* KPI summary */
+    .kpi-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 640px) { .kpi-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+    @media (min-width: 960px) { .kpi-grid { grid-template-columns: repeat(4, minmax(0,1fr)); } }
+    .kpi { background: var(--pill-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; display: flex; gap: 12px; align-items: center; }
+    .kpi .icon { width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--card); border: 1px solid var(--card-border); font-size: 18px; }
+    .kpi .label { font-size: 12px; color: var(--muted); }
+    .kpi .value { font-size: 18px; font-weight: 700; }
+    .kpi .sub { font-size: 12px; color: var(--muted); }
+    .kpi.positive .value { color: #10b981; }
+    .kpi.negative .value { color: #ef4444; }
   </style>
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn/Vazirmatn-font-face.css" rel="stylesheet">
   <meta name="color-scheme" content="dark light">
@@ -164,12 +176,46 @@
     <div class="row">
       <div class="card col">
         <h2>خلاصه عملکرد</h2>
-        <div class="totals">
-          <div class="pill">واریزی کل: <strong>{{ '%.2f' % total_usd }}</strong> $ / <strong>{{ '{:,.0f}'.format(total_toman) }}</strong> تومان</div>
-          <div class="pill">برداشت کل: <strong>{{ '%.2f' % total_withdraw_usd }}</strong> $ / <strong>{{ '{:,.0f}'.format(total_withdraw_toman) }}</strong> تومان</div>
-          <div class="pill">موجودی BTC: <strong id="hold_btc">{{ '%.8f' % total_btc }}</strong> BTC</div>
-          <div class="pill">ارزش فعلی: <strong id="hold_usd">...</strong> $ / <strong id="hold_toman">...</strong> تومان</div>
-          <div class="pill" id="pl_wrap">سود/زیان: <strong id="pl_usd">...</strong> $ <span class="muted" id="pl_tmn"></span></div>
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="icon">💰</div>
+            <div>
+              <div class="label">واریزی کل</div>
+              <div class="value">{{ '%.2f' % total_usd }} <span class="sub">$</span></div>
+              <div class="sub">{{ '{:,.0f}'.format(total_toman) }} تومان</div>
+            </div>
+          </div>
+          <div class="kpi">
+            <div class="icon">💸</div>
+            <div>
+              <div class="label">برداشت کل</div>
+              <div class="value">{{ '%.2f' % total_withdraw_usd }} <span class="sub">$</span></div>
+              <div class="sub">{{ '{:,.0f}'.format(total_withdraw_toman) }} تومان</div>
+            </div>
+          </div>
+          <div class="kpi">
+            <div class="icon">💎</div>
+            <div>
+              <div class="label">موجودی BTC</div>
+              <div class="value" id="hold_btc">{{ '%.8f' % total_btc }} <span class="sub">BTC</span></div>
+            </div>
+          </div>
+          <div class="kpi" id="kpi_value">
+            <div class="icon">📈</div>
+            <div>
+              <div class="label">ارزش فعلی</div>
+              <div class="value"><span id="hold_usd">...</span> <span class="sub">$</span></div>
+              <div class="sub"><span id="hold_toman">...</span> تومان</div>
+            </div>
+          </div>
+          <div class="kpi" id="kpi_pl">
+            <div class="icon">⚖️</div>
+            <div>
+              <div class="label">سود / زیان</div>
+              <div class="value" id="pl_usd">...</div>
+              <div class="sub" id="pl_tmn"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -324,8 +370,15 @@
           var totalWithdrawUsd = Number("{{ '%.2f' % total_withdraw_usd }}");
           var netInvestedUsd = Math.max(0, totalDepositsUsd - totalWithdrawUsd);
           var plUsd = holdUsd - netInvestedUsd;
-          if (plUsdEl) plUsdEl.textContent = plUsd.toFixed(2);
-          if (plTmnEl) plTmnEl.textContent = '(' + Math.round(plUsd * usdToToman).toLocaleString('fa-IR') + ' تومان)';
+          if (plUsdEl) {
+            plUsdEl.textContent = plUsd.toFixed(2) + ' $';
+            var kpiPl = document.getElementById('kpi_pl');
+            if (kpiPl) {
+              kpiPl.classList.remove('positive','negative');
+              kpiPl.classList.add(plUsd >= 0 ? 'positive' : 'negative');
+            }
+          }
+          if (plTmnEl) plTmnEl.textContent = Math.round(plUsd * usdToToman).toLocaleString('fa-IR') + ' تومان';
         } catch (e) {
           usdEl.textContent = '—';
           tomanEl.textContent = '';
