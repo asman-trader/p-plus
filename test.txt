@@ -1,1 +1,9 @@
-jsj
+cd /home/bztypmws/myapp   # مسیر پروژه روی هاست
+
+
+git fetch origin           # دریافت آخرین تغییرات از GitHub
+
+
+
+git reset --hard origin/main  # بروزرسانی شاخه main و بازگردانی فایل‌ها
+git clean -fd              # حذف فایل‌های اضافی که در مخزن نیستند

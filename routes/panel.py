@@ -47,11 +47,11 @@ def panel_add():
 		price_usd_per_btc = float(request.form.get("price_usd_per_btc", "0").strip())
 	except ValueError:
 		flash("مقادیر وارد شده نامعتبر است.", "error")
-		return redirect(url_for("panel_index"))
+		return redirect(url_for("panel_bp.panel_index"))
 
 	if amount_btc <= 0 or price_usd_per_btc <= 0:
 		flash("مقادیر باید بزرگ‌تر از صفر باشند.", "error")
-		return redirect(url_for("panel_index"))
+		return redirect(url_for("panel_bp.panel_index"))
 
 	conn = get_db_connection()
 	cur = conn.cursor()
@@ -59,7 +59,7 @@ def panel_add():
 	conn.commit()
 	conn.close()
 	flash("خرید با موفقیت ثبت شد.", "success")
-	return redirect(url_for("panel_index"))
+	return redirect(url_for("panel_bp.panel_index"))
 
 
 @panel_bp.post("/panel/withdraw")
@@ -69,11 +69,11 @@ def panel_withdraw():
 		price_usd_per_btc = float(request.form.get("price_usd_per_btc", "0").strip())
 	except ValueError:
 		flash("مقادیر وارد شده نامعتبر است.", "error")
-		return redirect(url_for("panel_index"))
+		return redirect(url_for("panel_bp.panel_index"))
 
 	if amount_btc <= 0 or price_usd_per_btc <= 0:
 		flash("مقادیر باید بزرگ‌تر از صفر باشند.", "error")
-		return redirect(url_for("panel_index"))
+		return redirect(url_for("panel_bp.panel_index"))
 
 	conn = get_db_connection()
 	cur = conn.cursor()
@@ -81,7 +81,7 @@ def panel_withdraw():
 	conn.commit()
 	conn.close()
 	flash("برداشت با موفقیت ثبت شد.", "success")
-	return redirect(url_for("panel_index"))
+	return redirect(url_for("panel_bp.panel_index"))
 
 
 @panel_bp.post("/panel/rate")
@@ -90,11 +90,11 @@ def panel_update_rate():
 		new_rate = float(request.form.get("usd_to_toman", "0").strip())
 	except ValueError:
 		flash("نرخ نامعتبر است.", "error")
-		return redirect(url_for("panel_index"))
+		return redirect(url_for("panel_bp.panel_index"))
 
 	if new_rate <= 0:
 		flash("نرخ باید بزرگ‌تر از صفر باشد.", "error")
-		return redirect(url_for("panel_index"))
+		return redirect(url_for("panel_bp.panel_index"))
 
 	conn = get_db_connection()
 	cur = conn.cursor()
@@ -102,12 +102,12 @@ def panel_update_rate():
 	conn.commit()
 	conn.close()
 	flash("نرخ با موفقیت به‌روزرسانی شد.", "success")
-	return redirect(url_for("panel_index"))
+	return redirect(url_for("panel_bp.panel_index"))
 
 
 @panel_bp.get("/")
 def home():
-	return redirect(url_for("panel_index"))
+	return redirect(url_for("panel_bp.panel_index"))
 
 
 @panel_bp.get("/healthz")

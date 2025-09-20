@@ -65,7 +65,7 @@
             <div class="pill">واریزی کل (USD): <strong>{{ '%.2f' % total_usd }}</strong> $</div>
             <div class="pill">واریزی کل (تومان): <strong>{{ '{:,.0f}'.format(total_toman) }}</strong></div>
           </div>
-          <form method="post" action="{{ url_for('panel_add') }}" style="margin-top:12px;">
+          <form method="post" action="{{ url_for('panel_bp.panel_add') }}" style="margin-top:12px;">
             <div class="form-grid">
               <label>
                 مقدار BTC
@@ -93,7 +93,7 @@
             <div class="pill">برداشت کل (تومان): <strong>{{ '{:,.0f}'.format(total_withdraw_toman) }}</strong></div>
             <div class="pill">برداشت BTC: <strong>{{ '%.8f' % total_withdraw_btc }}</strong> BTC</div>
           </div>
-          <form method="post" action="{{ url_for('panel_withdraw') }}" style="margin-top:12px;">
+          <form method="post" action="{{ url_for('panel_bp.panel_withdraw') }}" style="margin-top:12px;">
             <div class="form-grid">
               <label>
                 مقدار BTC برداشت
@@ -125,7 +125,7 @@
     <div class="row">
       <div class="card col">
         <h2>ثبت خرید جدید</h2>
-        <form method="post" action="{{ url_for('panel_add') }}">
+        <form method="post" action="{{ url_for('panel_bp.panel_add') }}">
           <div class="form-grid">
             <label>
               مقدار BTC
@@ -144,7 +144,7 @@
 
       <div class="card col">
         <h2>تنظیم نرخ تبدیل دلار → تومان</h2>
-        <form method="post" action="{{ url_for('panel_update_rate') }}">
+        <form method="post" action="{{ url_for('panel_bp.panel_update_rate') }}">
           <label>
             نرخ (تومان برای هر دلار)
             <input type="number" step="1" min="1" name="usd_to_toman" value="{{ '%.0f' % usd_to_toman }}" required>
