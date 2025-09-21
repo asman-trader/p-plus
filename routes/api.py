@@ -118,23 +118,82 @@ def set_rate():
 	return jsonify({"usd_to_toman": new_rate})
 
 
+def _get_setting(key: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT value FROM settings WHERE key=?", (key,))
+    row = cur.fetchone()
+    conn.close()
+    return None if not row else row[0]
+
+
+def _set_setting(key: str, value: str) -> None:
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO settings(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+        (key, value),
+    )
+    conn.commit()
+    conn.close()
+
+
+def _fetch_json(url: str):
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+        "Accept": "application/json",
+    })
+    with urllib.request.urlopen(req, timeout=6) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
 @api_bp.get("/price/btcusd")
 def price_btcusd():
-	# Try multiple free sources, first successful wins
-	sources = [
-		("coindesk", "https://api.coindesk.com/v1/bpi/currentprice/USD.json", lambda data: float(data["bpi"]["USD"]["rate_float"])) ,
-		("binance", "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT", lambda data: float(data["price"])) ,
-		("bitstamp", "https://www.bitstamp.net/api/v2/ticker/btcusd/", lambda data: float(data["last"])) ,
-	]
-	for name, url, picker in sources:
-		try:
-			with urllib.request.urlopen(url, timeout=5) as resp:
-				payload = json.loads(resp.read().decode("utf-8"))
-				price = picker(payload)
-				return jsonify({"source": name, "price_usd": price})
-		except Exception:
-			continue
-	return jsonify({"error": "failed to fetch"}), 502
+    # Try multiple free sources, first successful wins
+    sources = [
+        ("coindesk", "https://api.coindesk.com/v1/bpi/currentprice/USD.json", lambda data: float(data["bpi"]["USD"]["rate_float"])),
+        ("binance", "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT", lambda data: float(data["price"])),
+        ("bitstamp", "https://www.bitstamp.net/api/v2/ticker/btcusd/", lambda data: float(data["last"])),
+        ("coingecko", "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd", lambda data: float(data["bitcoin"]["usd"]))
+    ]
+    for name, url, picker in sources:
+        try:
+            payload = _fetch_json(url)
+            price = picker(payload)
+            if not (price and price > 0):
+                continue
+            try:
+                _set_setting("last_price_usd", str(price))
+            except Exception:
+                pass
+            return jsonify({"source": name, "price_usd": price})
+        except Exception:
+            continue
+
+    # Fallback to cached price if available
+    try:
+        cached = _get_setting("last_price_usd")
+        if cached:
+            price = float(cached)
+            if price > 0:
+                return jsonify({"source": "cache", "price_usd": price, "stale": True})
+    except Exception:
+        pass
+
+    return jsonify({"error": "unavailable"})
+
+
+@api_bp.get("/price/btcusd2")
+def price_btcusd2():
+    try:
+        cached = _get_setting("last_price_usd")
+        if cached:
+            price = float(cached)
+            if price > 0:
+                return jsonify({"source": "cache", "price_usd": price, "stale": True})
+    except Exception:
+        pass
+    return jsonify({"error": "unavailable"})
 
 
 @api_bp.after_request
