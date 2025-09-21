@@ -183,6 +183,14 @@
               <div class="sub" id="pl_tmn"></div>
             </div>
           </div>
+          <div class="kpi" id="kpi_apy">
+            <div class="icon">📅</div>
+            <div>
+              <div class="label">بازده سالانه (APY)</div>
+              <div class="value" id="apy_val">...</div>
+              <div class="sub" id="apy_days"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -201,6 +209,8 @@
       var plTmnEl = document.getElementById('pl_tmn');
       var themeBtn = document.getElementById('themeBtn');
       var themeIcon = document.getElementById('themeIcon');
+      var inceptionDays = Number("{{ inception_days }}");
+      var netInvestedUsd = Number("{{ '%.2f' % net_invested_usd }}");
 
       function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
@@ -237,8 +247,8 @@
           // Compute P/L using deposits (total_usd) and withdrawals deducted
           var totalDepositsUsd = Number("{{ '%.2f' % total_usd }}");
           var totalWithdrawUsd = Number("{{ '%.2f' % total_withdraw_usd }}");
-          var netInvestedUsd = Math.max(0, totalDepositsUsd - totalWithdrawUsd);
-          var plUsd = holdUsd - netInvestedUsd;
+          var netInvestedCalc = Math.max(0, totalDepositsUsd - totalWithdrawUsd);
+          var plUsd = holdUsd - netInvestedCalc;
           if (plUsdEl) {
             plUsdEl.textContent = plUsd.toFixed(2) + ' $';
             var kpiPl = document.getElementById('kpi_pl');
@@ -248,6 +258,18 @@
             }
           }
           if (plTmnEl) plTmnEl.textContent = Math.round(plUsd * usdToToman).toLocaleString('fa-IR') + ' تومان';
+          // APY calculation (simple since inception): APY = ( (final/invested)^(365/days) - 1 )
+          var apyEl = document.getElementById('apy_val');
+          var apyDaysEl = document.getElementById('apy_days');
+          if (apyEl && netInvestedUsd > 0 && inceptionDays > 0) {
+            var ratio = holdUsd / netInvestedUsd;
+            var apy = Math.pow(ratio, 365 / inceptionDays) - 1;
+            if (isFinite(apy)) apyEl.textContent = (apy * 100).toFixed(2) + ' %'; else apyEl.textContent = '—';
+            apyDaysEl.textContent = inceptionDays + ' روز از شروع';
+          } else if (apyEl) {
+            apyEl.textContent = '—';
+            if (apyDaysEl) apyDaysEl.textContent = inceptionDays > 0 ? (inceptionDays + ' روز') : '';
+          }
         } catch (e) {
           usdEl.textContent = '—';
           tomanEl.textContent = '';
