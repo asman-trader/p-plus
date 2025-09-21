@@ -22,24 +22,24 @@ def panel_index():
 	total_withdraw_usd = cur.fetchone()[0] or 0
 	cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM withdrawals")
 	total_withdraw_btc = float(cur.fetchone()[0] or 0)
-    cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-    usd_to_toman = float(cur.fetchone()[0])
-    # Inception (first purchase date) for ROI/APY calculations
-    cur.execute("SELECT MIN(created_at) FROM purchases")
-    row_first = cur.fetchone()
-    inception_days = 0
-    try:
-        first_str = row_first[0] if row_first and row_first[0] else None
-        if first_str:
-            dt0 = datetime.fromisoformat(first_str)
-            inception_days = max(0, (datetime.utcnow() - dt0).days)
-    except Exception:
-        inception_days = 0
+	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+	usd_to_toman = float(cur.fetchone()[0])
+	# Inception (first purchase date) for ROI/APY calculations
+	cur.execute("SELECT MIN(created_at) FROM purchases")
+	row_first = cur.fetchone()
+	inception_days = 0
+	try:
+		first_str = row_first[0] if row_first and row_first[0] else None
+		if first_str:
+			dt0 = datetime.fromisoformat(first_str)
+			inception_days = max(0, (datetime.utcnow() - dt0).days)
+	except Exception:
+		inception_days = 0
 	total_toman = total_usd * usd_to_toman
 	conn.close()
-    net_invested_usd = max(0.0, float(total_usd) - float(total_withdraw_usd))
+	net_invested_usd = max(0.0, float(total_usd) - float(total_withdraw_usd))
 
-    return render_template(
+	return render_template(
 		"panel.html",
 		purchases=purchases,
 		withdrawals=withdrawals,
@@ -49,9 +49,9 @@ def panel_index():
 		total_btc=total_btc,
 		total_withdraw_usd=total_withdraw_usd,
 		total_withdraw_toman=total_withdraw_usd * usd_to_toman,
-        total_withdraw_btc=total_withdraw_btc,
-        inception_days=inception_days,
-        net_invested_usd=net_invested_usd,
+		total_withdraw_btc=total_withdraw_btc,
+		inception_days=inception_days,
+		net_invested_usd=net_invested_usd,
 	)
 
 

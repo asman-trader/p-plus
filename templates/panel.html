@@ -191,6 +191,14 @@
               <div class="sub" id="apy_days"></div>
             </div>
           </div>
+          <div class="kpi" id="kpi_roi">
+            <div class="icon">📊</div>
+            <div>
+              <div class="label">بازده کل (ROI)</div>
+              <div class="value" id="roi_val">...</div>
+              <div class="sub" id="roi_note"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -269,6 +277,17 @@
           } else if (apyEl) {
             apyEl.textContent = '—';
             if (apyDaysEl) apyDaysEl.textContent = inceptionDays > 0 ? (inceptionDays + ' روز') : '';
+          }
+          // ROI calculation: (final - invested) / invested
+          var roiEl = document.getElementById('roi_val');
+          var roiNoteEl = document.getElementById('roi_note');
+          if (roiEl && netInvestedUsd > 0) {
+            var roi = (holdUsd - netInvestedUsd) / netInvestedUsd;
+            if (isFinite(roi)) roiEl.textContent = (roi * 100).toFixed(2) + ' %'; else roiEl.textContent = '—';
+            if (roiNoteEl) roiNoteEl.textContent = 'نسبت به سرمایه خالص';
+          } else if (roiEl) {
+            roiEl.textContent = '—';
+            if (roiNoteEl) roiNoteEl.textContent = '';
           }
         } catch (e) {
           usdEl.textContent = '—';
