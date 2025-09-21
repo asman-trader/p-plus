@@ -137,3 +137,103 @@ def price_btcusd():
 	return jsonify({"error": "failed to fetch"}), 502
 
 
+@api_bp.after_request
+def add_cors_headers(resp):
+    resp.headers.setdefault("Access-Control-Allow-Origin", "*")
+    resp.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization")
+    resp.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+    return resp
+
+
+@api_bp.get("/withdrawals")
+def list_withdrawals():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM withdrawals ORDER BY id DESC")
+    rows = cur.fetchall()
+    conn.close()
+    withdrawals = []
+    for r in rows:
+        amount_usd = float(r["amount_btc"]) * float(r["price_usd_per_btc"])
+        withdrawals.append({
+            "id": r["id"],
+            "created_at": r["created_at"],
+            "amount_btc": float(r["amount_btc"]),
+            "price_usd_per_btc": float(r["price_usd_per_btc"]),
+            "amount_usd": amount_usd,
+        })
+    return jsonify(withdrawals)
+
+
+@api_bp.post("/withdrawals")
+def create_withdrawal():
+    payload = request.get_json(silent=True) or {}
+    try:
+        amount_btc = float(payload.get("amount_btc", 0))
+        price_usd_per_btc = float(payload.get("price_usd_per_btc", 0))
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid payload"}), 400
+
+    if amount_btc <= 0 or price_usd_per_btc <= 0:
+        return jsonify({"error": "amount_btc and price_usd_per_btc must be > 0"}), 400
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    created_at = datetime.utcnow().isoformat(timespec="seconds")
+    cur.execute(
+        "INSERT INTO withdrawals(created_at, amount_btc, price_usd_per_btc) VALUES(?,?,?)",
+        (created_at, amount_btc, price_usd_per_btc),
+    )
+    new_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+    return jsonify({
+        "id": new_id,
+        "created_at": created_at,
+        "amount_btc": amount_btc,
+        "price_usd_per_btc": price_usd_per_btc,
+        "amount_usd": amount_btc * price_usd_per_btc,
+    }), 201
+
+
+@api_bp.delete("/withdrawals/<int:withdrawal_id>")
+def delete_withdrawal(withdrawal_id: int):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM withdrawals WHERE id = ?", (withdrawal_id,))
+    deleted = cur.rowcount
+    conn.commit()
+    conn.close()
+    if deleted == 0:
+        return jsonify({"error": "not found"}), 404
+    return jsonify({"ok": True})
+
+
+@api_bp.get("/summary")
+def summary():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Purchases totals
+    cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0), COALESCE(SUM(amount_btc), 0) FROM purchases")
+    row_p = cur.fetchone()
+    total_usd = float(row_p[0] or 0)
+    total_btc = float(row_p[1] or 0)
+    # Withdrawals totals
+    cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0), COALESCE(SUM(amount_btc), 0) FROM withdrawals")
+    row_w = cur.fetchone()
+    total_withdraw_usd = float(row_w[0] or 0)
+    total_withdraw_btc = float(row_w[1] or 0)
+    # Settings
+    usd_to_toman = _get_usd_to_toman(conn)
+    conn.close()
+    return jsonify({
+        "total_deposit_usd": total_usd,
+        "total_deposit_btc": total_btc,
+        "total_withdraw_usd": total_withdraw_usd,
+        "total_withdraw_btc": total_withdraw_btc,
+        "usd_to_toman": usd_to_toman,
+        "total_deposit_toman": total_usd * usd_to_toman,
+        "total_withdraw_toman": total_withdraw_usd * usd_to_toman,
+        "net_invested_usd": max(0.0, total_usd - total_withdraw_usd),
+    })
+

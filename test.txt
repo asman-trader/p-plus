@@ -1,3 +1,6 @@
+source /home/bztypmws/virtualenv/myapp/3.10/bin/activate && cd /home/bztypmws/myapp
+
+
 cd /home/bztypmws/myapp   # مسیر پروژه روی هاست
 
 
