@@ -1,0 +1,12 @@
+{
+  "name": "P+ Panel",
+  "short_name": "P+",
+  "start_url": "/panel",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "fa",
+  "dir": "rtl",
+  "icons": []
+}

@@ -90,6 +90,7 @@
     }
     .header-bar { display:flex; justify-content: space-between; align-items:center; gap:12px; flex-wrap:wrap; }
     .actions { display:flex; align-items:center; gap:8px; position: relative; }
+    .header-bar a[aria-current="page"] { font-weight: 800; background: var(--pill-bg); padding: 4px 8px; border-radius: 8px; }
     .price-section { margin-top: 16px; }
     .price-card { background: var(--pill-bg); border:1px solid var(--card-border); border-radius:16px; padding:16px; backdrop-filter: blur(10px); text-align: center; transition: all 0.3s ease; }
     .price-card:hover { transform: translateY(-2px); box-shadow: var(--glow); }
@@ -134,6 +135,8 @@
   </style>
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn/Vazirmatn-font-face.css" rel="stylesheet">
   <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
   <meta name="robots" content="noindex,nofollow">
   <meta name="referrer" content="same-origin">
 </head>
@@ -254,6 +257,13 @@
       }
 
       // Drawer logic moved to `_drawer.html`
+
+      // Register service worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function(){
+          navigator.serviceWorker.register('{{ url_for('static', filename='sw.js') }}').catch(function(){});
+        });
+      }
     })();
   </script>
 </body>

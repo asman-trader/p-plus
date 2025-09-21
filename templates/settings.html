@@ -6,6 +6,7 @@
 <div class="card" id="settings">
   <h2>تنظیم نرخ تبدیل دلار → تومان</h2>
   <form method="post" action="{{ url_for('panel_bp.panel_update_rate') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>
       نرخ (تومان برای هر دلار)
       <input type="number" step="1" min="1" name="usd_to_toman" value="{{ '%.0f' % usd_to_toman }}" required inputmode="numeric" placeholder="مثلاً 60000">
