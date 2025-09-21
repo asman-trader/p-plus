@@ -97,6 +97,9 @@
     .price-value { font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
     .price-currency { font-size: 18px; color: var(--muted); margin-right: 4px; }
     .price-toman { font-size: 12px; display: block; }
+    .skeleton { position: relative; background: color-mix(in oklab, var(--pill-bg) 85%, transparent); color: transparent; border-radius: 8px; overflow: hidden; }
+    .skeleton::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent); transform: translateX(-100%); animation: shimmer 1.2s infinite; }
+    @keyframes shimmer { 100% { transform: translateX(100%); } }
     .menu-btn { width:44px; height:44px; border-radius:12px; border:1px solid var(--card-border); background: var(--pill-bg); color: var(--text); display:flex; align-items:center; justify-content:center; cursor:pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); }
     .menu-btn:hover { transform: scale(1.05); box-shadow: var(--glow); }
     .menu { position:absolute; inset-inline-end:0; top:52px; width:220px; background: var(--card); border:1px solid var(--card-border); border-radius:16px; box-shadow: var(--shadow); padding:8px; display:none; z-index: 70; backdrop-filter: blur(20px); }
@@ -121,6 +124,7 @@
     .bottom-nav a { flex: 1; text-align: center; text-decoration: none; color: var(--muted); font-size: 12px; padding: 8px 6px; border-radius: 12px; transition: all 0.3s ease; font-weight: 500; }
     .bottom-nav a:hover { color: var(--text); background: var(--pill-bg); transform: translateY(-2px); }
     .bottom-nav a .icon { display:block; margin: 0 auto 4px; width: 20px; height: 20px; font-size: 16px; }
+    .bottom-nav a[aria-current="page"] { color: var(--text); background: var(--pill-bg); font-weight: 700; }
     @media (min-width: 640px) { .bottom-nav { display: none; } }
     @media (max-width: 639px) { .container { padding-bottom: calc(70px + env(safe-area-inset-bottom)); } }
     html { scroll-behavior: smooth; }
@@ -137,7 +141,7 @@
   <div class="container">
     <div class="card" id="top">
       <div class="header-bar">
-        <h1><a href="{{ url_for('panel_bp.panel_index') }}" style="text-decoration: none; color: inherit;">داشبورد</a></h1>
+        <h1><a href="{{ url_for('panel_bp.panel_index') }}" style="text-decoration: none; color: inherit;"{% if request.path == url_for('panel_bp.panel_index') %} aria-current="page"{% endif %}>داشبورد</a></h1>
         <div class="actions">
           <button type="button" class="menu-btn" id="themeBtn" title="تغییر تم"><span id="themeIcon">🌙</span></button>
           <button type="button" class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" title="منو">☰</button>
@@ -147,10 +151,10 @@
         <div class="price-card">
           <span class="price-label">BTC/USDT</span>
           <div class="price-value">
-            <strong id="btc_usd">...</strong>
+            <strong id="btc_usd" class="skeleton">...</strong>
             <span class="price-currency">$</span>
           </div>
-          <span class="price-toman muted" id="btc_toman">...</span>
+            <span class="price-toman muted skeleton" id="btc_toman">...</span>
         </div>
       </div>
     </div>
@@ -170,10 +174,10 @@
   
   
   <nav class="bottom-nav" aria-label="پیمایش">
-    <a href="{{ url_for('panel_bp.deposits_page') }}"><span class="icon">💰</span>واریزی</a>
-    <a href="{{ url_for('panel_bp.withdrawals_page') }}"><span class="icon">💸</span>برداشت</a>
-    <a href="{{ url_for('panel_bp.balance_page') }}"><span class="icon">💎</span>موجودی</a>
-    <a href="{{ url_for('panel_bp.purchases_page') }}"><span class="icon">📊</span>خریدها</a>
+    <a href="{{ url_for('panel_bp.deposits_page') }}"{% if request.path == url_for('panel_bp.deposits_page') %} aria-current="page"{% endif %}><span class="icon">💰</span>واریزی</a>
+    <a href="{{ url_for('panel_bp.withdrawals_page') }}"{% if request.path == url_for('panel_bp.withdrawals_page') %} aria-current="page"{% endif %}><span class="icon">💸</span>برداشت</a>
+    <a href="{{ url_for('panel_bp.balance_page') }}"{% if request.path == url_for('panel_bp.balance_page') %} aria-current="page"{% endif %}><span class="icon">💎</span>موجودی</a>
+    <a href="{{ url_for('panel_bp.purchases_page') }}"{% if request.path == url_for('panel_bp.purchases_page') %} aria-current="page"{% endif %}><span class="icon">📊</span>خریدها</a>
   </nav>
 
   {% from "_drawer.html" import drawer %}
@@ -215,8 +219,10 @@
           var price = Number(data && data.price_usd);
           if (!isFinite(price)) throw new Error('bad price');
           usdEl.textContent = price.toFixed(2);
+          usdEl.classList.remove('skeleton');
           var toman = Math.round(price * usdToToman);
           tomanEl.textContent = '(' + toman.toLocaleString('fa-IR') + ' تومان)';
+          tomanEl.classList.remove('skeleton');
           if (holdUsdEl && holdTmnEl) {
             var holdUsd = totalBtc * price;
             var holdTmn = Math.round(holdUsd * usdToToman);
@@ -226,6 +232,8 @@
         } catch (e) {
           usdEl.textContent = '—';
           tomanEl.textContent = '';
+          usdEl.classList.remove('skeleton');
+          tomanEl.classList.remove('skeleton');
           if (holdUsdEl && holdTmnEl) {
             holdUsdEl.textContent = '—';
             holdTmnEl.textContent = '—';

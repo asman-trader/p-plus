@@ -9,6 +9,7 @@
     .drawer-nav{display:flex;flex-direction:column;padding:8px}
     .drawer-nav a{display:flex;align-items:center;gap:12px;padding:12px 14px;text-decoration:none;color:var(--text);border-radius:12px;transition:background .2s ease,transform .2s ease}
     .drawer-nav a:hover{background:var(--pill-bg);transform:translateX(-2px)}
+    .drawer-nav a[aria-current="page"]{background:var(--pill-bg);font-weight:700}
     .drawer-footer{margin-top:auto;padding:12px;border-top:1px solid var(--card-border);display:flex;gap:8px}
     .drawer-close{margin-inline-start:auto}
     body.no-scroll{overflow:hidden;height:100vh}
@@ -23,12 +24,12 @@
       <button type="button" class="menu-btn drawer-close" id="drawerCloseBtn" aria-label="بستن">✕</button>
     </div>
     <nav class="drawer-nav" role="navigation">
-      <a href="{{ url_for('panel_bp.panel_index') }}">🏠 داشبورد</a>
-      <a href="{{ url_for('panel_bp.deposits_page') }}">💰 واریزی</a>
-      <a href="{{ url_for('panel_bp.withdrawals_page') }}">💸 برداشت</a>
-      <a href="{{ url_for('panel_bp.balance_page') }}">💎 موجودی</a>
-      <a href="{{ url_for('panel_bp.purchases_page') }}">📊 خریدها</a>
-      <a href="{{ url_for('panel_bp.settings_page') }}">⚙️ تنظیمات</a>
+      <a href="{{ url_for('panel_bp.panel_index') }}"{% if request.path == url_for('panel_bp.panel_index') %} aria-current="page"{% endif %}>🏠 داشبورد</a>
+      <a href="{{ url_for('panel_bp.deposits_page') }}"{% if request.path == url_for('panel_bp.deposits_page') %} aria-current="page"{% endif %}>💰 واریزی</a>
+      <a href="{{ url_for('panel_bp.withdrawals_page') }}"{% if request.path == url_for('panel_bp.withdrawals_page') %} aria-current="page"{% endif %}>💸 برداشت</a>
+      <a href="{{ url_for('panel_bp.balance_page') }}"{% if request.path == url_for('panel_bp.balance_page') %} aria-current="page"{% endif %}>💎 موجودی</a>
+      <a href="{{ url_for('panel_bp.purchases_page') }}"{% if request.path == url_for('panel_bp.purchases_page') %} aria-current="page"{% endif %}>📊 خریدها</a>
+      <a href="{{ url_for('panel_bp.settings_page') }}"{% if request.path == url_for('panel_bp.settings_page') %} aria-current="page"{% endif %}>⚙️ تنظیمات</a>
     </nav>
   </aside>
 
