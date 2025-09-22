@@ -14,8 +14,8 @@ def get_prices():
         response = requests.get('https://api.wallex.ir/v1/currencies/stats', timeout=5)
         if response.status_code == 200:
             result = response.json()['result']
-            btc_irt = next((float(item['price']) for item in result if item['key'] == 'BTC'), 0)
-            usdt_irt = next((float(item['price']) for item in result if item['key'] == 'USDT'), 0)
+            btc_irt = next((float(item['price']) for item in result if item['key'] == 'BTCIRT'), 0)
+            usdt_irt = next((float(item['price']) for item in result if item['key'] == 'USDTIRT'), 0)
             btc_usdt = next((float(item['price']) for item in result if item['key'] == 'BTCUSDT'), 0)
             if btc_usdt == 0 and usdt_irt != 0:
                 btc_usdt = btc_irt / usdt_irt
