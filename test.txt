@@ -1,12 +1,20 @@
 source /home/bztypmws/virtualenv/myapp/3.10/bin/activate && cd /home/bztypmws/myapp
 
 
-cd /home/bztypmws/myapp   # مسیر پروژه روی هاست
-
-
 git fetch origin           # دریافت آخرین تغییرات از GitHub
 
 
 
 git reset --hard origin/main  # بروزرسانی شاخه main و بازگردانی فایل‌ها
 git clean -fd              # حذف فایل‌های اضافی که در مخزن نیستند
+
+
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+
+
+
