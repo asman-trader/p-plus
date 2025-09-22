@@ -19,7 +19,7 @@ def get_prices():
             data = response.json()["stats"]
             btc_irt = float(data.get("btc-rls", {}).get("latest", 0))
             usdt_irt = float(data.get("usdt-rls", {}).get("latest", 0))
-            btc_usdt = float(data.get("btc-usdt", {}).get("latest", 0))
+            btc_usdt = float(data.get("btc-usdt", {}).get("latest", 0)) if "btc-usdt" in data else (btc_irt / usdt_irt if usdt_irt > 0 else 0)
             return jsonify({
                 "btc_irt": btc_irt,
                 "usdt_irt": usdt_irt,
