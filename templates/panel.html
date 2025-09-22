@@ -190,6 +190,35 @@
       </div>
     </div>
     
+    <div class="row">
+      <div class="card col">
+        <h2>قیمت‌های بازار</h2>
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="icon">₿</div>
+            <div>
+              <div class="label">BTC / USDT</div>
+              <div class="value" id="btc_usdt_price">...</div>
+            </div>
+          </div>
+          <div class="kpi">
+            <div class="icon">$</div>
+            <div>
+              <div class="label">USDT / تومان</div>
+              <div class="value" id="usdt_irt_price">...</div>
+            </div>
+          </div>
+          <div class="kpi">
+            <div class="icon">₿</div>
+            <div>
+              <div class="label">BTC / تومان</div>
+              <div class="value" id="btc_irt_price">...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     
   
   <script>
@@ -239,6 +268,14 @@
           var holdTmn = Math.round(holdUsd * usdToToman);
           holdUsdEl.textContent = holdUsd.toFixed(2);
           holdTmnEl.textContent = holdTmn.toLocaleString('fa-IR');
+
+          var btcUsdtEl = document.getElementById('btc_usdt_price');
+          var usdtIrtEl = document.getElementById('usdt_irt_price');
+          var btcIrtEl = document.getElementById('btc_irt_price');
+
+          if (btcUsdtEl) btcUsdtEl.textContent = price.toFixed(2) + ' USDT';
+          if (usdtIrtEl) usdtIrtEl.textContent = usdToToman.toLocaleString('fa-IR') + ' تومان';
+          if (btcIrtEl) btcIrtEl.textContent = Number(data.btc_irt).toLocaleString('fa-IR') + ' تومان';
 
           // Compute P/L using current balance and net invested amount
           var plUsd = holdUsd - netInvestedUsd;
