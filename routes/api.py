@@ -3,8 +3,34 @@ from datetime import datetime
 from db import get_db_connection
 import json
 import urllib.request
+import requests
 
 api_bp = Blueprint("api_bp", __name__, url_prefix="/api")
+
+
+@api_bp.get("/price/btcusd")
+def get_btc_price():
+	"""دریافت قیمت فعلی BTC از CoinGecko API"""
+	try:
+		response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', timeout=5)
+		if response.status_code == 200:
+			data = response.json()
+			price = data.get('bitcoin', {}).get('usd', 0)
+			return jsonify({
+				"price_usd": price,
+				"timestamp": datetime.utcnow().isoformat(),
+				"source": "coingecko"
+			})
+		else:
+			raise Exception(f"API returned status {response.status_code}")
+	except Exception as e:
+		# در صورت خطا، قیمت پیش‌فرض برگردان
+		return jsonify({
+			"price_usd": 50000,
+			"timestamp": datetime.utcnow().isoformat(),
+			"source": "fallback",
+			"error": str(e)
+		})
 
 
 def _get_usd_to_toman(conn) -> float:

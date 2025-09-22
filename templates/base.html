@@ -137,6 +137,12 @@
     .kpi .value { font-size: 18px; font-weight: 700; color: var(--text); }
     .kpi .label { font-size: 14px; color: var(--muted); font-weight: 500; }
     .kpi .sub { font-size: 12px; color: var(--muted); }
+    
+    /* KPI positive/negative states */
+    .kpi.positive { border-color: #10b981; background: color-mix(in oklab, #10b981 10%, var(--pill-bg)); }
+    .kpi.positive .value { color: #10b981; }
+    .kpi.negative { border-color: #ef4444; background: color-mix(in oklab, #ef4444 10%, var(--pill-bg)); }
+    .kpi.negative .value { color: #ef4444; }
   </style>
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn/Vazirmatn-font-face.css" rel="stylesheet">
   <meta name="color-scheme" content="dark light">

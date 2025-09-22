@@ -5,6 +5,14 @@
 {% block content %}
 <div class="card" id="balance">
   <h2>دارایی فعلی</h2>
+  
+  <!-- هشدار موجودی منفی -->
+  {% if current_btc_balance < 0 %}
+  <div class="flash error" style="margin-bottom: 16px;">
+    ⚠️ هشدار: موجودی BTC منفی است! ({{ '%.8f' % current_btc_balance }} BTC)
+  </div>
+  {% endif %}
+  
   <div class="kpi-grid">
     <div class="kpi">
       <div class="icon">🪙</div>
@@ -34,6 +42,36 @@
   
   <div class="divider"></div>
   
+  <h3>عملکرد سرمایه‌گذاری</h3>
+  <div class="kpi-grid">
+    <div class="kpi {% if profit_loss_usd >= 0 %}positive{% else %}negative{% endif %}">
+      <div class="icon">📊</div>
+      <div>
+        <div class="label">سود / زیان</div>
+        <div class="value" id="profit_loss_value">${{ '%.2f' % profit_loss_usd }}</div>
+        <div class="sub" id="profit_loss_toman">{{ '{:,.0f}'.format(profit_loss_usd * usd_to_toman) }} تومان</div>
+      </div>
+    </div>
+    <div class="kpi {% if roi_percentage >= 0 %}positive{% else %}negative{% endif %}">
+      <div class="icon">📈</div>
+      <div>
+        <div class="label">بازده (ROI)</div>
+        <div class="value" id="roi_value">{{ '%.1f' % roi_percentage }}%</div>
+        <div class="sub">نسبت به سرمایه خالص</div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="icon">⏰</div>
+      <div>
+        <div class="label">مدت سرمایه‌گذاری</div>
+        <div class="value">{{ inception_days }} <span class="sub">روز</span></div>
+        <div class="sub">از شروع فعالیت</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="divider"></div>
+  
   <h3>جزئیات تراکنش‌ها</h3>
   <div class="kpi-grid">
     <div class="kpi">
@@ -41,6 +79,7 @@
       <div>
         <div class="label">کل خرید (USD)</div>
         <div class="value">${{ '%.2f' % total_invested_usd }}</div>
+        <div class="sub">{{ total_purchases_count }} تراکنش</div>
       </div>
     </div>
     <div class="kpi">
@@ -48,6 +87,7 @@
       <div>
         <div class="label">کل برداشت (USD)</div>
         <div class="value">${{ '%.2f' % total_withdrawn_usd }}</div>
+        <div class="sub">{{ total_withdrawals_count }} تراکنش</div>
       </div>
     </div>
     <div class="kpi">
@@ -55,6 +95,7 @@
       <div>
         <div class="label">سرمایه‌گذاری خالص</div>
         <div class="value">${{ '%.2f' % net_invested_usd }}</div>
+        <div class="sub">آخرین تراکنش: {{ last_transaction_date or 'هیچ' }}</div>
       </div>
     </div>
   </div>
@@ -66,14 +107,13 @@
 (function() {
   const btcAmount = {{ current_btc_balance }};
   const usdToToman = {{ usd_to_toman }};
+  const netInvestedUsd = {{ net_invested_usd }};
   
-  // دریافت قیمت فعلی BTC (مثال - در واقعیت باید از API دریافت شود)
+  // دریافت قیمت فعلی BTC از API داخلی
   function fetchCurrentPrice() {
-    // اینجا باید از یک API واقعی استفاده شود
-    // برای مثال از CoinGecko یا Binance
-    return fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd')
+    return fetch('/api/price/btcusd')
       .then(response => response.json())
-      .then(data => data.bitcoin.usd)
+      .then(data => data.price_usd)
       .catch(() => 50000); // قیمت پیش‌فرض در صورت خطا
   }
   
@@ -81,8 +121,36 @@
     const usdValue = btcAmount * currentPrice;
     const tomanValue = usdValue * usdToToman;
     
+    // به‌روزرسانی ارزش فعلی
     document.getElementById('current_usd_value').textContent = usdValue.toFixed(2);
     document.getElementById('current_toman_value').textContent = tomanValue.toLocaleString('fa-IR');
+    
+    // محاسبه و به‌روزرسانی سود/زیان
+    const profitLoss = usdValue - netInvestedUsd;
+    const profitLossToman = profitLoss * usdToToman;
+    
+    document.getElementById('profit_loss_value').textContent = '$' + profitLoss.toFixed(2);
+    document.getElementById('profit_loss_toman').textContent = profitLossToman.toLocaleString('fa-IR') + ' تومان';
+    
+    // محاسبه و به‌روزرسانی ROI
+    let roiPercentage = 0;
+    if (netInvestedUsd > 0) {
+      roiPercentage = (profitLoss / netInvestedUsd) * 100;
+    }
+    document.getElementById('roi_value').textContent = roiPercentage.toFixed(1) + '%';
+    
+    // تغییر رنگ KPI ها بر اساس سود/زیان
+    const profitLossKpi = document.querySelector('.kpi.positive, .kpi.negative');
+    if (profitLossKpi) {
+      profitLossKpi.classList.remove('positive', 'negative');
+      profitLossKpi.classList.add(profitLoss >= 0 ? 'positive' : 'negative');
+    }
+    
+    const roiKpi = document.querySelector('.kpi.positive, .kpi.negative');
+    if (roiKpi && roiKpi !== profitLossKpi) {
+      roiKpi.classList.remove('positive', 'negative');
+      roiKpi.classList.add(roiPercentage >= 0 ? 'positive' : 'negative');
+    }
   }
   
   // بارگذاری اولیه

@@ -257,6 +257,37 @@ def balance_page():
 	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
 	usd_to_toman = float(cur.fetchone()[0])
 	
+	# تاریخ آخرین تراکنش
+	cur.execute("SELECT MAX(created_at) FROM (SELECT created_at FROM purchases UNION ALL SELECT created_at FROM withdrawals)")
+	last_transaction_date = cur.fetchone()[0]
+	
+	# تعداد تراکنش‌ها
+	cur.execute("SELECT COUNT(*) FROM purchases")
+	total_purchases_count = cur.fetchone()[0]
+	cur.execute("SELECT COUNT(*) FROM withdrawals")
+	total_withdrawals_count = cur.fetchone()[0]
+	
+	# محاسبه ROI (با قیمت فعلی تقریبی)
+	current_btc_price = 50000  # این باید از API دریافت شود
+	current_value_usd = current_btc_balance * current_btc_price
+	roi_percentage = 0
+	profit_loss_usd = 0
+	if net_invested_usd > 0:
+		roi_percentage = ((current_value_usd - net_invested_usd) / net_invested_usd) * 100
+		profit_loss_usd = current_value_usd - net_invested_usd
+	
+	# تاریخ شروع سرمایه‌گذاری
+	cur.execute("SELECT MIN(created_at) FROM purchases")
+	row_first = cur.fetchone()
+	inception_days = 0
+	try:
+		first_str = row_first[0] if row_first and row_first[0] else None
+		if first_str:
+			dt0 = datetime.fromisoformat(first_str)
+			inception_days = max(0, (datetime.utcnow() - dt0).days)
+	except Exception:
+		inception_days = 0
+	
 	conn.close()
 	
 	return render_template("balance.html", 
@@ -266,7 +297,13 @@ def balance_page():
 		net_invested_usd=net_invested_usd,
 		total_invested_usd=total_invested_usd,
 		total_withdrawn_usd=total_withdrawn_usd,
-		usd_to_toman=usd_to_toman)
+		usd_to_toman=usd_to_toman,
+		last_transaction_date=last_transaction_date,
+		total_purchases_count=total_purchases_count,
+		total_withdrawals_count=total_withdrawals_count,
+		roi_percentage=roi_percentage,
+		profit_loss_usd=profit_loss_usd,
+		inception_days=inception_days)
 
 
 @panel_bp.get("/purchases")
