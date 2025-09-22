@@ -13,8 +13,8 @@ from flask_wtf.csrf import CSRFProtect, generate_csrf  # type: ignore
 # ----------------------------------------------------------------------------
 app = Flask(__name__)
 app.secret_key = os.environ.get("APP_SECRET_KEY", "dev-secret-key")
-app.config["LOGIN_USERNAME"] = os.environ.get("LOGIN_USERNAME", "masood1528014@gmail.com")
-app.config["LOGIN_PASSWORD"] = os.environ.get("LOGIN_PASSWORD", "m430128185")
+app.config["LOGIN_USERNAME"] = os.environ.get("LOGIN_USERNAME", "09121471301")
+app.config["LOGIN_PASSWORD"] = os.environ.get("LOGIN_PASSWORD", "0430128185")
 
 # اطمینان از وجود دیتابیس و جداول
 ensure_db()
