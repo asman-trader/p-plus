@@ -17,11 +17,11 @@ import os
 # --------------------------
 webhook_bp = Blueprint("webhook_bp", __name__)
 
-# --- سکرت باید از ENV ست شده باشه ---
+# --- سکرت از ENV خوانده می‌شود؛ اگر نبود، لاگ هشدار می‌دهیم اما برنامه را متوقف نمی‌کنیم ---
 SECRET_ENV = os.environ.get("WEBHOOK_SECRET")
 if not SECRET_ENV:
-    raise RuntimeError("❌ متغیر محیطی WEBHOOK_SECRET تنظیم نشده است.")
-SECRET = SECRET_ENV.encode()
+    print("[webhook] ⚠️ WEBHOOK_SECRET تنظیم نشده است؛ درخواست‌های وبهوک رد خواهند شد (403)")
+SECRET = (SECRET_ENV or "").encode()
 
 # مسیر پروژه و برنچ
 PROJECT_DIR = os.environ.get("PROJECT_DIR", "/home/bztypmws/myapp")
@@ -39,7 +39,7 @@ RESTART_CMD = os.environ.get("RESTART_CMD")
 # --------------------------
 def verify_signature(data: bytes, signature: str | None) -> bool:
     """تطبیق امضای ارسال‌شده توسط GitHub با محاسبه محلی"""
-    if not signature:
+    if not signature or not SECRET:
         return False
     mac = hmac.new(SECRET, data, hashlib.sha256)
     return hmac.compare_digest("sha256=" + mac.hexdigest(), signature)
