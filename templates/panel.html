@@ -144,23 +144,23 @@
       <div class="card col">
         <h2>خلاصه عملکرد</h2>
         <div class="kpi-grid">
-          <div class="kpi">
+          <a class="kpi" href="{{ url_for('panel_bp.deposits_page') }}" style="text-decoration:none; color: inherit;">
             <div class="icon">💰</div>
             <div>
               <div class="label">واریزی کل</div>
               <div class="value">{{ '%.2f' % total_usd }} <span class="sub">$</span></div>
               <div class="sub">{{ '{:,.0f}'.format(total_toman) }} تومان</div>
             </div>
-          </div>
-          <div class="kpi">
+          </a>
+          <a class="kpi" href="{{ url_for('panel_bp.withdrawals_page') }}" style="text-decoration:none; color: inherit;">
             <div class="icon">💸</div>
             <div>
               <div class="label">برداشت کل</div>
               <div class="value">{{ '%.2f' % total_withdraw_usd }} <span class="sub">$</span></div>
               <div class="sub">{{ '{:,.0f}'.format(total_withdraw_toman) }} تومان</div>
             </div>
-          </div>
-          <div class="kpi" id="kpi_hold">
+          </a>
+          <a class="kpi" id="kpi_hold" href="{{ url_for('panel_bp.balance_page') }}" style="text-decoration:none; color: inherit;">
             <div class="icon">💎</div>
             <div>
               <div class="label">دارایی</div>
@@ -169,8 +169,8 @@
               <div class="value"><span id="hold_usd">...</span> <span class="sub">$</span></div>
               <div class="sub"><span id="hold_toman">...</span> تومان</div>
             </div>
-          </div>
-          <div class="kpi" id="kpi_pl">
+          </a>
+          <a class="kpi" id="kpi_pl" href="{{ url_for('panel_bp.purchases_page') }}" style="text-decoration:none; color: inherit;">
             <div class="icon">⚖️</div>
             <div>
               <div class="label">سود / زیان</div>
@@ -185,7 +185,7 @@
               <div class="value" id="apy_val">...</div>
               <div class="sub" id="apy_days"></div>
             </div>
-          </div>
+          </a>
         </div>
       </div>
     </div>
