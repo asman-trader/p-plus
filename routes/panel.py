@@ -192,7 +192,7 @@ def withdrawals_page():
 	conn = get_db_connection()
 	cur = conn.cursor()
 	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM withdrawals ORDER BY id DESC")
-	withdrawals = cur.fetchall()
+	rows = cur.fetchall()
 	cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM withdrawals")
 	total_withdraw_usd = cur.fetchone()[0] or 0
 	cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM withdrawals")
@@ -200,6 +200,18 @@ def withdrawals_page():
 	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
 	usd_to_toman = float(cur.fetchone()[0])
 	conn.close()
+	
+	# Convert sqlite3.Row to plain dicts for JSON serialization
+	withdrawals = [
+		{
+			"id": int(r["id"]),
+			"created_at": r["created_at"],
+			"amount_btc": float(r["amount_btc"]),
+			"price_usd_per_btc": float(r["price_usd_per_btc"]),
+		}
+		for r in rows
+	]
+	
 	return render_template("withdrawals.html", withdrawals=withdrawals, total_withdraw_usd=total_withdraw_usd, total_withdraw_btc=total_withdraw_btc, total_withdraw_toman=total_withdraw_usd * usd_to_toman, usd_to_toman=usd_to_toman)
 
 

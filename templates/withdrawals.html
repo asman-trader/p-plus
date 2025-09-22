@@ -5,10 +5,28 @@
 {% block content %}
 <div class="card" id="withdraw">
   <h2>برداشت</h2>
-  <div class="totals">
-    <div class="pill">برداشت کل (USD): <strong>{{ '%.2f' % total_withdraw_usd }}</strong> $</div>
-    <div class="pill">برداشت کل (تومان): <strong>{{ '{:,.0f}'.format(total_withdraw_toman) }}</strong></div>
-    <div class="pill">برداشت BTC: <strong>{{ '%.8f' % total_withdraw_btc }}</strong> BTC</div>
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="icon">💰</div>
+      <div>
+        <div class="label">برداشت کل (USD)</div>
+        <div class="value">{{ '%.2f' % total_withdraw_usd }} <span class="sub">$</span></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="icon">🏦</div>
+      <div>
+        <div class="label">برداشت کل (تومان)</div>
+        <div class="value">{{ '{:,.0f}'.format(total_withdraw_toman) }} <span class="sub">تومان</span></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="icon">₿</div>
+      <div>
+        <div class="label">برداشت BTC</div>
+        <div class="value">{{ '%.8f' % total_withdraw_btc }} <span class="sub">BTC</span></div>
+      </div>
+    </div>
   </div>
   <form method="post" action="{{ url_for('panel_bp.panel_withdraw') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -61,7 +79,7 @@
     </div>
   </div>
   <div id="wd_mobile" style="display:none;">
-    <div id="wd_cards" class="row"></div>
+    <div id="wd_cards"></div>
   </div>
 </div>
 <script>
@@ -86,15 +104,15 @@
         var price = Number(w.price_usd_per_btc || 0);
         var total = amt * price;
         var card = document.createElement('div');
-        card.className = 'card col';
-        card.innerHTML = '<div class="kpi">'+
-          '<div class="icon">💸</div>'+
+        card.className = 'kpi';
+        card.style.marginBottom = '12px';
+        card.innerHTML = '<div class="icon">💸</div>'+
           '<div>'+
           '<div class="label">#'+w.id+' • '+w.created_at+'</div>'+
           '<div class="value">'+amt.toFixed(8)+' <span class="sub">BTC</span></div>'+
           '<div class="label" style="margin-top:8px;">قیمت واحد: '+price.toFixed(2)+' $</div>'+
           '<div class="sub">مبلغ: '+total.toFixed(2)+' $</div>'+
-          '</div></div>';
+          '</div>';
         cards.appendChild(card);
       });
     }
