@@ -122,7 +122,7 @@ def panel_update_rate():
 
 @panel_bp.get("/")
 def home():
-	return redirect(url_for("panel_bp.panel_index"))
+    return redirect(url_for("auth_bp.login"))
 
 
 @panel_bp.get("/healthz")

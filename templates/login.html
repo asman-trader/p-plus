@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}ورود{% endblock %}
+
+{% block content %}
+  <style>
+    .login-wrap { min-height: calc(100vh - 24px); display: grid; place-items: center; padding: 12px; }
+    .login-card { width: 100%; max-width: 420px; }
+    .login-form { display: grid; gap: 12px; }
+    .brand { text-align: center; margin-bottom: 10px; font-weight: 900; font-size: 22px; background: var(--primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .brand-badge { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; margin: 0 auto 8px; background: var(--pill-bg); border: 1px solid var(--card-border); font-size: 26px; box-shadow: var(--glow); }
+    .brand-sub { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+    .field { position: relative; }
+    .toggle-pass { position: absolute; inset-inline-start: 8px; top: 50%; transform: translateY(-50%); border: 1px solid var(--card-border); background: var(--pill-bg); color: var(--text); border-radius: 10px; height: 36px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+    .toggle-pass:hover { box-shadow: var(--glow); }
+    @media (max-width: 640px) {
+      .btn { width: 100%; }
+    }
+  </style>
+
+  <div class="login-wrap">
+    <div class="card login-card">
+      <div class="brand-badge">🔐</div>
+      <div class="brand">ورود به پنل</div>
+      <div class="brand-sub">برای ادامه، وارد حساب کاربری خود شوید</div>
+      <form class="login-form" method="post" action="{{ url_for('auth_bp.login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div>
+          <label for="username">نام کاربری (ایمیل)</label>
+          <input id="username" name="username" type="text" inputmode="email" autocomplete="username" placeholder="example@email.com" required autofocus>
+        </div>
+        <div class="field">
+          <label for="password">رمز عبور</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+          <button class="toggle-pass" type="button" id="togglePass" aria-controls="password" aria-label="نمایش/مخفی کردن رمز">👁️</button>
+        </div>
+        <button class="btn btn-primary" type="submit">ورود</button>
+      </form>
+    </div>
+  </div>
+  <script>
+    (function(){
+      var btn = document.getElementById('togglePass');
+      var input = document.getElementById('password');
+      if(btn && input){
+        btn.addEventListener('click', function(){
+          var type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+          input.setAttribute('type', type);
+          btn.textContent = type === 'password' ? '👁️' : '🙈';
+        });
+      }
+    })();
+  </script>
+{% endblock %}
+
+
