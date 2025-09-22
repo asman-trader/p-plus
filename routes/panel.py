@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request  # pyright: ignore[reportMissingImports]
 from datetime import datetime
 from db import get_db_connection
+import requests
 
 panel_bp = Blueprint("panel_bp", __name__)
 
@@ -56,8 +57,16 @@ def panel_index():
 	net_invested_usd = total_purchased_usd - total_withdrawn_usd
 	
 	# نرخ تبدیل
-	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-	usd_to_toman = float(cur.fetchone()[0])
+	# cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+	# usd_to_toman = float(cur.fetchone()[0])
+	usd_to_toman = 60000  # Default
+	try:
+		response = requests.post('https://api.nobitex.ir/market/stats', json={"srcCurrency": "usdt", "dstCurrency": "rls"}, timeout=3)
+		if response.status_code == 200:
+			data = response.json()["stats"]["usdt-rls"]
+			usd_to_toman = float(data["latest"])
+	except Exception:
+		pass
 	
 	# محاسبه ROI (درصد سود/زیان)
 	roi_percentage = 0
@@ -254,8 +263,16 @@ def balance_page():
 	net_invested_usd = total_invested_usd - total_withdrawn_usd
 	
 	# نرخ تبدیل
-	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-	usd_to_toman = float(cur.fetchone()[0])
+	# cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+	# usd_to_toman = float(cur.fetchone()[0])
+	usd_to_toman = 60000  # Default
+	try:
+		response = requests.post('https://api.nobitex.ir/market/stats', json={"srcCurrency": "usdt", "dstCurrency": "rls"}, timeout=3)
+		if response.status_code == 200:
+			data = response.json()["stats"]["usdt-rls"]
+			usd_to_toman = float(data["latest"])
+	except Exception:
+		pass
 	
 	# تاریخ آخرین تراکنش
 	cur.execute("SELECT MAX(created_at) FROM (SELECT created_at FROM purchases UNION ALL SELECT created_at FROM withdrawals)")

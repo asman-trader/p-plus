@@ -194,7 +194,7 @@
   
   <script>
     (function () {
-      var usdToToman = Number("{{ '%.0f' % usd_to_toman }}");
+      let usdToToman = Number("{{ '%.0f' % usd_to_toman }}");  // Initial
       var usdEl = document.getElementById('btc_usd');
       var tomanEl = document.getElementById('btc_toman');
       var currentBtcBalance = Number("{{ '%.8f' % current_btc_balance }}");
@@ -226,10 +226,11 @@
 
       async function fetchPrice() {
         try {
-          var res = await fetch('/api/price/btcusd', { cache: 'no-store' });
+          var res = await fetch('/api/price', { cache: 'no-store' });
           if (!res.ok) throw new Error('bad status');
           var data = await res.json();
-          var price = Number(data && data.price_usd);
+          usdToToman = Number(data.usdt_irt) || usdToToman;
+          var price = Number(data.btc_usdt);
           if (!isFinite(price)) throw new Error('bad price');
           usdEl.textContent = price.toFixed(2);
           var toman = Math.round(price * usdToToman);

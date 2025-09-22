@@ -106,15 +106,18 @@
 <script>
 (function() {
   const btcAmount = {{ current_btc_balance }};
-  const usdToToman = {{ usd_to_toman }};
+  let usdToToman = {{ usd_to_toman }};  // Initial from server
   const netInvestedUsd = {{ net_invested_usd }};
   
-  // دریافت قیمت فعلی BTC از API داخلی
+  // دریافت قیمت‌ها
   function fetchCurrentPrice() {
-    return fetch('/api/price/btcusd')
+    return fetch('/api/price')
       .then(response => response.json())
-      .then(data => data.price_usd)
-      .catch(() => 50000); // قیمت پیش‌فرض در صورت خطا
+      .then(data => {
+        usdToToman = data.usdt_irt || usdToToman;  // Update toman rate
+        return data.btc_usdt;
+      })
+      .catch(() => 50000);
   }
   
   function updateValues(currentPrice) {

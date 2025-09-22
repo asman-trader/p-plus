@@ -8,29 +8,37 @@ import requests
 api_bp = Blueprint("api_bp", __name__, url_prefix="/api")
 
 
-@api_bp.get("/price/btcusd")
-def get_btc_price():
-	"""دریافت قیمت فعلی BTC از CoinGecko API"""
-	try:
-		response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', timeout=5)
-		if response.status_code == 200:
-			data = response.json()
-			price = data.get('bitcoin', {}).get('usd', 0)
-			return jsonify({
-				"price_usd": price,
-				"timestamp": datetime.utcnow().isoformat(),
-				"source": "coingecko"
-			})
-		else:
-			raise Exception(f"API returned status {response.status_code}")
-	except Exception as e:
-		# در صورت خطا، قیمت پیش‌فرض برگردان
-		return jsonify({
-			"price_usd": 50000,
-			"timestamp": datetime.utcnow().isoformat(),
-			"source": "fallback",
-			"error": str(e)
-		})
+@api_bp.get("/price")
+def get_prices():
+    try:
+        response = requests.post('https://api.nobitex.ir/market/stats', json={
+            "srcCurrency": "btc,usdt",
+            "dstCurrency": "rls,usdt"
+        }, timeout=5)
+        if response.status_code == 200:
+            data = response.json()["stats"]
+            btc_irt = float(data.get("btc-rls", {}).get("latest", 0))
+            usdt_irt = float(data.get("usdt-rls", {}).get("latest", 0))
+            btc_usdt = float(data.get("btc-usdt", {}).get("latest", 0))
+            return jsonify({
+                "btc_irt": btc_irt,
+                "usdt_irt": usdt_irt,
+                "btc_usdt": btc_usdt,
+                "timestamp": datetime.utcnow().isoformat(),
+                "source": "nobitex"
+            })
+        else:
+            raise Exception(f"API returned status {response.status_code}")
+    except Exception as e:
+        # Fallback prices
+        return jsonify({
+            "btc_irt": 3000000000,
+            "usdt_irt": 60000,
+            "btc_usdt": 50000,
+            "timestamp": datetime.utcnow().isoformat(),
+            "source": "fallback",
+            "error": str(e)
+        })
 
 
 def _get_usd_to_toman(conn) -> float:
