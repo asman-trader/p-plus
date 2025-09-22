@@ -88,9 +88,9 @@ def panel_add():
 			flash("مقادیر وارد شده نامعتبر است.", "error")
 			return redirect(url_for("panel_bp.deposits_page"))
 
-	if amount_btc <= 0 or price_usd_per_btc <= 0:
-		flash("مقادیر باید بزرگ‌تر از صفر باشند.", "error")
-		return redirect(url_for("panel_bp.deposits_page"))
+		if amount_btc <= 0 or price_usd_per_btc <= 0:
+			flash("مقادیر باید بزرگ‌تر از صفر باشند.", "error")
+			return redirect(url_for("panel_bp.deposits_page"))
 
 		conn = get_db_connection()
 		cur = conn.cursor()
@@ -114,9 +114,9 @@ def panel_withdraw():
 			flash("مقادیر وارد شده نامعتبر است.", "error")
 			return redirect(url_for("panel_bp.withdrawals_page"))
 
-	if amount_btc <= 0 or price_usd_per_btc <= 0:
-		flash("مقادیر باید بزرگ‌تر از صفر باشند.", "error")
-		return redirect(url_for("panel_bp.withdrawals_page"))
+		if amount_btc <= 0 or price_usd_per_btc <= 0:
+			flash("مقادیر باید بزرگ‌تر از صفر باشند.", "error")
+			return redirect(url_for("panel_bp.withdrawals_page"))
 
 		conn = get_db_connection()
 		cur = conn.cursor()
