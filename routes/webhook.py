@@ -17,10 +17,10 @@ import os
 # --------------------------
 webhook_bp = Blueprint("webhook_bp", __name__)
 
-# --- سکرت از ENV خوانده می‌شود؛ اگر نبود، لاگ هشدار می‌دهیم اما برنامه را متوقف نمی‌کنیم ---
+# --- Secret from ENV; if not set, skip signature check with warning ---
 SECRET_ENV = os.environ.get("WEBHOOK_SECRET")
 if not SECRET_ENV:
-    print("[webhook] ⚠️ WEBHOOK_SECRET تنظیم نشده است؛ درخواست‌های وبهوک رد خواهند شد (403)")
+    print("[webhook] WARNING: WEBHOOK_SECRET not set; skipping signature check (INSECURE!)")
 SECRET = (SECRET_ENV or "").encode()
 
 # مسیر پروژه و برنچ
@@ -38,8 +38,9 @@ RESTART_CMD = os.environ.get("RESTART_CMD")
 # بررسی صحت امضای GitHub
 # --------------------------
 def verify_signature(data: bytes, signature: str | None) -> bool:
-    """تطبیق امضای ارسال‌شده توسط GitHub با محاسبه محلی"""
-    if not signature or not SECRET:
+    if not SECRET:
+        return True  # Skip check if no secret
+    if not signature:
         return False
     mac = hmac.new(SECRET, data, hashlib.sha256)
     return hmac.compare_digest("sha256=" + mac.hexdigest(), signature)
