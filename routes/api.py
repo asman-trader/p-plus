@@ -11,26 +11,22 @@ api_bp = Blueprint("api_bp", __name__, url_prefix="/api")
 @api_bp.get("/price")
 def get_prices():
     try:
-        response = requests.post('https://api.nobitex.ir/market/stats', json={
-            "srcCurrency": "btc,usdt",
-            "dstCurrency": "rls,usdt"
-        }, timeout=5)
+        response = requests.get('https://api.wallex.ir/v1/currencies/stats', timeout=5)
         if response.status_code == 200:
-            data = response.json()["stats"]
-            btc_irt = float(data.get("btc-rls", {}).get("latest", 0))
-            usdt_irt = float(data.get("usdt-rls", {}).get("latest", 0))
-            btc_usdt = float(data.get("btc-usdt", {}).get("latest", 0)) if "btc-usdt" in data else (btc_irt / usdt_irt if usdt_irt > 0 else 0)
+            data = response.json()['result']
+            btc_irt = float(data['btcirt']['price'])
+            usdt_irt = float(data['usdtirt']['price'])
+            btc_usdt = float(data['btcusdt']['price'])
             return jsonify({
                 "btc_irt": btc_irt,
                 "usdt_irt": usdt_irt,
                 "btc_usdt": btc_usdt,
                 "timestamp": datetime.utcnow().isoformat(),
-                "source": "nobitex"
+                "source": "wallex"
             })
         else:
             raise Exception(f"API returned status {response.status_code}")
     except Exception as e:
-        # Fallback prices
         return jsonify({
             "btc_irt": 3000000000,
             "usdt_irt": 60000,
