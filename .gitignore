@@ -1,4 +1,49 @@
 __pycache__/
-*.pyc
-tmp/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtualenv / environments
+.venv/
+venv/
+env/
+ENV/
+*virtualenv*/
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+server.log
+server.err
+server.out
 stderr.log
+
+# SQLite and local data
+*.sqlite3
+pplus.sqlite3
+instance/
+data/
+var/
+
+# Runtime / temp
+tmp/
+cache/
+*.pid
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Editors/OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Node (if present)
+node_modules/
