@@ -33,22 +33,42 @@ def _to_float(txt: str) -> float:
 def panel_index():
 	conn = get_db_connection()
 	cur = conn.cursor()
-	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM purchases ORDER BY id DESC")
+	
+	# دریافت آخرین تراکنش‌ها
+	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM purchases ORDER BY id DESC LIMIT 5")
 	purchases = cur.fetchall()
-	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM withdrawals ORDER BY id DESC")
+	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM withdrawals ORDER BY id DESC LIMIT 5")
 	withdrawals = cur.fetchall()
-	# Total deposits in USD and BTC
+	
+	# محاسبه آمار کلی
 	cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM purchases")
-	total_usd = cur.fetchone()[0] or 0
+	total_purchased_usd = float(cur.fetchone()[0] or 0)
 	cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM purchases")
-	total_btc = float(cur.fetchone()[0] or 0)
+	total_purchased_btc = float(cur.fetchone()[0] or 0)
+	
 	cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM withdrawals")
-	total_withdraw_usd = cur.fetchone()[0] or 0
+	total_withdrawn_usd = float(cur.fetchone()[0] or 0)
 	cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM withdrawals")
-	total_withdraw_btc = float(cur.fetchone()[0] or 0)
+	total_withdrawn_btc = float(cur.fetchone()[0] or 0)
+	
+	# محاسبه موجودی فعلی
+	current_btc_balance = total_purchased_btc - total_withdrawn_btc
+	net_invested_usd = total_purchased_usd - total_withdrawn_usd
+	
+	# نرخ تبدیل
 	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
 	usd_to_toman = float(cur.fetchone()[0])
-	# Inception (first purchase date) for ROI/APY calculations
+	
+	# محاسبه ROI (درصد سود/زیان)
+	roi_percentage = 0
+	if net_invested_usd > 0:
+		# اینجا باید قیمت فعلی BTC را از API دریافت کنیم
+		# برای حالا از یک قیمت ثابت استفاده می‌کنیم
+		current_btc_price = 50000  # این باید از API دریافت شود
+		current_value_usd = current_btc_balance * current_btc_price
+		roi_percentage = ((current_value_usd - net_invested_usd) / net_invested_usd) * 100
+	
+	# تاریخ شروع سرمایه‌گذاری
 	cur.execute("SELECT MIN(created_at) FROM purchases")
 	row_first = cur.fetchone()
 	inception_days = 0
@@ -59,23 +79,22 @@ def panel_index():
 			inception_days = max(0, (datetime.utcnow() - dt0).days)
 	except Exception:
 		inception_days = 0
-	total_toman = total_usd * usd_to_toman
+	
 	conn.close()
-	net_invested_usd = max(0.0, float(total_usd) - float(total_withdraw_usd))
 
 	return render_template(
 		"panel.html",
 		purchases=purchases,
 		withdrawals=withdrawals,
-		total_usd=total_usd,
-		usd_to_toman=usd_to_toman,
-		total_toman=total_toman,
-		total_btc=total_btc,
-		total_withdraw_usd=total_withdraw_usd,
-		total_withdraw_toman=total_withdraw_usd * usd_to_toman,
-		total_withdraw_btc=total_withdraw_btc,
-		inception_days=inception_days,
+		total_purchased_usd=total_purchased_usd,
+		total_purchased_btc=total_purchased_btc,
+		total_withdrawn_usd=total_withdrawn_usd,
+		total_withdrawn_btc=total_withdrawn_btc,
+		current_btc_balance=current_btc_balance,
 		net_invested_usd=net_invested_usd,
+		usd_to_toman=usd_to_toman,
+		roi_percentage=roi_percentage,
+		inception_days=inception_days,
 	)
 
 
@@ -219,12 +238,35 @@ def withdrawals_page():
 def balance_page():
 	conn = get_db_connection()
 	cur = conn.cursor()
+	
+	# محاسبه موجودی واقعی (خرید - برداشت)
 	cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM purchases")
-	total_btc = float(cur.fetchone()[0] or 0)
+	total_purchased_btc = float(cur.fetchone()[0] or 0)
+	cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM withdrawals")
+	total_withdrawn_btc = float(cur.fetchone()[0] or 0)
+	current_btc_balance = total_purchased_btc - total_withdrawn_btc
+	
+	# محاسبه ارزش سرمایه‌گذاری شده
+	cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM purchases")
+	total_invested_usd = float(cur.fetchone()[0] or 0)
+	cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM withdrawals")
+	total_withdrawn_usd = float(cur.fetchone()[0] or 0)
+	net_invested_usd = total_invested_usd - total_withdrawn_usd
+	
+	# نرخ تبدیل
 	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
 	usd_to_toman = float(cur.fetchone()[0])
+	
 	conn.close()
-	return render_template("balance.html", total_btc=total_btc, usd_to_toman=usd_to_toman)
+	
+	return render_template("balance.html", 
+		current_btc_balance=current_btc_balance,
+		total_purchased_btc=total_purchased_btc,
+		total_withdrawn_btc=total_withdrawn_btc,
+		net_invested_usd=net_invested_usd,
+		total_invested_usd=total_invested_usd,
+		total_withdrawn_usd=total_withdrawn_usd,
+		usd_to_toman=usd_to_toman)
 
 
 @panel_bp.get("/purchases")

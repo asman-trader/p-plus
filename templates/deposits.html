@@ -4,11 +4,24 @@
 
 {% block content %}
 <div class="card" id="deposit">
-  <h2>واریزی</h2>
-  <div class="totals">
-    <div class="pill">واریزی کل (USD): <strong>{{ '%.2f' % total_usd }}</strong> $</div>
-    <div class="pill">واریزی کل (تومان): <strong>{{ '{:,.0f}'.format(total_toman) }}</strong></div>
+  <h2>واریزی جدید</h2>
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="icon">💰</div>
+      <div>
+        <div class="label">کل واریزی (USD)</div>
+        <div class="value">${{ '%.2f' % total_usd }}</div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="icon">🏦</div>
+      <div>
+        <div class="label">کل واریزی (تومان)</div>
+        <div class="value">{{ '{:,.0f}'.format(total_toman) }} <span class="sub">تومان</span></div>
+      </div>
+    </div>
   </div>
+  
   <form method="post" action="{{ url_for('panel_bp.panel_add') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-grid">
@@ -21,29 +34,14 @@
         <input type="number" step="0.01" min="0" name="price_usd_per_btc" required inputmode="decimal" placeholder="مثلاً 61234.50">
       </label>
     </div>
-    <div class="section-actions" style="margin-top:12px; display:flex; gap:10px;">
+    <div class="section-actions">
       <button type="submit" class="btn btn-primary">ثبت واریزی</button>
     </div>
   </form>
 </div>
+
 <div class="card" id="deposits-list">
   <h2>آخرین واریزی‌ها</h2>
-  <div id="dp_mobile" class="row" style="display:none;"></div>
+  <div class="hint">💡 برای مشاهده لیست کامل واریزی‌ها به صفحه "خریدها" مراجعه کنید</div>
 </div>
-<script>
-  (function(){
-    var isMobile = window.matchMedia('(max-width: 640px)');
-    var listWrap = document.getElementById('deposits-list');
-    var mob = document.getElementById('dp_mobile');
-    function apply(){
-      if (!listWrap || !mob) return;
-      var mobile = isMobile.matches;
-      mob.style.display = mobile ? '' : 'none';
-      // این صفحه دیتای لیست واریزی‌ها را به‌صورت جدول ندارد؛
-      // اگر بعداً API لیست را اضافه کردیم، اینجا کارت‌های موبایل رندر می‌شود.
-    }
-    apply();
-    isMobile.addEventListener('change', apply);
-  })();
-</script>
 {% endblock %}

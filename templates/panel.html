@@ -148,23 +148,23 @@
             <div class="icon">💰</div>
             <div>
               <div class="label">واریزی کل</div>
-              <div class="value">{{ '%.2f' % total_usd }} <span class="sub">$</span></div>
-              <div class="sub">{{ '{:,.0f}'.format(total_toman) }} تومان</div>
+              <div class="value">${{ '%.2f' % total_purchased_usd }}</div>
+              <div class="sub">{{ '{:,.0f}'.format(total_purchased_usd * usd_to_toman) }} تومان</div>
             </div>
           </a>
           <a class="kpi" href="{{ url_for('panel_bp.withdrawals_page') }}" style="text-decoration:none; color: inherit;">
             <div class="icon">💸</div>
             <div>
               <div class="label">برداشت کل</div>
-              <div class="value">{{ '%.2f' % total_withdraw_usd }} <span class="sub">$</span></div>
-              <div class="sub">{{ '{:,.0f}'.format(total_withdraw_toman) }} تومان</div>
+              <div class="value">${{ '%.2f' % total_withdrawn_usd }}</div>
+              <div class="sub">{{ '{:,.0f}'.format(total_withdrawn_usd * usd_to_toman) }} تومان</div>
             </div>
           </a>
           <a class="kpi" id="kpi_hold" href="{{ url_for('panel_bp.balance_page') }}" style="text-decoration:none; color: inherit;">
             <div class="icon">💎</div>
             <div>
-              <div class="label">دارایی</div>
-              <div class="value" id="hold_btc">{{ '%.8f' % total_btc }} <span class="sub">BTC</span></div>
+              <div class="label">موجودی فعلی</div>
+              <div class="value" id="hold_btc">{{ '%.8f' % current_btc_balance }} <span class="sub">BTC</span></div>
               <div class="label" style="margin-top:8px;">ارزش فعلی</div>
               <div class="value"><span id="hold_usd">...</span> <span class="sub">$</span></div>
               <div class="sub"><span id="hold_toman">...</span> تومان</div>
@@ -178,12 +178,12 @@
               <div class="sub" id="pl_tmn"></div>
 
               <div class="label" style="margin-top:8px;">بازده کل (ROI)</div>
-              <div class="value" id="roi_val">...</div>
-              <div class="sub" id="roi_note"></div>
+              <div class="value" id="roi_val">{{ '%.1f' % roi_percentage }}%</div>
+              <div class="sub" id="roi_note">نسبت به سرمایه خالص</div>
 
-              <div class="label" style="margin-top:8px;">بازده سالانه (APY)</div>
-              <div class="value" id="apy_val">...</div>
-              <div class="sub" id="apy_days"></div>
+              <div class="label" style="margin-top:8px;">سرمایه‌گذاری خالص</div>
+              <div class="value">${{ '%.2f' % net_invested_usd }}</div>
+              <div class="sub" id="apy_days">{{ inception_days }} روز از شروع</div>
             </div>
           </a>
         </div>
@@ -197,7 +197,7 @@
       var usdToToman = Number("{{ '%.0f' % usd_to_toman }}");
       var usdEl = document.getElementById('btc_usd');
       var tomanEl = document.getElementById('btc_toman');
-      var totalBtc = Number("{{ '%.8f' % total_btc }}");
+      var currentBtcBalance = Number("{{ '%.8f' % current_btc_balance }}");
       var holdUsdEl = document.getElementById('hold_usd');
       var holdTmnEl = document.getElementById('hold_toman');
       var plUsdEl = document.getElementById('pl_usd');
@@ -234,16 +234,13 @@
           usdEl.textContent = price.toFixed(2);
           var toman = Math.round(price * usdToToman);
           tomanEl.textContent = '(' + toman.toLocaleString('fa-IR') + ' تومان)';
-          var holdUsd = totalBtc * price;
+          var holdUsd = currentBtcBalance * price;
           var holdTmn = Math.round(holdUsd * usdToToman);
           holdUsdEl.textContent = holdUsd.toFixed(2);
           holdTmnEl.textContent = holdTmn.toLocaleString('fa-IR');
 
-          // Compute P/L using deposits (total_usd) and withdrawals deducted
-          var totalDepositsUsd = Number("{{ '%.2f' % total_usd }}");
-          var totalWithdrawUsd = Number("{{ '%.2f' % total_withdraw_usd }}");
-          var netInvestedCalc = Math.max(0, totalDepositsUsd - totalWithdrawUsd);
-          var plUsd = holdUsd - netInvestedCalc;
+          // Compute P/L using current balance and net invested amount
+          var plUsd = holdUsd - netInvestedUsd;
           if (plUsdEl) {
             plUsdEl.textContent = plUsd.toFixed(2) + ' $';
             var kpiPl = document.getElementById('kpi_pl');

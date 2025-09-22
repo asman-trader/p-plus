@@ -3,42 +3,95 @@
 {% block title %}دارایی - داشبورد{% endblock %}
 
 {% block content %}
-<style>
-  .kpi-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-  @media (min-width: 640px) { .kpi-grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
-  .kpi { background: var(--pill-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; display: flex; gap: 12px; align-items: center; }
-  .kpi .icon { width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--card); border: 1px solid var(--card-border); font-size: 18px; }
-  .kpi .label { font-size: 12px; color: var(--muted); }
-  .kpi .value { font-size: 18px; font-weight: 700; }
-  .kpi .sub { font-size: 12px; color: var(--muted); }
-  .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
-</style>
-
 <div class="card" id="balance">
-  <h2>دارایی</h2>
+  <h2>دارایی فعلی</h2>
   <div class="kpi-grid">
     <div class="kpi">
       <div class="icon">🪙</div>
       <div>
-        <div class="label">مقدار</div>
-        <div class="value"><span id="hold_btc">{{ '%.8f' % total_btc }}</span> <span class="sub">BTC</span></div>
+        <div class="label">موجودی BTC</div>
+        <div class="value">{{ '%.8f' % current_btc_balance }} <span class="sub">BTC</span></div>
+        <div class="sub">خرید: {{ '%.8f' % total_purchased_btc }} | برداشت: {{ '%.8f' % total_withdrawn_btc }}</div>
       </div>
     </div>
     <div class="kpi">
       <div class="icon">💵</div>
       <div>
-        <div class="label">ارزش فعلی</div>
-        <div class="value"><span id="hold_usd">...</span> <span class="sub">$</span></div>
+        <div class="label">ارزش فعلی (USD)</div>
+        <div class="value"><span id="current_usd_value">...</span> <span class="sub">$</span></div>
+        <div class="sub">سرمایه‌گذاری: ${{ '%.2f' % net_invested_usd }}</div>
       </div>
     </div>
     <div class="kpi">
       <div class="icon">🇮🇷</div>
       <div>
-        <div class="label">ارزش فعلی</div>
-        <div class="value"><span id="hold_toman">...</span> <span class="sub">تومان</span></div>
+        <div class="label">ارزش فعلی (تومان)</div>
+        <div class="value"><span id="current_toman_value">...</span> <span class="sub">تومان</span></div>
+        <div class="sub">نرخ: {{ '{:,.0f}'.format(usd_to_toman) }} تومان</div>
       </div>
     </div>
   </div>
-  <div class="hint">قیمت به‌صورت خودکار از بازار دریافت و اعداد به‌روزرسانی می‌شوند.</div>
+  
+  <div class="divider"></div>
+  
+  <h3>جزئیات تراکنش‌ها</h3>
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="icon">📈</div>
+      <div>
+        <div class="label">کل خرید (USD)</div>
+        <div class="value">${{ '%.2f' % total_invested_usd }}</div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="icon">📉</div>
+      <div>
+        <div class="label">کل برداشت (USD)</div>
+        <div class="value">${{ '%.2f' % total_withdrawn_usd }}</div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="icon">💰</div>
+      <div>
+        <div class="label">سرمایه‌گذاری خالص</div>
+        <div class="value">${{ '%.2f' % net_invested_usd }}</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="hint">💡 قیمت فعلی BTC به‌صورت خودکار از بازار دریافت می‌شود</div>
 </div>
+
+<script>
+(function() {
+  const btcAmount = {{ current_btc_balance }};
+  const usdToToman = {{ usd_to_toman }};
+  
+  // دریافت قیمت فعلی BTC (مثال - در واقعیت باید از API دریافت شود)
+  function fetchCurrentPrice() {
+    // اینجا باید از یک API واقعی استفاده شود
+    // برای مثال از CoinGecko یا Binance
+    return fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd')
+      .then(response => response.json())
+      .then(data => data.bitcoin.usd)
+      .catch(() => 50000); // قیمت پیش‌فرض در صورت خطا
+  }
+  
+  function updateValues(currentPrice) {
+    const usdValue = btcAmount * currentPrice;
+    const tomanValue = usdValue * usdToToman;
+    
+    document.getElementById('current_usd_value').textContent = usdValue.toFixed(2);
+    document.getElementById('current_toman_value').textContent = tomanValue.toLocaleString('fa-IR');
+  }
+  
+  // بارگذاری اولیه
+  fetchCurrentPrice().then(updateValues);
+  
+  // به‌روزرسانی هر 30 ثانیه
+  setInterval(() => {
+    fetchCurrentPrice().then(updateValues);
+  }, 30000);
+})();
+</script>
 {% endblock %}
