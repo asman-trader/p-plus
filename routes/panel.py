@@ -6,31 +6,28 @@ panel_bp = Blueprint("panel_bp", __name__)
 
 
 def _to_float(txt: str) -> float:
-    """Parse user input numbers with Persian digits and separators to float."""
-    if txt is None:
-        return 0.0
-    s = str(txt).strip()
-    # Convert Persian digits to ASCII
-    trans = str.maketrans("۰۱۲۳۴۵۶۷۸۹,٬٫»،","0123456789....",
-                          )
-    # safer mapping step-by-step
-    persian_digits = "۰۱۲۳۴۵۶۷۸۹"
-    for i, d in enumerate(persian_digits):
-        s = s.replace(d, str(i))
-    # normalize separators
-    s = s.replace("،", ",").replace("٬", ",").replace("٫", ".")
-    s = s.replace(" ", "")
-    # remove thousand separators
-    if s.count(",") > 0 and "." in s:
-        s = s.replace(",", "")
-    elif s.count(",") == 1 and "." not in s:
-        s = s.replace(",", ".")
-    else:
-        s = s.replace(",", "")
-    try:
-        return float(s)
-    except Exception:
-        return float("nan")
+	"""Parse user input numbers with Persian digits and separators to float."""
+	if txt is None:
+		return 0.0
+	s = str(txt).strip()
+	# Convert Persian digits to ASCII
+	persian_digits = "۰۱۲۳۴۵۶۷۸۹"
+	for i, d in enumerate(persian_digits):
+		s = s.replace(d, str(i))
+	# normalize separators and spaces
+	s = s.replace("،", ",").replace("٬", ",").replace("٫", ".")
+	s = s.replace(" ", "")
+	# remove thousand separators / unify decimal
+	if s.count(",") > 0 and "." in s:
+		s = s.replace(",", "")
+	elif s.count(",") == 1 and "." not in s:
+		s = s.replace(",", ".")
+	else:
+		s = s.replace(",", "")
+	try:
+		return float(s)
+	except Exception:
+		return float("nan")
 
 @panel_bp.get("/panel")
 def panel_index():
@@ -84,11 +81,11 @@ def panel_index():
 
 @panel_bp.post("/panel/add")
 def panel_add():
-    amount_btc = _to_float(request.form.get("amount_btc", "0"))
-    price_usd_per_btc = _to_float(request.form.get("price_usd_per_btc", "0"))
-    if not (amount_btc == amount_btc and price_usd_per_btc == price_usd_per_btc):  # NaN check
-        flash("مقادیر وارد شده نامعتبر است.", "error")
-        return redirect(url_for("panel_bp.deposits_page"))
+	amount_btc = _to_float(request.form.get("amount_btc", "0"))
+	price_usd_per_btc = _to_float(request.form.get("price_usd_per_btc", "0"))
+	if not (amount_btc == amount_btc and price_usd_per_btc == price_usd_per_btc):  # NaN check
+		flash("مقادیر وارد شده نامعتبر است.", "error")
+		return redirect(url_for("panel_bp.deposits_page"))
 
 	if amount_btc <= 0 or price_usd_per_btc <= 0:
 		flash("مقادیر باید بزرگ‌تر از صفر باشند.", "error")
@@ -105,11 +102,11 @@ def panel_add():
 
 @panel_bp.post("/panel/withdraw")
 def panel_withdraw():
-    amount_btc = _to_float(request.form.get("amount_btc", "0"))
-    price_usd_per_btc = _to_float(request.form.get("price_usd_per_btc", "0"))
-    if not (amount_btc == amount_btc and price_usd_per_btc == price_usd_per_btc):
-        flash("مقادیر وارد شده نامعتبر است.", "error")
-        return redirect(url_for("panel_bp.withdrawals_page"))
+	amount_btc = _to_float(request.form.get("amount_btc", "0"))
+	price_usd_per_btc = _to_float(request.form.get("price_usd_per_btc", "0"))
+	if not (amount_btc == amount_btc and price_usd_per_btc == price_usd_per_btc):
+		flash("مقادیر وارد شده نامعتبر است.", "error")
+		return redirect(url_for("panel_bp.withdrawals_page"))
 
 	if amount_btc <= 0 or price_usd_per_btc <= 0:
 		flash("مقادیر باید بزرگ‌تر از صفر باشند.", "error")
