@@ -160,17 +160,12 @@
               <div class="sub">{{ '{:,.0f}'.format(total_withdraw_toman) }} تومان</div>
             </div>
           </div>
-          <div class="kpi">
+          <div class="kpi" id="kpi_hold">
             <div class="icon">💎</div>
             <div>
-              <div class="label">موجودی BTC</div>
+              <div class="label">دارایی</div>
               <div class="value" id="hold_btc">{{ '%.8f' % total_btc }} <span class="sub">BTC</span></div>
-            </div>
-          </div>
-          <div class="kpi" id="kpi_value">
-            <div class="icon">📈</div>
-            <div>
-              <div class="label">ارزش فعلی</div>
+              <div class="label" style="margin-top:8px;">ارزش فعلی</div>
               <div class="value"><span id="hold_usd">...</span> <span class="sub">$</span></div>
               <div class="sub"><span id="hold_toman">...</span> تومان</div>
             </div>
@@ -181,22 +176,14 @@
               <div class="label">سود / زیان</div>
               <div class="value" id="pl_usd">...</div>
               <div class="sub" id="pl_tmn"></div>
-            </div>
-          </div>
-          <div class="kpi" id="kpi_apy">
-            <div class="icon">📅</div>
-            <div>
-              <div class="label">بازده سالانه (APY)</div>
-              <div class="value" id="apy_val">...</div>
-              <div class="sub" id="apy_days"></div>
-            </div>
-          </div>
-          <div class="kpi" id="kpi_roi">
-            <div class="icon">📊</div>
-            <div>
-              <div class="label">بازده کل (ROI)</div>
+
+              <div class="label" style="margin-top:8px;">بازده کل (ROI)</div>
               <div class="value" id="roi_val">...</div>
               <div class="sub" id="roi_note"></div>
+
+              <div class="label" style="margin-top:8px;">بازده سالانه (APY)</div>
+              <div class="value" id="apy_val">...</div>
+              <div class="sub" id="apy_days"></div>
             </div>
           </div>
         </div>

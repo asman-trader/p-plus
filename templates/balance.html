@@ -1,14 +1,44 @@
 {% extends "base.html" %}
 
-{% block title %}موجودی - داشبورد{% endblock %}
+{% block title %}دارایی - داشبورد{% endblock %}
 
 {% block content %}
+<style>
+  .kpi-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 640px) { .kpi-grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+  .kpi { background: var(--pill-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; display: flex; gap: 12px; align-items: center; }
+  .kpi .icon { width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--card); border: 1px solid var(--card-border); font-size: 18px; }
+  .kpi .label { font-size: 12px; color: var(--muted); }
+  .kpi .value { font-size: 18px; font-weight: 700; }
+  .kpi .sub { font-size: 12px; color: var(--muted); }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+</style>
+
 <div class="card" id="balance">
-  <h2>موجودی</h2>
-  <div class="totals">
-    <div class="pill">موجودی BTC: <strong id="hold_btc">{{ '%.8f' % total_btc }}</strong> BTC</div>
-    <div class="pill">ارزش فعلی (USD): <strong id="hold_usd">...</strong> $</div>
-    <div class="pill">ارزش فعلی (تومان): <strong id="hold_toman">...</strong></div>
+  <h2>دارایی</h2>
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="icon">🪙</div>
+      <div>
+        <div class="label">مقدار</div>
+        <div class="value"><span id="hold_btc">{{ '%.8f' % total_btc }}</span> <span class="sub">BTC</span></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="icon">💵</div>
+      <div>
+        <div class="label">ارزش فعلی</div>
+        <div class="value"><span id="hold_usd">...</span> <span class="sub">$</span></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="icon">🇮🇷</div>
+      <div>
+        <div class="label">ارزش فعلی</div>
+        <div class="value"><span id="hold_toman">...</span> <span class="sub">تومان</span></div>
+      </div>
+    </div>
   </div>
+  <div class="hint">قیمت به‌صورت خودکار از بازار دریافت و اعداد به‌روزرسانی می‌شوند.</div>
 </div>
 {% endblock %}

@@ -127,7 +127,10 @@
     .bottom-nav a .icon { display:block; margin: 0 auto 4px; width: 20px; height: 20px; font-size: 16px; }
     .bottom-nav a[aria-current="page"] { color: var(--text); background: var(--pill-bg); font-weight: 700; }
     @media (min-width: 640px) { .bottom-nav { display: none; } }
-    @media (max-width: 639px) { .container { padding-bottom: calc(70px + env(safe-area-inset-bottom)); } }
+    @media (max-width: 639px) {
+      .bottom-nav { display: none; }
+      .container { padding-bottom: 12px; }
+    }
     html { scroll-behavior: smooth; }
     .divider { height: 2px; background: linear-gradient(90deg, transparent, var(--card-border), transparent); margin: 20px 0; border-radius: 2px; }
 
@@ -179,7 +182,7 @@
   <nav class="bottom-nav" aria-label="پیمایش">
     <a href="{{ url_for('panel_bp.deposits_page') }}"{% if request.path == url_for('panel_bp.deposits_page') %} aria-current="page"{% endif %}><span class="icon">💰</span>واریزی</a>
     <a href="{{ url_for('panel_bp.withdrawals_page') }}"{% if request.path == url_for('panel_bp.withdrawals_page') %} aria-current="page"{% endif %}><span class="icon">💸</span>برداشت</a>
-    <a href="{{ url_for('panel_bp.balance_page') }}"{% if request.path == url_for('panel_bp.balance_page') %} aria-current="page"{% endif %}><span class="icon">💎</span>موجودی</a>
+    <a href="{{ url_for('panel_bp.balance_page') }}"{% if request.path == url_for('panel_bp.balance_page') %} aria-current="page"{% endif %}><span class="icon">💎</span>دارایی</a>
     <a href="{{ url_for('panel_bp.purchases_page') }}"{% if request.path == url_for('panel_bp.purchases_page') %} aria-current="page"{% endif %}><span class="icon">📊</span>خریدها</a>
   </nav>
 
