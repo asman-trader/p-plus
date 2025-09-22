@@ -81,7 +81,6 @@ def panel_index():
 
 @panel_bp.post("/panel/add")
 def panel_add():
-	# Fixed indentation issue
 	try:
 		amount_btc = _to_float(request.form.get("amount_btc", "0"))
 		price_usd_per_btc = _to_float(request.form.get("price_usd_per_btc", "0"))
@@ -161,6 +160,7 @@ def home():
 @panel_bp.get("/healthz")
 def healthz():
 	return "ok", 200
+
 @panel_bp.get("/settings")
 def settings_page():
 	# Load current rate
@@ -246,5 +246,3 @@ def purchases_page():
 		for r in rows_w
 	]
 	return render_template("purchases.html", purchases=purchases, withdrawals=withdrawals, usd_to_toman=usd_to_toman)
-
-
