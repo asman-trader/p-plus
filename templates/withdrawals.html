@@ -30,33 +30,82 @@
 
 <div class="card" id="withdrawals-list">
   <h2>لیست برداشت‌ها</h2>
-  <div class="table-scroll">
-    <table class="responsive">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>تاریخ</th>
-          <th>BTC</th>
-          <th>قیمت واحد (USD)</th>
-          <th>مبلغ (USD)</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% if withdrawals %}
-          {% for w in withdrawals %}
-            <tr>
-              <td data-label="#">{{ w["id"] }}</td>
-              <td class="muted" data-label="تاریخ">{{ w["created_at"] }}</td>
-              <td data-label="BTC">{{ '%.8f' % w["amount_btc"] }}</td>
-              <td data-label="قیمت واحد (USD)">{{ '%.2f' % w["price_usd_per_btc"] }}</td>
-              <td data-label="مبلغ (USD)">{{ '%.2f' % (w["amount_btc"] * w["price_usd_per_btc"]) }}</td>
-            </tr>
-          {% endfor %}
-        {% else %}
-          <tr><td colspan="5" class="muted">برداشتی ثبت نشده است.</td></tr>
-        {% endif %}
-      </tbody>
-    </table>
+  <div id="wd_desktop">
+    <div class="table-scroll">
+      <table class="responsive">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>تاریخ</th>
+            <th>BTC</th>
+            <th>قیمت واحد (USD)</th>
+            <th>مبلغ (USD)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if withdrawals %}
+            {% for w in withdrawals %}
+              <tr>
+                <td data-label="#">{{ w["id"] }}</td>
+                <td class="muted" data-label="تاریخ">{{ w["created_at"] }}</td>
+                <td data-label="BTC">{{ '%.8f' % w["amount_btc"] }}</td>
+                <td data-label="قیمت واحد (USD)">{{ '%.2f' % w["price_usd_per_btc"] }}</td>
+                <td data-label="مبلغ (USD)">{{ '%.2f' % (w["amount_btc"] * w["price_usd_per_btc"]) }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="5" class="muted">برداشتی ثبت نشده است.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div id="wd_mobile" style="display:none;">
+    <div id="wd_cards" class="row"></div>
   </div>
 </div>
+<script>
+  (function(){
+    var isMobile = window.matchMedia('(max-width: 640px)');
+    var d = document.getElementById('wd_desktop');
+    var m = document.getElementById('wd_mobile');
+    var cards = document.getElementById('wd_cards');
+    var data = {{ withdrawals|tojson }};
+    function renderCards(){
+      if (!cards) return;
+      cards.innerHTML = '';
+      if (!data || !data.length){
+        var empty = document.createElement('div');
+        empty.className = 'muted';
+        empty.textContent = 'برداشتی ثبت نشده است.';
+        cards.appendChild(empty);
+        return;
+      }
+      data.forEach(function(w){
+        var amt = Number(w.amount_btc || 0);
+        var price = Number(w.price_usd_per_btc || 0);
+        var total = amt * price;
+        var card = document.createElement('div');
+        card.className = 'card col';
+        card.innerHTML = '<div class="kpi">'+
+          '<div class="icon">💸</div>'+
+          '<div>'+
+          '<div class="label">#'+w.id+' • '+w.created_at+'</div>'+
+          '<div class="value">'+amt.toFixed(8)+' <span class="sub">BTC</span></div>'+
+          '<div class="label" style="margin-top:8px;">قیمت واحد: '+price.toFixed(2)+' $</div>'+
+          '<div class="sub">مبلغ: '+total.toFixed(2)+' $</div>'+
+          '</div></div>';
+        cards.appendChild(card);
+      });
+    }
+    function apply(){
+      var mobile = isMobile.matches;
+      if (d) d.style.display = mobile ? 'none' : '';
+      if (m) m.style.display = mobile ? '' : 'none';
+      if (mobile) renderCards();
+    }
+    apply();
+    isMobile.addEventListener('change', apply);
+  })();
+</script>
 {% endblock %}

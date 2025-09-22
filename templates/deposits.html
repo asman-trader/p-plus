@@ -26,4 +26,24 @@
     </div>
   </form>
 </div>
+<div class="card" id="deposits-list">
+  <h2>آخرین واریزی‌ها</h2>
+  <div id="dp_mobile" class="row" style="display:none;"></div>
+</div>
+<script>
+  (function(){
+    var isMobile = window.matchMedia('(max-width: 640px)');
+    var listWrap = document.getElementById('deposits-list');
+    var mob = document.getElementById('dp_mobile');
+    function apply(){
+      if (!listWrap || !mob) return;
+      var mobile = isMobile.matches;
+      mob.style.display = mobile ? '' : 'none';
+      // این صفحه دیتای لیست واریزی‌ها را به‌صورت جدول ندارد؛
+      // اگر بعداً API لیست را اضافه کردیم، اینجا کارت‌های موبایل رندر می‌شود.
+    }
+    apply();
+    isMobile.addEventListener('change', apply);
+  })();
+</script>
 {% endblock %}
