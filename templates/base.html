@@ -125,6 +125,9 @@
     .divider { height: 2px; background: linear-gradient(90deg, transparent, var(--card-border), transparent); margin: 20px 0; border-radius: 2px; }
 
     /* Drawer styles moved to `_drawer.html` */
+    /* Section actions utility */
+    .section-actions { display:flex; gap:10px; }
+    @media (max-width: 640px) { .section-actions { flex-direction: column; } .section-actions .btn, .section-actions a.btn { width: 100%; } }
   </style>
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn/Vazirmatn-font-face.css" rel="stylesheet">
   <meta name="color-scheme" content="dark light">

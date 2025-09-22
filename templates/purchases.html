@@ -5,7 +5,7 @@
 {% block content %}
 <div class="card" id="purchases">
   <h2>معاملات</h2>
-  <div class="row">
+  <div class="row" id="trades_desktop">
     <div class="col">
       <h3 style="margin-bottom:8px;">باز</h3>
       <div class="table-scroll">
@@ -46,6 +46,13 @@
       </div>
     </div>
   </div>
+  <div id="trades_mobile" style="display:none;">
+    <h3 style="margin-bottom:8px;">باز</h3>
+    <div id="open_cards" class="row"></div>
+    <div class="divider"></div>
+    <h3 style="margin-bottom:8px;">بسته</h3>
+    <div id="closed_cards" class="row"></div>
+  </div>
 </div>
 <script>
   (function(){
@@ -62,6 +69,7 @@
     var queue = purchases.map(function(p){
       return { id:p.id, date:p.created_at, amount: toNum(p.amount_btc), price: toNum(p.price_usd_per_btc) };
     }).reverse(); // oldest first
+    var closedLots = [];
     withdrawals.slice().forEach(function(w){
       var remain = toNum(w.amount_btc);
       var wPrice = toNum(w.price_usd_per_btc);
@@ -81,6 +89,7 @@
                        '<td data-label="میانگین خروج">'+wPrice.toFixed(2)+'</td>'+
                        '<td data-label="سود/زیان">'+pl.toFixed(2)+' $</td>';
         closedBody.appendChild(tr);
+        closedLots.push({ id: lot.id, buy: lot.date, sell: w.created_at, btc: take, buyP: lot.price, sellP: wPrice, pl: pl });
         lot.amount -= take;
         remain -= take;
         if(lot.amount <= 1e-12) queue.shift();
@@ -89,6 +98,8 @@
 
     function renderOpen(currentPrice){
       openBody.innerHTML='';
+      var openCards = document.getElementById('open_cards');
+      if (openCards) openCards.innerHTML='';
       queue.forEach(function(lot){
         var cost = lot.amount * lot.price;
         var curVal = lot.amount * currentPrice;
@@ -101,8 +112,44 @@
                        '<td data-label="ارزش فعلی">'+curVal.toFixed(2)+' $</td>'+
                        '<td data-label="سود/زیان">'+pl.toFixed(2)+' $</td>';
         openBody.appendChild(tr);
+        if (openCards) {
+          var cost = lot.amount * lot.price;
+          var curVal = lot.amount * currentPrice;
+          var pl = curVal - cost;
+          var card = document.createElement('div');
+          card.className = 'card col';
+          card.innerHTML = '<div class="kpi">'+
+            '<div class="icon">📈</div>'+
+            '<div>'+
+            '<div class="label">#'+lot.id+' • '+lot.date+'</div>'+
+            '<div class="value">'+lot.amount.toFixed(8)+' <span class="sub">BTC</span></div>'+
+            '<div class="sub">میانگین: '+lot.price.toFixed(2)+' $</div>'+
+            '<div class="label" style="margin-top:8px;">ارزش فعلی: '+curVal.toFixed(2)+' $ • سود/زیان: '+pl.toFixed(2)+' $</div>'+
+            '</div></div>';
+          openCards.appendChild(card);
+        }
       });
     }
+
+    function renderClosedCards(){
+      var closedCards = document.getElementById('closed_cards');
+      if (!closedCards) return;
+      closedCards.innerHTML = '';
+      closedLots.forEach(function(r){
+        var card = document.createElement('div');
+        card.className = 'card col';
+        card.innerHTML = '<div class="kpi">'+
+          '<div class="icon">📉</div>'+
+          '<div>'+
+          '<div class="label">#'+r.id+' • '+r.buy+' → '+r.sell+'</div>'+
+          '<div class="value">'+r.btc.toFixed(8)+' <span class="sub">BTC</span></div>'+
+          '<div class="sub">میانگین خرید: '+r.buyP.toFixed(2)+' $ • میانگین خروج: '+r.sellP.toFixed(2)+' $</div>'+
+          '<div class="label" style="margin-top:8px;">سود/زیان: '+r.pl.toFixed(2)+' $</div>'+
+          '</div></div>';
+        closedCards.appendChild(card);
+      });
+    }
+    renderClosedCards();
 
     function readPrice(){
       var p = Number(priceEl && priceEl.textContent && priceEl.textContent.replace(/[^0-9.]/g,''));
@@ -117,6 +164,18 @@
       if (p) renderOpen(p);
     });
     if (priceEl) obs.observe(priceEl, { childList:true });
+
+    function applyResponsive(){
+      var isMobile = window.matchMedia('(max-width: 640px)').matches;
+      var d = document.getElementById('trades_desktop');
+      var m = document.getElementById('trades_mobile');
+      if (d && m) {
+        d.style.display = isMobile ? 'none' : '';
+        m.style.display = isMobile ? '' : 'none';
+      }
+    }
+    applyResponsive();
+    window.addEventListener('resize', applyResponsive);
   })();
 </script>
 {% endblock %}
