@@ -9,7 +9,7 @@
     <div class="pill">واریزی کل (USD): <strong>{{ '%.2f' % total_usd }}</strong> $</div>
     <div class="pill">واریزی کل (تومان): <strong>{{ '{:,.0f}'.format(total_toman) }}</strong></div>
   </div>
-  <form method="post" action="{{ url_for('panel_bp.panel_add') }}" style="margin-top:12px;">
+  <form method="post" action="{{ url_for('panel_bp.panel_add') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-grid">
       <label>
@@ -21,7 +21,7 @@
         <input type="number" step="0.01" min="0" name="price_usd_per_btc" required inputmode="decimal" placeholder="مثلاً 61234.50">
       </label>
     </div>
-    <div style="margin-top:12px; display:flex; gap:10px;">
+    <div class="section-actions" style="margin-top:12px; display:flex; gap:10px;">
       <button type="submit" class="btn btn-primary">ثبت واریزی</button>
     </div>
   </form>

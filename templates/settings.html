@@ -11,7 +11,7 @@
       نرخ (تومان برای هر دلار)
       <input type="number" step="1" min="1" name="usd_to_toman" value="{{ '%.0f' % usd_to_toman }}" required inputmode="numeric" placeholder="مثلاً 60000">
     </label>
-    <div style="margin-top:12px; display:flex; gap:10px;">
+    <div class="section-actions" style="margin-top:12px; display:flex; gap:10px;">
       <button type="submit" class="btn btn-primary">ذخیره</button>
       <a href="{{ url_for('panel_bp.panel_index') }}" class="btn btn-outline">بازگشت</a>
     </div>

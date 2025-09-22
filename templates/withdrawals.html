@@ -10,7 +10,7 @@
     <div class="pill">برداشت کل (تومان): <strong>{{ '{:,.0f}'.format(total_withdraw_toman) }}</strong></div>
     <div class="pill">برداشت BTC: <strong>{{ '%.8f' % total_withdraw_btc }}</strong> BTC</div>
   </div>
-  <form method="post" action="{{ url_for('panel_bp.panel_withdraw') }}" style="margin-top:12px;">
+  <form method="post" action="{{ url_for('panel_bp.panel_withdraw') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-grid">
       <label>
@@ -22,7 +22,7 @@
         <input type="number" step="0.01" min="0" name="price_usd_per_btc" required inputmode="decimal" placeholder="مثلاً 60000">
       </label>
     </div>
-    <div style="margin-top:12px; display:flex; gap:10px;">
+    <div class="section-actions" style="margin-top:12px; display:flex; gap:10px;">
       <button type="submit" class="btn btn-danger">ثبت برداشت</button>
     </div>
   </form>
