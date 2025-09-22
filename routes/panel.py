@@ -81,44 +81,54 @@ def panel_index():
 
 @panel_bp.post("/panel/add")
 def panel_add():
-	amount_btc = _to_float(request.form.get("amount_btc", "0"))
-	price_usd_per_btc = _to_float(request.form.get("price_usd_per_btc", "0"))
-	if not (amount_btc == amount_btc and price_usd_per_btc == price_usd_per_btc):  # NaN check
-		flash("مقادیر وارد شده نامعتبر است.", "error")
-		return redirect(url_for("panel_bp.deposits_page"))
+	try:
+		amount_btc = _to_float(request.form.get("amount_btc", "0"))
+		price_usd_per_btc = _to_float(request.form.get("price_usd_per_btc", "0"))
+		if not (amount_btc == amount_btc and price_usd_per_btc == price_usd_per_btc):  # NaN check
+			flash("مقادیر وارد شده نامعتبر است.", "error")
+			return redirect(url_for("panel_bp.deposits_page"))
 
 	if amount_btc <= 0 or price_usd_per_btc <= 0:
 		flash("مقادیر باید بزرگ‌تر از صفر باشند.", "error")
 		return redirect(url_for("panel_bp.deposits_page"))
 
-	conn = get_db_connection()
-	cur = conn.cursor()
-	cur.execute("INSERT INTO purchases(created_at, amount_btc, price_usd_per_btc) VALUES(?,?,?)", (datetime.utcnow().isoformat(timespec="seconds"), amount_btc, price_usd_per_btc))
-	conn.commit()
-	conn.close()
-	flash("خرید با موفقیت ثبت شد.", "success")
-	return redirect(url_for("panel_bp.deposits_page"))
+		conn = get_db_connection()
+		cur = conn.cursor()
+		cur.execute("INSERT INTO purchases(created_at, amount_btc, price_usd_per_btc) VALUES(?,?,?)", (datetime.utcnow().isoformat(timespec="seconds"), amount_btc, price_usd_per_btc))
+		conn.commit()
+		conn.close()
+		flash("خرید با موفقیت ثبت شد.", "success")
+		return redirect(url_for("panel_bp.deposits_page"))
+	except Exception as e:
+		print("[panel_add] error:", e)
+		flash("خطای داخلی هنگام ثبت واریزی.", "error")
+		return redirect(url_for("panel_bp.deposits_page"))
 
 
 @panel_bp.post("/panel/withdraw")
 def panel_withdraw():
-	amount_btc = _to_float(request.form.get("amount_btc", "0"))
-	price_usd_per_btc = _to_float(request.form.get("price_usd_per_btc", "0"))
-	if not (amount_btc == amount_btc and price_usd_per_btc == price_usd_per_btc):
-		flash("مقادیر وارد شده نامعتبر است.", "error")
-		return redirect(url_for("panel_bp.withdrawals_page"))
+	try:
+		amount_btc = _to_float(request.form.get("amount_btc", "0"))
+		price_usd_per_btc = _to_float(request.form.get("price_usd_per_btc", "0"))
+		if not (amount_btc == amount_btc and price_usd_per_btc == price_usd_per_btc):
+			flash("مقادیر وارد شده نامعتبر است.", "error")
+			return redirect(url_for("panel_bp.withdrawals_page"))
 
 	if amount_btc <= 0 or price_usd_per_btc <= 0:
 		flash("مقادیر باید بزرگ‌تر از صفر باشند.", "error")
 		return redirect(url_for("panel_bp.withdrawals_page"))
 
-	conn = get_db_connection()
-	cur = conn.cursor()
-	cur.execute("INSERT INTO withdrawals(created_at, amount_btc, price_usd_per_btc) VALUES(?,?,?)", (datetime.utcnow().isoformat(timespec="seconds"), amount_btc, price_usd_per_btc))
-	conn.commit()
-	conn.close()
-	flash("برداشت با موفقیت ثبت شد.", "success")
-	return redirect(url_for("panel_bp.withdrawals_page"))
+		conn = get_db_connection()
+		cur = conn.cursor()
+		cur.execute("INSERT INTO withdrawals(created_at, amount_btc, price_usd_per_btc) VALUES(?,?,?)", (datetime.utcnow().isoformat(timespec="seconds"), amount_btc, price_usd_per_btc))
+		conn.commit()
+		conn.close()
+		flash("برداشت با موفقیت ثبت شد.", "success")
+		return redirect(url_for("panel_bp.withdrawals_page"))
+	except Exception as e:
+		print("[panel_withdraw] error:", e)
+		flash("خطای داخلی هنگام ثبت برداشت.", "error")
+		return redirect(url_for("panel_bp.withdrawals_page"))
 
 
 @panel_bp.post("/panel/rate")
