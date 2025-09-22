@@ -7,14 +7,14 @@ DB_PATH = os.environ.get("PPLUS_DB_PATH") or os.path.join(BASE_DIR, "pplus.sqlit
 
 
 def get_db_connection() -> sqlite3.Connection:
-	# Ensure target directory exists when using external DB paths
-	try:
-		os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-	except Exception:
-		pass
-	conn = sqlite3.connect(DB_PATH)
-	conn.row_factory = sqlite3.Row
-	return conn
+    # Ensure target directory exists when using external DB paths
+    try:
+        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    except Exception:
+        pass
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 def ensure_db() -> None:
