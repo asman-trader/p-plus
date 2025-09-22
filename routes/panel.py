@@ -81,6 +81,7 @@ def panel_index():
 
 @panel_bp.post("/panel/add")
 def panel_add():
+	# Fixed indentation issue
 	try:
 		amount_btc = _to_float(request.form.get("amount_btc", "0"))
 		price_usd_per_btc = _to_float(request.form.get("price_usd_per_btc", "0"))
