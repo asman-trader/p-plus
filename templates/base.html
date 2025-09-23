@@ -88,31 +88,312 @@
       .totals { gap:16px; }
       .totals .pill { padding:10px 14px; }
     }
-    .header-bar { display:flex; justify-content: space-between; align-items:center; gap:12px; flex-wrap:wrap; }
-    .actions { display:flex; align-items:center; gap:8px; position: relative; }
-    .header-bar a[aria-current="page"] { font-weight: 800; background: var(--pill-bg); padding: 4px 8px; border-radius: 8px; }
-    .price-section { margin-top: 16px; }
-    .price-card { background: var(--pill-bg); border:1px solid var(--card-border); border-radius:16px; padding:16px; backdrop-filter: blur(10px); text-align: center; transition: all 0.3s ease; }
-    .price-card:hover { transform: translateY(-2px); box-shadow: var(--glow); }
-    .price-label { font-size: 14px; color: var(--muted); font-weight: 600; display: block; margin-bottom: 8px; }
-    .price-value { font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-    .price-currency { font-size: 18px; color: var(--muted); margin-right: 4px; }
-    .price-toman { font-size: 12px; display: block; }
+    /* Enhanced Header Styles */
+    .header-bar { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      gap: 16px; 
+      flex-wrap: wrap;
+      padding: 8px 0;
+    }
+    
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .header-title h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      background: var(--primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .header-title a {
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease;
+    }
+    
+    .header-title a:hover {
+      transform: translateY(-1px);
+    }
+    
+    .header-title a[aria-current="page"] { 
+      font-weight: 800; 
+      background: var(--pill-bg); 
+      padding: 6px 12px; 
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+    }
+    
+    .actions { 
+      display: flex; 
+      align-items: center; 
+      gap: 12px; 
+      position: relative;
+      flex-shrink: 0;
+    }
+    
+    .price-section { 
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    
+    @media (min-width: 640px) {
+      .price-section {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    
+    .price-card { 
+      background: var(--pill-bg); 
+      border: 1px solid var(--card-border); 
+      border-radius: 16px; 
+      padding: 20px; 
+      backdrop-filter: blur(10px); 
+      text-align: center; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .price-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 16px 16px 0 0;
+    }
+    
+    .price-card:hover { 
+      transform: translateY(-3px); 
+      box-shadow: var(--glow);
+      border-color: var(--primary-600);
+    }
+    
+    .price-label { 
+      font-size: 13px; 
+      color: var(--muted); 
+      font-weight: 600; 
+      display: block; 
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .price-value { 
+      font-size: 28px; 
+      font-weight: 800; 
+      color: var(--text); 
+      margin-bottom: 6px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    
+    .price-currency { 
+      font-size: 16px; 
+      color: var(--muted); 
+      font-weight: 600;
+    }
+    
+    .price-toman { 
+      font-size: 13px; 
+      display: block;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    
+    /* Status indicator */
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
     .skeleton { position: relative; background: color-mix(in oklab, var(--pill-bg) 85%, transparent); color: transparent; border-radius: 8px; overflow: hidden; }
     .skeleton::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent); transform: translateX(-100%); animation: shimmer 1.2s infinite; }
     @keyframes shimmer { 100% { transform: translateX(100%); } }
-    .menu-btn { width:44px; height:44px; border-radius:12px; border:1px solid var(--card-border); background: var(--pill-bg); color: var(--text); display:flex; align-items:center; justify-content:center; cursor:pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); }
-    .menu-btn:hover { transform: scale(1.05); box-shadow: var(--glow); }
-    .menu { position:absolute; inset-inline-end:0; top:52px; width:220px; background: var(--card); border:1px solid var(--card-border); border-radius:16px; box-shadow: var(--shadow); padding:8px; display:none; z-index: 70; backdrop-filter: blur(20px); }
-    .menu.open { display:block; animation: menuSlide 0.3s ease; }
-    .menu a { display:block; padding:10px 12px; color: var(--text); text-decoration:none; border-radius:10px; transition: all 0.3s ease; font-weight: 500; }
-    .menu a:hover { background: var(--pill-bg); transform: translateX(-2px); }
-    @keyframes menuSlide { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .menu-btn { 
+      width: 48px; 
+      height: 48px; 
+      border-radius: 14px; 
+      border: 1px solid var(--card-border); 
+      background: var(--pill-bg); 
+      color: var(--text); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      cursor: pointer; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+      backdrop-filter: blur(10px);
+      font-size: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .menu-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.5s;
+    }
+    
+    .menu-btn:hover { 
+      transform: scale(1.05); 
+      box-shadow: var(--glow);
+      border-color: var(--primary-600);
+    }
+    
+    .menu-btn:hover::before {
+      left: 100%;
+    }
+    
+    .menu { 
+      position: absolute; 
+      inset-inline-end: 0; 
+      top: 60px; 
+      width: 280px; 
+      background: var(--card); 
+      border: 1px solid var(--card-border); 
+      border-radius: 20px; 
+      box-shadow: var(--shadow); 
+      padding: 12px; 
+      display: none; 
+      z-index: 70; 
+      backdrop-filter: blur(20px);
+      overflow: hidden;
+    }
+    
+    .menu::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--primary);
+    }
+    
+    .menu.open { 
+      display: block; 
+      animation: menuSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+    }
+    
+    .menu a { 
+      display: block; 
+      padding: 12px 16px; 
+      color: var(--text); 
+      text-decoration: none; 
+      border-radius: 12px; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+      font-weight: 500;
+      margin-bottom: 4px;
+      position: relative;
+    }
+    
+    .menu a:hover { 
+      background: var(--pill-bg); 
+      transform: translateX(-4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .menu a[aria-current="page"] {
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+    }
+    
+    @keyframes menuSlide { 
+      from { 
+        opacity: 0; 
+        transform: translateY(-20px) scale(0.95); 
+      } 
+      to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+      } 
+    }
 
     /* Mobile-first enhancements */
     @media (max-width: 640px) {
       .btn { width: 100%; }
       .row .col { flex-basis: 100%; }
+      
+      /* Header responsive */
+      .header-bar {
+        gap: 12px;
+        padding: 4px 0;
+      }
+      
+      .header-title h1 {
+        font-size: 18px;
+      }
+      
+      .menu-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 16px;
+      }
+      
+      .menu {
+        width: calc(100vw - 24px);
+        right: 12px;
+        left: 12px;
+      }
+      
+      .price-section {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      
+      .price-card {
+        padding: 16px;
+      }
+      
+      .price-value {
+        font-size: 24px;
+      }
+      
+      .price-label {
+        font-size: 12px;
+      }
+      
       table.responsive, table.responsive thead, table.responsive tbody, table.responsive th, table.responsive td, table.responsive tr { display: block; }
       table.responsive thead { display: none; }
       table.responsive tr { margin: 10px 0; padding: 10px; border: 1px solid var(--card-border); border-radius: 12px; background: color-mix(in oklab, var(--pill-bg) 80%, transparent); }
@@ -160,19 +441,41 @@
     {% if not hide_chrome %}
     <div class="card" id="top">
       <div class="header-bar">
-        <h1><a href="{{ url_for('panel_bp.panel_index') }}" style="text-decoration: none; color: inherit;"{% if request.path == url_for('panel_bp.panel_index') %} aria-current="page"{% endif %}>داشبورد</a></h1>
+        <div class="header-title">
+          <h1><a href="{{ url_for('panel_bp.panel_index') }}"{% if request.path == url_for('panel_bp.panel_index') %} aria-current="page"{% endif %}>💎 P+ Dashboard</a></h1>
+        </div>
         <div class="actions">
-          <button type="button" class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" title="منو">☰</button>
+          <button type="button" class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" title="منو">
+            <span>☰</span>
+          </button>
         </div>
       </div>
+      
       <div class="price-section">
         <div class="price-card">
-          <span class="price-label">BTC/USDT</span>
+          <span class="price-label">Bitcoin Price</span>
           <div class="price-value">
             <strong id="btc_usd" class="skeleton">...</strong>
-            <span class="price-currency">$</span>
+            <span class="price-currency">USD</span>
           </div>
-            <span class="price-toman muted skeleton" id="btc_toman">...</span>
+          <span class="price-toman skeleton" id="btc_toman">...</span>
+          <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span>Live Price</span>
+          </div>
+        </div>
+        
+        <div class="price-card">
+          <span class="price-label">Exchange Rate</span>
+          <div class="price-value">
+            <strong id="usd_toman_rate" class="skeleton">...</strong>
+            <span class="price-currency">IRT</span>
+          </div>
+          <span class="price-toman">Per USD</span>
+          <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span>Real-time</span>
+          </div>
         </div>
       </div>
     </div>
@@ -204,6 +507,7 @@
       var usdToToman = {{ usd_to_toman if usd_to_toman is defined else 60000 }};
       var usdEl = document.getElementById('btc_usd');
       var tomanEl = document.getElementById('btc_toman');
+      var rateEl = document.getElementById('usd_toman_rate');
       var totalBtc = Number("{{ total_btc if total_btc is defined else 0 }}");
       var holdUsdEl = document.getElementById('hold_usd');
       var holdTmnEl = document.getElementById('hold_toman');
@@ -229,8 +533,14 @@
           
           // محاسبه و نمایش قیمت تومان
           var toman = Math.round(price * usdToToman);
-          tomanEl.textContent = '(' + toman.toLocaleString('fa-IR') + ' تومان)';
+          tomanEl.textContent = toman.toLocaleString('fa-IR') + ' تومان';
           tomanEl.classList.remove('skeleton');
+          
+          // نمایش نرخ تبدیل
+          if (rateEl) {
+            rateEl.textContent = usdToToman.toLocaleString('fa-IR');
+            rateEl.classList.remove('skeleton');
+          }
           
           // به‌روزرسانی موجودی اگر موجود باشد
           if (holdUsdEl && holdTmnEl) {
@@ -242,9 +552,13 @@
         } catch (e) {
           console.error('Price fetch error:', e);
           usdEl.textContent = '—';
-          tomanEl.textContent = '';
+          tomanEl.textContent = 'خطا در دریافت';
           usdEl.classList.remove('skeleton');
           tomanEl.classList.remove('skeleton');
+          if (rateEl) {
+            rateEl.textContent = '—';
+            rateEl.classList.remove('skeleton');
+          }
           if (holdUsdEl && holdTmnEl) {
             holdUsdEl.textContent = '—';
             holdTmnEl.textContent = '—';
