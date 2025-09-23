@@ -284,6 +284,25 @@ def balance_page():
 	cur.execute("SELECT COUNT(*) FROM withdrawals")
 	total_withdrawals_count = cur.fetchone()[0]
 	
+	# Fetch all transactions
+	cur.execute("""
+		SELECT id, created_at, amount_btc, price_usd_per_btc, 'purchase' as type 
+		FROM purchases 
+		UNION ALL 
+		SELECT id, created_at, amount_btc, price_usd_per_btc, 'withdrawal' as type 
+		FROM withdrawals 
+		ORDER BY created_at DESC
+	""")
+	transactions = [
+		{
+			"id": r[0],
+			"created_at": r[1],
+			"amount_btc": r[2],
+			"price_usd_per_btc": r[3],
+			"type": r[4]
+		} for r in cur.fetchall()
+	]
+	
 	# محاسبه ROI (با قیمت فعلی تقریبی)
 	current_btc_price = 50000  # این باید از API دریافت شود
 	current_value_usd = current_btc_balance * current_btc_price
@@ -320,7 +339,8 @@ def balance_page():
 		total_withdrawals_count=total_withdrawals_count,
 		roi_percentage=roi_percentage,
 		profit_loss_usd=profit_loss_usd,
-		inception_days=inception_days)
+		inception_days=inception_days,
+		transactions=transactions)
 
 
 @panel_bp.get("/purchases")

@@ -103,6 +103,40 @@
   <div class="hint">💡 قیمت فعلی BTC به‌صورت خودکار از بازار دریافت می‌شود</div>
 </div>
 
+<div class="card" id="transactions">
+  <h3>لیست تمام تراکنش‌ها</h3>
+  <div class="table-scroll">
+    <table class="responsive">
+      <thead>
+        <tr>
+          <th>نوع</th>
+          <th>تاریخ</th>
+          <th>مقدار BTC</th>
+          <th>قیمت USD</th>
+          <th>مبلغ USD</th>
+          <th>مبلغ تومان</th>
+          <th>وضعیت</th>
+          <th>توضیحات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tx in transactions %}
+          <tr class="{% if tx.type == 'purchase' %}row-purchase{% else %}row-withdrawal{% endif %}">
+            <td>{% if tx.type == 'purchase' %}خرید{% else %}برداشت{% endif %}</td>
+            <td>{{ tx.created_at }}</td>
+            <td>{{ '%.8f' % tx.amount_btc }}</td>
+            <td>{{ '%.2f' % tx.price_usd_per_btc }}</td>
+            <td>{{ '%.2f' % (tx.amount_btc * tx.price_usd_per_btc) }}</td>
+            <td>{{ '{:,.0f}'.format((tx.amount_btc * tx.price_usd_per_btc * usd_to_toman)) }}</td>
+            <td>انجام شده</td>
+            <td></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <script>
 (function() {
   const btcAmount = {{ current_btc_balance }};
