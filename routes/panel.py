@@ -341,36 +341,3 @@ def balance_page():
 		profit_loss_usd=profit_loss_usd,
 		inception_days=inception_days,
 		transactions=transactions)
-
-
-@panel_bp.get("/purchases")
-def purchases_page():
-	conn = get_db_connection()
-	cur = conn.cursor()
-	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM purchases ORDER BY id DESC")
-	rows_p = cur.fetchall()
-	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM withdrawals ORDER BY id ASC")
-	rows_w = cur.fetchall()
-	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-	usd_to_toman = float(cur.fetchone()[0])
-	conn.close()
-	# Convert sqlite3.Row to plain dicts for JSON serialization in template
-	purchases = [
-		{
-			"id": int(r["id"]),
-			"created_at": r["created_at"],
-			"amount_btc": float(r["amount_btc"]),
-			"price_usd_per_btc": float(r["price_usd_per_btc"]),
-		}
-		for r in rows_p
-	]
-	withdrawals = [
-		{
-			"id": int(r["id"]),
-			"created_at": r["created_at"],
-			"amount_btc": float(r["amount_btc"]),
-			"price_usd_per_btc": float(r["price_usd_per_btc"]),
-		}
-		for r in rows_w
-	]
-	return render_template("purchases.html", purchases=purchases, withdrawals=withdrawals, usd_to_toman=usd_to_toman)

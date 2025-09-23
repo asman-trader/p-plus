@@ -28,7 +28,6 @@
       <a href="{{ url_for('panel_bp.deposits_page') }}"{% if request.path == url_for('panel_bp.deposits_page') %} aria-current="page"{% endif %}>💰 واریزی</a>
       <a href="{{ url_for('panel_bp.withdrawals_page') }}"{% if request.path == url_for('panel_bp.withdrawals_page') %} aria-current="page"{% endif %}>💸 برداشت</a>
       <a href="{{ url_for('panel_bp.balance_page') }}"{% if request.path == url_for('panel_bp.balance_page') %} aria-current="page"{% endif %}>💎 دارایی</a>
-      <a href="{{ url_for('panel_bp.purchases_page') }}"{% if request.path == url_for('panel_bp.purchases_page') %} aria-current="page"{% endif %}>📊 خریدها</a>
       <a href="{{ url_for('panel_bp.settings_page') }}"{% if request.path == url_for('panel_bp.settings_page') %} aria-current="page"{% endif %}>⚙️ تنظیمات</a>
       <form method="post" action="{{ url_for('auth_bp.logout') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
