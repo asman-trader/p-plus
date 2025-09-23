@@ -512,18 +512,72 @@
     document.getElementById('current_usd_value_detail').textContent = '$' + usdValue.toFixed(2);
     document.getElementById('current_toman_value_detail').textContent = tomanValue.toLocaleString('fa-IR') + ' تومان';
     
-    // محاسبه و به‌روزرسانی سود/زیان
-    const profitLoss = usdValue - netInvestedUsd;
-    const profitLossToman = profitLoss * usdToToman;
+    // محاسبه دقیق سود/زیان با در نظر گیری معاملات بسته و باز
+    const purchases = {{ purchases|tojson }};
+    const withdrawals = {{ withdrawals|tojson }};
     
-    document.getElementById('profit_loss_value').textContent = '$' + profitLoss.toFixed(2);
-    document.getElementById('profit_loss_value_detail').textContent = '$' + profitLoss.toFixed(2);
+    // محاسبه معاملات بسته با FIFO
+    let closedTradesProfit = 0;
+    let purchaseQueue = purchases.map(p => ({
+      id: p.id,
+      date: p.created_at,
+      amount: parseFloat(p.amount_btc),
+      price: parseFloat(p.price_usd_per_btc)
+    })).sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    let withdrawalQueue = withdrawals.map(w => ({
+      id: w.id,
+      date: w.created_at,
+      amount: parseFloat(w.amount_btc),
+      price: parseFloat(w.price_usd_per_btc)
+    })).sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    // محاسبه معاملات بسته
+    for (let withdrawal of withdrawalQueue) {
+      let remainingWithdrawal = withdrawal.amount;
+      
+      while (remainingWithdrawal > 1e-12 && purchaseQueue.length > 0) {
+        let purchase = purchaseQueue[0];
+        let tradeAmount = Math.min(remainingWithdrawal, purchase.amount);
+        
+        // محاسبه سود/زیان این معامله
+        let buyCost = tradeAmount * purchase.price;
+        let sellValue = tradeAmount * withdrawal.price;
+        let tradeProfit = sellValue - buyCost;
+        closedTradesProfit += tradeProfit;
+        
+        // کاهش از صف‌ها
+        remainingWithdrawal -= tradeAmount;
+        purchase.amount -= tradeAmount;
+        
+        // اگر خرید تمام شد، از صف حذف کن
+        if (purchase.amount <= 1e-12) {
+          purchaseQueue.shift();
+        }
+      }
+    }
+    
+    // محاسبه ارزش معاملات باز
+    let openTradesValue = 0;
+    let openTradesCost = 0;
+    for (let purchase of purchaseQueue) {
+      openTradesCost += purchase.amount * purchase.price;
+      openTradesValue += purchase.amount * currentPrice;
+    }
+    
+    let openTradesProfit = openTradesValue - openTradesCost;
+    let totalProfitLoss = closedTradesProfit + openTradesProfit;
+    let profitLossToman = totalProfitLoss * usdToToman;
+    
+    // به‌روزرسانی سود/زیان
+    document.getElementById('profit_loss_value').textContent = '$' + totalProfitLoss.toFixed(2);
+    document.getElementById('profit_loss_value_detail').textContent = '$' + totalProfitLoss.toFixed(2);
     document.getElementById('profit_loss_toman_detail').textContent = profitLossToman.toLocaleString('fa-IR') + ' تومان';
     
     // محاسبه و به‌روزرسانی ROI
     let roiPercentage = 0;
     if (netInvestedUsd > 0) {
-      roiPercentage = (profitLoss / netInvestedUsd) * 100;
+      roiPercentage = (totalProfitLoss / netInvestedUsd) * 100;
     }
     document.getElementById('roi_value_detail').textContent = roiPercentage.toFixed(1) + '%';
     
@@ -531,13 +585,13 @@
     const profitLossCards = document.querySelectorAll('.kpi-card.positive, .kpi-card.negative');
     profitLossCards.forEach(card => {
       card.classList.remove('positive', 'negative');
-      card.classList.add(profitLoss >= 0 ? 'positive' : 'negative');
+      card.classList.add(totalProfitLoss >= 0 ? 'positive' : 'negative');
     });
     
     // تغییر رنگ header cards
     const headerCards = document.querySelectorAll('.balance-card');
     if (headerCards.length >= 4) {
-      headerCards[3].style.color = profitLoss >= 0 ? '#10b981' : '#ef4444';
+      headerCards[3].style.color = totalProfitLoss >= 0 ? '#10b981' : '#ef4444';
     }
   }
   

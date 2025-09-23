@@ -68,14 +68,77 @@ def panel_index():
 	except Exception:
 		pass
 	
-	# محاسبه ROI (درصد سود/زیان)
+	# محاسبه ROI دقیق با در نظر گیری معاملات بسته و باز
 	roi_percentage = 0
+	profit_loss_usd = 0
+	
+	# دریافت قیمت فعلی BTC از API
+	current_btc_price = 50000  # Default
+	try:
+		response = requests.post('https://api.nobitex.ir/market/stats', json={"srcCurrency": "btc", "dstCurrency": "usdt"}, timeout=3)
+		if response.status_code == 200:
+			data = response.json()["stats"]["btc-usdt"]
+			current_btc_price = float(data["latest"])
+	except Exception:
+		pass
+	
+	# محاسبه سود/زیان از معاملات بسته (FIFO)
+	closed_trades_profit = 0
+	purchases_list = []
+	withdrawals_list = []
+	
+	# دریافت تمام خریدها و برداشت‌ها
+	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM purchases ORDER BY created_at ASC")
+	purchases_list = cur.fetchall()
+	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM withdrawals ORDER BY created_at ASC")
+	withdrawals_list = cur.fetchall()
+	
+	# محاسبه معاملات بسته با FIFO
+	purchase_queue = [(p[0], p[1], float(p[2]), float(p[3])) for p in purchases_list]
+	withdrawal_queue = [(w[0], w[1], float(w[2]), float(w[3])) for w in withdrawals_list]
+	
+	for withdrawal in withdrawal_queue:
+		remaining_withdrawal = withdrawal[2]
+		withdrawal_price = withdrawal[3]
+		
+		while remaining_withdrawal > 1e-12 and purchase_queue:
+			purchase = purchase_queue[0]
+			purchase_amount = purchase[2]
+			purchase_price = purchase[3]
+			
+			# مقدار معامله شده
+			trade_amount = min(remaining_withdrawal, purchase_amount)
+			
+			# محاسبه سود/زیان این معامله
+			buy_cost = trade_amount * purchase_price
+			sell_value = trade_amount * withdrawal_price
+			trade_profit = sell_value - buy_cost
+			closed_trades_profit += trade_profit
+			
+			# کاهش از صف‌ها
+			remaining_withdrawal -= trade_amount
+			purchase_queue[0] = (purchase[0], purchase[1], purchase[2] - trade_amount, purchase[3])
+			
+			# اگر خرید تمام شد، از صف حذف کن
+			if purchase_queue[0][2] <= 1e-12:
+				purchase_queue.pop(0)
+	
+	# محاسبه ارزش معاملات باز (موجودی فعلی)
+	open_trades_value = 0
+	open_trades_cost = 0
+	for purchase in purchase_queue:
+		open_trades_cost += purchase[2] * purchase[3]
+		open_trades_value += purchase[2] * current_btc_price
+	
+	open_trades_profit = open_trades_value - open_trades_cost
+	
+	# محاسبه کل سود/زیان
+	total_profit_loss = closed_trades_profit + open_trades_profit
+	
+	# محاسبه ROI
 	if net_invested_usd > 0:
-		# اینجا باید قیمت فعلی BTC را از API دریافت کنیم
-		# برای حالا از یک قیمت ثابت استفاده می‌کنیم
-		current_btc_price = 50000  # این باید از API دریافت شود
-		current_value_usd = current_btc_balance * current_btc_price
-		roi_percentage = ((current_value_usd - net_invested_usd) / net_invested_usd) * 100
+		roi_percentage = (total_profit_loss / net_invested_usd) * 100
+		profit_loss_usd = total_profit_loss
 	
 	# تاریخ شروع سرمایه‌گذاری
 	cur.execute("SELECT MIN(created_at) FROM purchases")
@@ -329,14 +392,77 @@ def balance_page():
 		} for r in cur.fetchall()
 	]
 	
-	# محاسبه ROI (با قیمت فعلی تقریبی)
-	current_btc_price = 50000  # این باید از API دریافت شود
-	current_value_usd = current_btc_balance * current_btc_price
+	# محاسبه ROI دقیق با در نظر گیری معاملات بسته و باز
 	roi_percentage = 0
 	profit_loss_usd = 0
+	
+	# دریافت قیمت فعلی BTC از API
+	current_btc_price = 50000  # Default
+	try:
+		response = requests.post('https://api.nobitex.ir/market/stats', json={"srcCurrency": "btc", "dstCurrency": "usdt"}, timeout=3)
+		if response.status_code == 200:
+			data = response.json()["stats"]["btc-usdt"]
+			current_btc_price = float(data["latest"])
+	except Exception:
+		pass
+	
+	# محاسبه سود/زیان از معاملات بسته (FIFO)
+	closed_trades_profit = 0
+	purchases_list = []
+	withdrawals_list = []
+	
+	# دریافت تمام خریدها و برداشت‌ها
+	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM purchases ORDER BY created_at ASC")
+	purchases_list = cur.fetchall()
+	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM withdrawals ORDER BY created_at ASC")
+	withdrawals_list = cur.fetchall()
+	
+	# محاسبه معاملات بسته با FIFO
+	purchase_queue = [(p[0], p[1], float(p[2]), float(p[3])) for p in purchases_list]
+	withdrawal_queue = [(w[0], w[1], float(w[2]), float(w[3])) for w in withdrawals_list]
+	
+	for withdrawal in withdrawal_queue:
+		remaining_withdrawal = withdrawal[2]
+		withdrawal_price = withdrawal[3]
+		
+		while remaining_withdrawal > 1e-12 and purchase_queue:
+			purchase = purchase_queue[0]
+			purchase_amount = purchase[2]
+			purchase_price = purchase[3]
+			
+			# مقدار معامله شده
+			trade_amount = min(remaining_withdrawal, purchase_amount)
+			
+			# محاسبه سود/زیان این معامله
+			buy_cost = trade_amount * purchase_price
+			sell_value = trade_amount * withdrawal_price
+			trade_profit = sell_value - buy_cost
+			closed_trades_profit += trade_profit
+			
+			# کاهش از صف‌ها
+			remaining_withdrawal -= trade_amount
+			purchase_queue[0] = (purchase[0], purchase[1], purchase[2] - trade_amount, purchase[3])
+			
+			# اگر خرید تمام شد، از صف حذف کن
+			if purchase_queue[0][2] <= 1e-12:
+				purchase_queue.pop(0)
+	
+	# محاسبه ارزش معاملات باز (موجودی فعلی)
+	open_trades_value = 0
+	open_trades_cost = 0
+	for purchase in purchase_queue:
+		open_trades_cost += purchase[2] * purchase[3]
+		open_trades_value += purchase[2] * current_btc_price
+	
+	open_trades_profit = open_trades_value - open_trades_cost
+	
+	# محاسبه کل سود/زیان
+	total_profit_loss = closed_trades_profit + open_trades_profit
+	
+	# محاسبه ROI
 	if net_invested_usd > 0:
-		roi_percentage = ((current_value_usd - net_invested_usd) / net_invested_usd) * 100
-		profit_loss_usd = current_value_usd - net_invested_usd
+		roi_percentage = (total_profit_loss / net_invested_usd) * 100
+		profit_loss_usd = total_profit_loss
 	
 	# تاریخ شروع سرمایه‌گذاری
 	cur.execute("SELECT MIN(created_at) FROM purchases")

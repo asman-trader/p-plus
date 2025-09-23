@@ -538,7 +538,9 @@
           // Update KPI cards
           if (holdUsdEl) holdUsdEl.textContent = '$' + holdUsd.toFixed(2) + ' (' + holdTmn.toLocaleString('fa-IR') + ' تومان)';
           
-          // Calculate P/L
+          // محاسبه دقیق سود/زیان با در نظر گیری معاملات بسته و باز
+          // اینجا باید داده‌های purchases و withdrawals از سرور دریافت شوند
+          // برای حالا از محاسبه ساده استفاده می‌کنیم
           var plUsd = holdUsd - netInvestedUsd;
           var plTmn = Math.round(plUsd * usdToToman);
           
