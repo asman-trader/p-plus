@@ -3,45 +3,339 @@
 {% block title %}واریزی - داشبورد{% endblock %}
 
 {% block content %}
-<div class="card" id="deposit">
-  <h2>واریزی جدید</h2>
-  <div class="kpi-grid">
-    <div class="kpi">
-      <div class="icon">💰</div>
-      <div>
-        <div class="label">کل واریزی (USD)</div>
-        <div class="value">${{ '%.2f' % total_usd }}</div>
-      </div>
-    </div>
-    <div class="kpi">
-      <div class="icon">🏦</div>
-      <div>
-        <div class="label">کل واریزی (تومان)</div>
-        <div class="value">{{ '{:,.0f}'.format(total_toman) }} <span class="sub">تومان</span></div>
+  <style>
+    /* Enhanced Deposits Page Styles */
+    .page-header {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-radius: 24px;
+      padding: 32px;
+      margin-bottom: 24px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .page-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="depositPattern" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23depositPattern)"/></svg>');
+      opacity: 0.3;
+    }
+    
+    .page-content {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .page-title {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 0 8px 0;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .page-subtitle {
+      font-size: 16px;
+      opacity: 0.9;
+      margin: 0 0 24px 0;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+    }
+    
+    .stat-card {
+      text-align: center;
+      padding: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    
+    /* Enhanced Form Styles */
+    .form-container {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .form-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #10b981, #059669);
+    }
+    
+    .form-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 24px 0;
+      color: var(--text);
+    }
+    
+    .form-grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: 1fr;
+    }
+    
+    @media (min-width: 640px) {
+      .form-grid { grid-template-columns: 1fr 1fr; }
+    }
+    
+    .form-group {
+      position: relative;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 16px 20px;
+      border-radius: 16px;
+      border: 2px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 16px;
+      min-height: 56px;
+      outline: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+    }
+    
+    .form-input:focus {
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    .form-input::placeholder {
+      color: var(--muted);
+      opacity: 0.7;
+    }
+    
+    .form-button {
+      width: 100%;
+      padding: 16px 24px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    
+    .form-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    .form-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(16, 185, 129, 0.3);
+    }
+    
+    .form-button:hover::before {
+      left: 100%;
+    }
+    
+    .form-button:active {
+      transform: translateY(0);
+    }
+    
+    /* Info Card */
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    
+    .info-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 12px 0;
+      color: var(--text);
+    }
+    
+    .info-text {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin: 0;
+    }
+    
+    .info-icon {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 16px;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 640px) {
+      .page-header {
+        padding: 24px 20px;
+        margin-bottom: 16px;
+      }
+      
+      .page-title {
+        font-size: 24px;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      
+      .stat-card {
+        padding: 16px;
+      }
+      
+      .stat-value {
+        font-size: 20px;
+      }
+      
+      .form-container {
+        padding: 24px 20px;
+      }
+      
+      .form-title {
+        font-size: 18px;
+      }
+    }
+    
+    /* Loading Animation */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .loading {
+      animation: pulse 2s infinite;
+    }
+  </style>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-content">
+      <h1 class="page-title">💰 واریزی جدید</h1>
+      <p class="page-subtitle">ثبت خرید بیت‌کوین جدید در پورتفولیو</p>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value">${{ '%.2f' % total_usd }}</div>
+          <div class="stat-label">کل واریزی USD</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ '{:,.0f}'.format(total_toman) }}</div>
+          <div class="stat-label">کل واریزی تومان</div>
+        </div>
       </div>
     </div>
   </div>
-  
-  <form method="post" action="{{ url_for('panel_bp.panel_add') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="form-grid">
-      <label>
-        مقدار BTC
-        <input type="number" step="0.00000001" min="0" name="amount_btc" required inputmode="decimal" placeholder="مثلاً 0.005">
-      </label>
-      <label>
-        قیمت دلار هر BTC
-        <input type="number" step="0.01" min="0" name="price_usd_per_btc" required inputmode="decimal" placeholder="مثلاً 61234.50">
-      </label>
-    </div>
-    <div class="section-actions">
-      <button type="submit" class="btn btn-primary">ثبت واریزی</button>
-    </div>
-  </form>
-</div>
 
-<div class="card" id="deposits-list">
-  <h2>آخرین واریزی‌ها</h2>
-  <div class="hint">💡 برای مشاهده لیست کامل واریزی‌ها به صفحه "خریدها" مراجعه کنید</div>
-</div>
+  <!-- Form Container -->
+  <div class="form-container">
+    <h2 class="form-title">📝 ثبت واریزی جدید</h2>
+    
+    <form method="post" action="{{ url_for('panel_bp.panel_add') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" for="amount_btc">
+            مقدار بیت‌کوین <span style="color: #ef4444;">*</span>
+          </label>
+          <input 
+            type="number" 
+            id="amount_btc"
+            name="amount_btc" 
+            step="0.00000001" 
+            min="0" 
+            required 
+            inputmode="decimal" 
+            placeholder="مثلاً 0.005"
+            class="form-input"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="price_usd_per_btc">
+            قیمت دلار هر BTC <span style="color: #ef4444;">*</span>
+          </label>
+          <input 
+            type="number" 
+            id="price_usd_per_btc"
+            name="price_usd_per_btc" 
+            step="0.01" 
+            min="0" 
+            required 
+            inputmode="decimal" 
+            placeholder="مثلاً 61234.50"
+            class="form-input"
+          >
+        </div>
+      </div>
+      
+      <button type="submit" class="form-button">
+        💰 ثبت واریزی
+      </button>
+    </form>
+  </div>
+
+  <!-- Info Card -->
+  <div class="info-card">
+    <h3 class="info-title">
+      <span class="info-icon">💡</span>
+      راهنمای واریزی
+    </h3>
+    <p class="info-text">
+      برای ثبت واریزی جدید، مقدار بیت‌کوین خریداری شده و قیمت خرید را وارد کنید. 
+      سیستم به‌طور خودکار ارزش دلاری و تومانی را محاسبه می‌کند. 
+      برای مشاهده لیست کامل واریزی‌ها به صفحه "دارایی" مراجعه کنید.
+    </p>
+  </div>
 {% endblock %}

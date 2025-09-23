@@ -3,127 +3,504 @@
 {% block title %}برداشت‌ها - داشبورد{% endblock %}
 
 {% block content %}
-<div class="card" id="withdraw">
-  <h2>برداشت</h2>
-  <div class="kpi-grid">
-    <div class="kpi">
-      <div class="icon">💰</div>
-      <div>
-        <div class="label">برداشت کل (USD)</div>
-        <div class="value">{{ '%.2f' % total_withdraw_usd }} <span class="sub">$</span></div>
-      </div>
-    </div>
-    <div class="kpi">
-      <div class="icon">🏦</div>
-      <div>
-        <div class="label">برداشت کل (تومان)</div>
-        <div class="value">{{ '{:,.0f}'.format(total_withdraw_toman) }} <span class="sub">تومان</span></div>
-      </div>
-    </div>
-    <div class="kpi">
-      <div class="icon">₿</div>
-      <div>
-        <div class="label">برداشت BTC</div>
-        <div class="value">{{ '%.8f' % total_withdraw_btc }} <span class="sub">BTC</span></div>
+  <style>
+    /* Enhanced Withdrawals Page Styles */
+    .page-header {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border-radius: 24px;
+      padding: 32px;
+      margin-bottom: 24px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .page-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="withdrawPattern" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23withdrawPattern)"/></svg>');
+      opacity: 0.3;
+    }
+    
+    .page-content {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .page-title {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 0 8px 0;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .page-subtitle {
+      font-size: 16px;
+      opacity: 0.9;
+      margin: 0 0 24px 0;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+    }
+    
+    .stat-card {
+      text-align: center;
+      padding: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    
+    /* Enhanced Form Styles */
+    .form-container {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .form-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+    
+    .form-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 24px 0;
+      color: var(--text);
+    }
+    
+    .form-grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: 1fr;
+    }
+    
+    @media (min-width: 640px) {
+      .form-grid { grid-template-columns: 1fr 1fr; }
+    }
+    
+    .form-group {
+      position: relative;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 16px 20px;
+      border-radius: 16px;
+      border: 2px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 16px;
+      min-height: 56px;
+      outline: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+    }
+    
+    .form-input:focus {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    .form-input::placeholder {
+      color: var(--muted);
+      opacity: 0.7;
+    }
+    
+    .form-button {
+      width: 100%;
+      padding: 16px 24px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    
+    .form-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    .form-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(239, 68, 68, 0.3);
+    }
+    
+    .form-button:hover::before {
+      left: 100%;
+    }
+    
+    .form-button:active {
+      transform: translateY(0);
+    }
+    
+    /* Enhanced Table Styles */
+    .table-container {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .table-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #8b5cf6, #6366f1);
+    }
+    
+    .table-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 20px 0;
+      color: var(--text);
+    }
+    
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+    }
+    
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+    
+    .table th,
+    .table td {
+      padding: 16px;
+      border-bottom: 1px solid var(--card-border);
+      text-align: right;
+    }
+    
+    .table th {
+      background: var(--pill-bg);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 14px;
+      position: sticky;
+      top: 0;
+    }
+    
+    .table tbody tr {
+      transition: all 0.2s ease;
+    }
+    
+    .table tbody tr:hover {
+      background: var(--pill-bg);
+    }
+    
+    .table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    
+    /* Mobile Cards */
+    .mobile-cards {
+      display: none;
+    }
+    
+    @media (max-width: 640px) {
+      .table-scroll {
+        display: none;
+      }
+      
+      .mobile-cards {
+        display: block;
+      }
+      
+      .mobile-card {
+        background: var(--pill-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        transition: all 0.2s ease;
+      }
+      
+      .mobile-card:hover {
+        background: var(--card);
+        transform: translateY(-2px);
+      }
+      
+      .mobile-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      
+      .mobile-card-id {
+        font-weight: 600;
+        color: var(--text);
+      }
+      
+      .mobile-card-date {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      
+      .mobile-card-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        font-size: 14px;
+      }
+      
+      .mobile-card-detail {
+        display: flex;
+        justify-content: space-between;
+      }
+      
+      .mobile-card-label {
+        color: var(--muted);
+      }
+      
+      .mobile-card-value {
+        color: var(--text);
+        font-weight: 500;
+      }
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 640px) {
+      .page-header {
+        padding: 24px 20px;
+        margin-bottom: 16px;
+      }
+      
+      .page-title {
+        font-size: 24px;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      
+      .stat-card {
+        padding: 16px;
+      }
+      
+      .stat-value {
+        font-size: 20px;
+      }
+      
+      .form-container {
+        padding: 24px 20px;
+      }
+      
+      .form-title {
+        font-size: 18px;
+      }
+      
+      .table-container {
+        padding: 20px;
+      }
+    }
+  </style>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-content">
+      <h1 class="page-title">💸 برداشت</h1>
+      <p class="page-subtitle">ثبت فروش بیت‌کوین از پورتفولیو</p>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value">${{ '%.2f' % total_withdraw_usd }}</div>
+          <div class="stat-label">برداشت کل USD</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ '{:,.0f}'.format(total_withdraw_toman) }}</div>
+          <div class="stat-label">برداشت کل تومان</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ '%.8f' % total_withdraw_btc }}</div>
+          <div class="stat-label">برداشت کل BTC</div>
+        </div>
       </div>
     </div>
   </div>
-  <form method="post" action="{{ url_for('panel_bp.panel_withdraw') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="form-grid">
-      <label>
-        مقدار BTC برداشت
-        <input type="number" step="0.00000001" min="0" name="amount_btc" required inputmode="decimal" placeholder="مثلاً 0.003">
-      </label>
-      <label>
-        قیمت دلار هر BTC (لحظه برداشت)
-        <input type="number" step="0.01" min="0" name="price_usd_per_btc" required inputmode="decimal" placeholder="مثلاً 60000">
-      </label>
-    </div>
-    <div class="section-actions" style="margin-top:12px; display:flex; gap:10px;">
-      <button type="submit" class="btn btn-danger">ثبت برداشت</button>
-    </div>
-  </form>
-</div>
 
-<div class="card" id="withdrawals-list">
-  <h2>لیست برداشت‌ها</h2>
-  <div id="wd_desktop">
+  <!-- Form Container -->
+  <div class="form-container">
+    <h2 class="form-title">📝 ثبت برداشت جدید</h2>
+    
+    <form method="post" action="{{ url_for('panel_bp.panel_withdraw') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" for="amount_btc">
+            مقدار BTC برداشت <span style="color: #ef4444;">*</span>
+          </label>
+          <input 
+            type="number" 
+            id="amount_btc"
+            name="amount_btc" 
+            step="0.00000001" 
+            min="0" 
+            required 
+            inputmode="decimal" 
+            placeholder="مثلاً 0.003"
+            class="form-input"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="price_usd_per_btc">
+            قیمت دلار هر BTC <span style="color: #ef4444;">*</span>
+          </label>
+          <input 
+            type="number" 
+            id="price_usd_per_btc"
+            name="price_usd_per_btc" 
+            step="0.01" 
+            min="0" 
+            required 
+            inputmode="decimal" 
+            placeholder="مثلاً 60000"
+            class="form-input"
+          >
+        </div>
+      </div>
+      
+      <button type="submit" class="form-button">
+        💸 ثبت برداشت
+      </button>
+    </form>
+  </div>
+
+  <!-- Withdrawals List -->
+  <div class="table-container">
+    <h2 class="table-title">📋 لیست برداشت‌ها</h2>
+    
+    <!-- Desktop Table -->
     <div class="table-scroll">
-      <table class="responsive">
+      <table class="table">
         <thead>
           <tr>
-            <th>#</th>
+            <th>شناسه</th>
             <th>تاریخ</th>
-            <th>BTC</th>
+            <th>مقدار BTC</th>
             <th>قیمت واحد (USD)</th>
-            <th>مبلغ (USD)</th>
+            <th>مبلغ کل (USD)</th>
           </tr>
         </thead>
         <tbody>
           {% if withdrawals %}
             {% for w in withdrawals %}
               <tr>
-                <td data-label="#">{{ w["id"] }}</td>
-                <td class="muted" data-label="تاریخ">{{ w["created_at"] }}</td>
-                <td data-label="BTC">{{ '%.8f' % w["amount_btc"] }}</td>
-                <td data-label="قیمت واحد (USD)">{{ '%.2f' % w["price_usd_per_btc"] }}</td>
-                <td data-label="مبلغ (USD)">{{ '%.2f' % (w["amount_btc"] * w["price_usd_per_btc"]) }}</td>
+                <td><strong>#{{ w["id"] }}</strong></td>
+                <td class="muted">{{ w["created_at"] }}</td>
+                <td><strong>{{ '%.8f' % w["amount_btc"] }}</strong></td>
+                <td>${{ '%.2f' % w["price_usd_per_btc"] }}</td>
+                <td><strong>${{ '%.2f' % (w["amount_btc"] * w["price_usd_per_btc"]) }}</strong></td>
               </tr>
             {% endfor %}
           {% else %}
-            <tr><td colspan="5" class="muted">برداشتی ثبت نشده است.</td></tr>
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 40px; color: var(--muted);">
+                <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                <div>هنوز برداشتی ثبت نشده است</div>
+              </td>
+            </tr>
           {% endif %}
         </tbody>
       </table>
     </div>
+    
+    <!-- Mobile Cards -->
+    <div class="mobile-cards">
+      {% if withdrawals %}
+        {% for w in withdrawals %}
+          <div class="mobile-card">
+            <div class="mobile-card-header">
+              <div class="mobile-card-id">#{{ w["id"] }}</div>
+              <div class="mobile-card-date">{{ w["created_at"] }}</div>
+            </div>
+            <div class="mobile-card-details">
+              <div class="mobile-card-detail">
+                <span class="mobile-card-label">مقدار BTC:</span>
+                <span class="mobile-card-value">{{ '%.8f' % w["amount_btc"] }}</span>
+              </div>
+              <div class="mobile-card-detail">
+                <span class="mobile-card-label">قیمت واحد:</span>
+                <span class="mobile-card-value">${{ '%.2f' % w["price_usd_per_btc"] }}</span>
+              </div>
+              <div class="mobile-card-detail">
+                <span class="mobile-card-label">مبلغ کل:</span>
+                <span class="mobile-card-value"><strong>${{ '%.2f' % (w["amount_btc"] * w["price_usd_per_btc"]) }}</strong></span>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div style="text-align: center; padding: 40px; color: var(--muted);">
+          <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+          <div>هنوز برداشتی ثبت نشده است</div>
+        </div>
+      {% endif %}
+    </div>
   </div>
-  <div id="wd_mobile" style="display:none;">
-    <div id="wd_cards"></div>
-  </div>
-</div>
-<script>
-  (function(){
-    var isMobile = window.matchMedia('(max-width: 640px)');
-    var d = document.getElementById('wd_desktop');
-    var m = document.getElementById('wd_mobile');
-    var cards = document.getElementById('wd_cards');
-    var data = {{ withdrawals|tojson }};
-    function renderCards(){
-      if (!cards) return;
-      cards.innerHTML = '';
-      if (!data || !data.length){
-        var empty = document.createElement('div');
-        empty.className = 'muted';
-        empty.textContent = 'برداشتی ثبت نشده است.';
-        cards.appendChild(empty);
-        return;
-      }
-      data.forEach(function(w){
-        var amt = Number(w.amount_btc || 0);
-        var price = Number(w.price_usd_per_btc || 0);
-        var total = amt * price;
-        var card = document.createElement('div');
-        card.className = 'kpi';
-        card.style.marginBottom = '12px';
-        card.innerHTML = '<div class="icon">💸</div>'+
-          '<div>'+
-          '<div class="label">#'+w.id+' • '+w.created_at+'</div>'+
-          '<div class="value">'+amt.toFixed(8)+' <span class="sub">BTC</span></div>'+
-          '<div class="label" style="margin-top:8px;">قیمت واحد: '+price.toFixed(2)+' $</div>'+
-          '<div class="sub">مبلغ: '+total.toFixed(2)+' $</div>'+
-          '</div>';
-        cards.appendChild(card);
-      });
-    }
-    function apply(){
-      var mobile = isMobile.matches;
-      if (d) d.style.display = mobile ? 'none' : '';
-      if (m) m.style.display = mobile ? '' : 'none';
-      if (mobile) renderCards();
-    }
-    apply();
-    isMobile.addEventListener('change', apply);
-  })();
-</script>
 {% endblock %}

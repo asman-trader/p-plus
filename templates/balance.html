@@ -3,157 +3,485 @@
 {% block title %}دارایی - داشبورد{% endblock %}
 
 {% block content %}
-<div class="card" id="balance">
-  <h2>دارایی فعلی</h2>
-  
-  <!-- هشدار موجودی منفی -->
+  <style>
+    /* Enhanced Balance Page Styles */
+    .page-header {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      border-radius: 24px;
+      padding: 32px;
+      margin-bottom: 24px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .page-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="balancePattern" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23balancePattern)"/></svg>');
+      opacity: 0.3;
+    }
+    
+    .page-content {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .page-title {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 0 8px 0;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .page-subtitle {
+      font-size: 16px;
+      opacity: 0.9;
+      margin: 0 0 24px 0;
+    }
+    
+    .balance-overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .balance-card {
+      text-align: center;
+      padding: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .balance-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .balance-label {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    
+    /* Alert Styles */
+    .alert-container {
+      margin-bottom: 24px;
+    }
+    
+    .alert {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border-radius: 16px;
+      padding: 16px 20px;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 8px 16px rgba(239, 68, 68, 0.3);
+    }
+    
+    .alert-icon {
+      font-size: 20px;
+    }
+    
+    .alert-text {
+      font-weight: 600;
+    }
+    
+    /* Enhanced KPI Cards */
+    .kpi-section {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .kpi-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    }
+    
+    .kpi-section-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 20px 0;
+      color: var(--text);
+    }
+    
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    
+    @media (min-width: 640px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    
+    @media (min-width: 1024px) {
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    
+    .kpi-card {
+      background: var(--pill-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    
+    .kpi-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .kpi-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+    }
+    
+    .kpi-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      margin: 0;
+    }
+    
+    .kpi-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text);
+      margin: 0 0 4px 0;
+      line-height: 1;
+    }
+    
+    .kpi-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0;
+    }
+    
+    .kpi-card.positive .kpi-value {
+      color: #10b981;
+    }
+    
+    .kpi-card.negative .kpi-value {
+      color: #ef4444;
+    }
+    
+    /* Info Card */
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    
+    .info-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+    
+    .info-text {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 0;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 640px) {
+      .page-header {
+        padding: 24px 20px;
+        margin-bottom: 16px;
+      }
+      
+      .page-title {
+        font-size: 24px;
+      }
+      
+      .balance-overview {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      
+      .balance-card {
+        padding: 16px;
+      }
+      
+      .balance-value {
+        font-size: 20px;
+      }
+      
+      .kpi-section {
+        padding: 20px;
+      }
+      
+      .kpi-section-title {
+        font-size: 18px;
+      }
+      
+      .kpi-card {
+        padding: 16px;
+      }
+      
+      .kpi-value {
+        font-size: 20px;
+      }
+    }
+  </style>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-content">
+      <h1 class="page-title">💎 دارایی فعلی</h1>
+      <p class="page-subtitle">نمایش کامل وضعیت سرمایه‌گذاری و عملکرد پورتفولیو</p>
+      
+      <div class="balance-overview">
+        <div class="balance-card">
+          <div class="balance-value">{{ '%.8f' % current_btc_balance }}</div>
+          <div class="balance-label">موجودی BTC</div>
+        </div>
+        <div class="balance-card">
+          <div class="balance-value" id="current_usd_value">...</div>
+          <div class="balance-label">ارزش USD</div>
+        </div>
+        <div class="balance-card">
+          <div class="balance-value" id="current_toman_value">...</div>
+          <div class="balance-label">ارزش تومان</div>
+        </div>
+        <div class="balance-card">
+          <div class="balance-value" id="profit_loss_value">${{ '%.2f' % profit_loss_usd }}</div>
+          <div class="balance-label">سود/زیان</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert for Negative Balance -->
   {% if current_btc_balance < 0 %}
-  <div class="flash error" style="margin-bottom: 16px;">
-    ⚠️ هشدار: موجودی BTC منفی است! ({{ '%.8f' % current_btc_balance }} BTC)
+  <div class="alert-container">
+    <div class="alert">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-text">هشدار: موجودی BTC منفی است! ({{ '%.8f' % current_btc_balance }} BTC)</div>
+    </div>
   </div>
   {% endif %}
-  
-  <div class="kpi-grid">
-    <div class="kpi">
-      <div class="icon">🪙</div>
-      <div>
-        <div class="label">موجودی BTC</div>
-        <div class="value">{{ '%.8f' % current_btc_balance }} <span class="sub">BTC</span></div>
-        <div class="sub">خرید: {{ '%.8f' % total_purchased_btc }} | برداشت: {{ '%.8f' % total_withdrawn_btc }}</div>
-      </div>
-    </div>
-    <div class="kpi">
-      <div class="icon">💵</div>
-      <div>
-        <div class="label">ارزش فعلی (USD)</div>
-        <div class="value"><span id="current_usd_value">...</span> <span class="sub">$</span></div>
-        <div class="sub">سرمایه‌گذاری: ${{ '%.2f' % net_invested_usd }}</div>
-      </div>
-    </div>
-    <div class="kpi">
-      <div class="icon">🇮🇷</div>
-      <div>
-        <div class="label">ارزش فعلی (تومان)</div>
-        <div class="value"><span id="current_toman_value">...</span> <span class="sub">تومان</span></div>
-        <div class="sub">نرخ: {{ '{:,.0f}'.format(usd_to_toman) }} تومان</div>
-      </div>
-    </div>
-  </div>
-  
-  <div class="divider"></div>
-  
-  <h3>عملکرد سرمایه‌گذاری</h3>
-  <div class="kpi-grid">
-    <div class="kpi {% if profit_loss_usd >= 0 %}positive{% else %}negative{% endif %}">
-      <div class="icon">📊</div>
-      <div>
-        <div class="label">سود / زیان</div>
-        <div class="value" id="profit_loss_value">${{ '%.2f' % profit_loss_usd }}</div>
-        <div class="sub" id="profit_loss_toman">{{ '{:,.0f}'.format(profit_loss_usd * usd_to_toman) }} تومان</div>
-      </div>
-    </div>
-    <div class="kpi {% if roi_percentage >= 0 %}positive{% else %}negative{% endif %}">
-      <div class="icon">📈</div>
-      <div>
-        <div class="label">بازده (ROI)</div>
-        <div class="value" id="roi_value">{{ '%.1f' % roi_percentage }}%</div>
-        <div class="sub">نسبت به سرمایه خالص</div>
-      </div>
-    </div>
-    <div class="kpi">
-      <div class="icon">⏰</div>
-      <div>
-        <div class="label">مدت سرمایه‌گذاری</div>
-        <div class="value">{{ inception_days }} <span class="sub">روز</span></div>
-        <div class="sub">از شروع فعالیت</div>
-      </div>
-    </div>
-  </div>
-  
-  <div class="divider"></div>
-  
-  <h3>جزئیات تراکنش‌ها</h3>
-  <div class="kpi-grid">
-    <div class="kpi">
-      <div class="icon">📈</div>
-      <div>
-        <div class="label">کل خرید (USD)</div>
-        <div class="value">${{ '%.2f' % total_invested_usd }}</div>
-        <div class="sub">{{ total_purchases_count }} تراکنش</div>
-      </div>
-    </div>
-    <div class="kpi">
-      <div class="icon">📉</div>
-      <div>
-        <div class="label">کل برداشت (USD)</div>
-        <div class="value">${{ '%.2f' % total_withdrawn_usd }}</div>
-        <div class="sub">{{ total_withdrawals_count }} تراکنش</div>
-      </div>
-    </div>
-    <div class="kpi">
-      <div class="icon">💰</div>
-      <div>
-        <div class="label">سرمایه‌گذاری خالص</div>
-        <div class="value">${{ '%.2f' % net_invested_usd }}</div>
-        <div class="sub">آخرین تراکنش: {{ last_transaction_date or 'هیچ' }}</div>
-      </div>
-    </div>
-  </div>
-  
-  <div class="hint">💡 قیمت فعلی BTC به‌صورت خودکار از بازار دریافت می‌شود</div>
-</div>
 
-<div class="card" id="trades">
-  <h2>معاملات</h2>
-  <div class="row" id="trades_desktop">
-    <div class="col">
-      <h3 style="margin-bottom:8px;">باز</h3>
-      <div class="table-scroll">
-        <table class="responsive">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>تاریخ</th>
-              <th>BTC باقیمانده</th>
-              <th>میانگین قیمت (USD)</th>
-              <th>ارزش فعلی</th>
-              <th>سود/زیان</th>
-            </tr>
-          </thead>
-          <tbody id="open_trades_body">
-          </tbody>
-        </table>
+  <!-- Current Holdings -->
+  <div class="kpi-section">
+    <h2 class="kpi-section-title">🪙 موجودی فعلی</h2>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-icon">🪙</div>
+          <div>
+            <h3 class="kpi-title">موجودی BTC</h3>
+          </div>
+        </div>
+        <div class="kpi-value">{{ '%.8f' % current_btc_balance }} <span style="font-size: 16px; color: var(--muted);">BTC</span></div>
+        <p class="kpi-subtitle">خرید: {{ '%.8f' % total_purchased_btc }} | برداشت: {{ '%.8f' % total_withdrawn_btc }}</p>
       </div>
-    </div>
-    <div class="col">
-      <h3 style="margin-bottom:8px;">بسته</h3>
-      <div class="table-scroll">
-        <table class="responsive">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>خرید</th>
-              <th>خروج</th>
-              <th>BTC</th>
-              <th>میانگین خرید</th>
-              <th>میانگین خروج</th>
-              <th>سود/زیان</th>
-            </tr>
-          </thead>
-          <tbody id="closed_trades_body">
-          </tbody>
-        </table>
+      
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-icon">💵</div>
+          <div>
+            <h3 class="kpi-title">ارزش فعلی (USD)</h3>
+          </div>
+        </div>
+        <div class="kpi-value" id="current_usd_value_detail">...</div>
+        <p class="kpi-subtitle">سرمایه‌گذاری: ${{ '%.2f' % net_invested_usd }}</p>
+      </div>
+      
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-icon">🇮🇷</div>
+          <div>
+            <h3 class="kpi-title">ارزش فعلی (تومان)</h3>
+          </div>
+        </div>
+        <div class="kpi-value" id="current_toman_value_detail">...</div>
+        <p class="kpi-subtitle">نرخ: {{ '{:,.0f}'.format(usd_to_toman) }} تومان</p>
       </div>
     </div>
   </div>
-  <div id="trades_mobile" style="display:none;">
-    <h3 style="margin-bottom:8px;">باز</h3>
-    <div id="open_cards" class="row"></div>
-    <div class="divider"></div>
-    <h3 style="margin-bottom:8px;">بسته</h3>
-    <div id="closed_cards" class="row"></div>
+
+  <!-- Performance -->
+  <div class="kpi-section">
+    <h2 class="kpi-section-title">📊 عملکرد سرمایه‌گذاری</h2>
+    <div class="kpi-grid">
+      <div class="kpi-card {% if profit_loss_usd >= 0 %}positive{% else %}negative{% endif %}">
+        <div class="kpi-header">
+          <div class="kpi-icon">📊</div>
+          <div>
+            <h3 class="kpi-title">سود / زیان</h3>
+          </div>
+        </div>
+        <div class="kpi-value" id="profit_loss_value_detail">${{ '%.2f' % profit_loss_usd }}</div>
+        <p class="kpi-subtitle" id="profit_loss_toman_detail">{{ '{:,.0f}'.format(profit_loss_usd * usd_to_toman) }} تومان</p>
+      </div>
+      
+      <div class="kpi-card {% if roi_percentage >= 0 %}positive{% else %}negative{% endif %}">
+        <div class="kpi-header">
+          <div class="kpi-icon">📈</div>
+          <div>
+            <h3 class="kpi-title">بازده (ROI)</h3>
+          </div>
+        </div>
+        <div class="kpi-value" id="roi_value_detail">{{ '%.1f' % roi_percentage }}%</div>
+        <p class="kpi-subtitle">نسبت به سرمایه خالص</p>
+      </div>
+      
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-icon">⏰</div>
+          <div>
+            <h3 class="kpi-title">مدت سرمایه‌گذاری</h3>
+          </div>
+        </div>
+        <div class="kpi-value">{{ inception_days }} <span style="font-size: 16px; color: var(--muted);">روز</span></div>
+        <p class="kpi-subtitle">از شروع فعالیت</p>
+      </div>
+    </div>
   </div>
-</div>
+
+  <!-- Transaction Details -->
+  <div class="kpi-section">
+    <h2 class="kpi-section-title">💰 جزئیات تراکنش‌ها</h2>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-icon">📈</div>
+          <div>
+            <h3 class="kpi-title">کل خرید (USD)</h3>
+          </div>
+        </div>
+        <div class="kpi-value">${{ '%.2f' % total_invested_usd }}</div>
+        <p class="kpi-subtitle">{{ total_purchases_count }} تراکنش</p>
+      </div>
+      
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-icon">📉</div>
+          <div>
+            <h3 class="kpi-title">کل برداشت (USD)</h3>
+          </div>
+        </div>
+        <div class="kpi-value">${{ '%.2f' % total_withdrawn_usd }}</div>
+        <p class="kpi-subtitle">{{ total_withdrawals_count }} تراکنش</p>
+      </div>
+      
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-icon">💰</div>
+          <div>
+            <h3 class="kpi-title">سرمایه‌گذاری خالص</h3>
+          </div>
+        </div>
+        <div class="kpi-value">${{ '%.2f' % net_invested_usd }}</div>
+        <p class="kpi-subtitle">آخرین تراکنش: {{ last_transaction_date or 'هیچ' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Card -->
+  <div class="info-card">
+    <div class="info-icon">💡</div>
+    <p class="info-text">قیمت فعلی BTC به‌صورت خودکار از بازار دریافت می‌شود و هر 30 ثانیه به‌روزرسانی می‌شود</p>
+  </div>
+
+  <!-- Trades Section -->
+  <div class="kpi-section">
+    <h2 class="kpi-section-title">📈 معاملات</h2>
+    
+    <!-- Desktop Trades -->
+    <div id="trades_desktop">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div>
+          <h3 style="margin-bottom: 16px; font-size: 18px; font-weight: 600; color: var(--text);">🟢 باز</h3>
+          <div class="table-scroll">
+            <table class="responsive">
+              <thead>
+                <tr>
+                  <th>شناسه</th>
+                  <th>تاریخ</th>
+                  <th>BTC باقیمانده</th>
+                  <th>میانگین قیمت (USD)</th>
+                  <th>ارزش فعلی</th>
+                  <th>سود/زیان</th>
+                </tr>
+              </thead>
+              <tbody id="open_trades_body">
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div>
+          <h3 style="margin-bottom: 16px; font-size: 18px; font-weight: 600; color: var(--text);">🔴 بسته</h3>
+          <div class="table-scroll">
+            <table class="responsive">
+              <thead>
+                <tr>
+                  <th>شناسه</th>
+                  <th>خرید</th>
+                  <th>خروج</th>
+                  <th>BTC</th>
+                  <th>میانگین خرید</th>
+                  <th>میانگین خروج</th>
+                  <th>سود/زیان</th>
+                </tr>
+              </thead>
+              <tbody id="closed_trades_body">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Mobile Trades -->
+    <div id="trades_mobile" style="display:none;">
+      <h3 style="margin-bottom: 16px; font-size: 18px; font-weight: 600; color: var(--text);">🟢 باز</h3>
+      <div id="open_cards" class="row"></div>
+      <div class="divider"></div>
+      <h3 style="margin-bottom: 16px; font-size: 18px; font-weight: 600; color: var(--text);">🔴 بسته</h3>
+      <div id="closed_cards" class="row"></div>
+    </div>
+  </div>
 
 <script>
 (function() {
@@ -176,35 +504,40 @@
     const usdValue = btcAmount * currentPrice;
     const tomanValue = usdValue * usdToToman;
     
-    // به‌روزرسانی ارزش فعلی
-    document.getElementById('current_usd_value').textContent = usdValue.toFixed(2);
+    // به‌روزرسانی ارزش فعلی در header
+    document.getElementById('current_usd_value').textContent = '$' + usdValue.toFixed(2);
     document.getElementById('current_toman_value').textContent = tomanValue.toLocaleString('fa-IR');
+    
+    // به‌روزرسانی ارزش فعلی در detail sections
+    document.getElementById('current_usd_value_detail').textContent = '$' + usdValue.toFixed(2);
+    document.getElementById('current_toman_value_detail').textContent = tomanValue.toLocaleString('fa-IR') + ' تومان';
     
     // محاسبه و به‌روزرسانی سود/زیان
     const profitLoss = usdValue - netInvestedUsd;
     const profitLossToman = profitLoss * usdToToman;
     
     document.getElementById('profit_loss_value').textContent = '$' + profitLoss.toFixed(2);
-    document.getElementById('profit_loss_toman').textContent = profitLossToman.toLocaleString('fa-IR') + ' تومان';
+    document.getElementById('profit_loss_value_detail').textContent = '$' + profitLoss.toFixed(2);
+    document.getElementById('profit_loss_toman_detail').textContent = profitLossToman.toLocaleString('fa-IR') + ' تومان';
     
     // محاسبه و به‌روزرسانی ROI
     let roiPercentage = 0;
     if (netInvestedUsd > 0) {
       roiPercentage = (profitLoss / netInvestedUsd) * 100;
     }
-    document.getElementById('roi_value').textContent = roiPercentage.toFixed(1) + '%';
+    document.getElementById('roi_value_detail').textContent = roiPercentage.toFixed(1) + '%';
     
     // تغییر رنگ KPI ها بر اساس سود/زیان
-    const profitLossKpi = document.querySelector('.kpi.positive, .kpi.negative');
-    if (profitLossKpi) {
-      profitLossKpi.classList.remove('positive', 'negative');
-      profitLossKpi.classList.add(profitLoss >= 0 ? 'positive' : 'negative');
-    }
+    const profitLossCards = document.querySelectorAll('.kpi-card.positive, .kpi-card.negative');
+    profitLossCards.forEach(card => {
+      card.classList.remove('positive', 'negative');
+      card.classList.add(profitLoss >= 0 ? 'positive' : 'negative');
+    });
     
-    const roiKpi = document.querySelector('.kpi.positive, .kpi.negative');
-    if (roiKpi && roiKpi !== profitLossKpi) {
-      roiKpi.classList.remove('positive', 'negative');
-      roiKpi.classList.add(roiPercentage >= 0 ? 'positive' : 'negative');
+    // تغییر رنگ header cards
+    const headerCards = document.querySelectorAll('.balance-card');
+    if (headerCards.length >= 4) {
+      headerCards[3].style.color = profitLoss >= 0 ? '#10b981' : '#ef4444';
     }
   }
   
