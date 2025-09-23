@@ -284,7 +284,33 @@ def balance_page():
 	cur.execute("SELECT COUNT(*) FROM withdrawals")
 	total_withdrawals_count = cur.fetchone()[0]
 	
-	# Fetch all transactions
+	# Fetch purchases and withdrawals for trades calculation
+	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM purchases ORDER BY id DESC")
+	purchases_rows = cur.fetchall()
+	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM withdrawals ORDER BY id ASC")
+	withdrawals_rows = cur.fetchall()
+	
+	# Convert to dicts for JSON serialization
+	purchases = [
+		{
+			"id": int(r["id"]),
+			"created_at": r["created_at"],
+			"amount_btc": float(r["amount_btc"]),
+			"price_usd_per_btc": float(r["price_usd_per_btc"]),
+		}
+		for r in purchases_rows
+	]
+	withdrawals = [
+		{
+			"id": int(r["id"]),
+			"created_at": r["created_at"],
+			"amount_btc": float(r["amount_btc"]),
+			"price_usd_per_btc": float(r["price_usd_per_btc"]),
+		}
+		for r in withdrawals_rows
+	]
+	
+	# Fetch all transactions for transaction list
 	cur.execute("""
 		SELECT id, created_at, amount_btc, price_usd_per_btc, 'purchase' as type 
 		FROM purchases 
@@ -340,4 +366,6 @@ def balance_page():
 		roi_percentage=roi_percentage,
 		profit_loss_usd=profit_loss_usd,
 		inception_days=inception_days,
-		transactions=transactions)
+		transactions=transactions,
+		purchases=purchases,
+		withdrawals=withdrawals)
