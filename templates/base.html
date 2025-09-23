@@ -210,16 +210,29 @@
 
       async function fetchPrice() {
         try {
-          var res = await fetch('/api/price/btcusd', { cache: 'no-store' });
+          // دریافت قیمت BTC و نرخ تبدیل از API جدید
+          var res = await fetch('/api/price', { cache: 'no-store' });
           if (!res.ok) throw new Error('bad status');
           var data = await res.json();
-          var price = Number(data && data.price_usd);
+          
+          // به‌روزرسانی نرخ تبدیل
+          if (data.usdt_irt) {
+            usdToToman = Number(data.usdt_irt);
+          }
+          
+          var price = Number(data.btc_usdt);
           if (!isFinite(price)) throw new Error('bad price');
+          
+          // نمایش قیمت USD
           usdEl.textContent = price.toFixed(2);
           usdEl.classList.remove('skeleton');
+          
+          // محاسبه و نمایش قیمت تومان
           var toman = Math.round(price * usdToToman);
           tomanEl.textContent = '(' + toman.toLocaleString('fa-IR') + ' تومان)';
           tomanEl.classList.remove('skeleton');
+          
+          // به‌روزرسانی موجودی اگر موجود باشد
           if (holdUsdEl && holdTmnEl) {
             var holdUsd = totalBtc * price;
             var holdTmn = Math.round(holdUsd * usdToToman);
@@ -227,6 +240,7 @@
             holdTmnEl.textContent = holdTmn.toLocaleString('fa-IR');
           }
         } catch (e) {
+          console.error('Price fetch error:', e);
           usdEl.textContent = '—';
           tomanEl.textContent = '';
           usdEl.classList.remove('skeleton');
