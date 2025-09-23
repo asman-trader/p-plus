@@ -162,7 +162,6 @@
       <div class="header-bar">
         <h1><a href="{{ url_for('panel_bp.panel_index') }}" style="text-decoration: none; color: inherit;"{% if request.path == url_for('panel_bp.panel_index') %} aria-current="page"{% endif %}>داشبورد</a></h1>
         <div class="actions">
-          <button type="button" class="menu-btn" id="themeBtn" title="تغییر تم"><span id="themeIcon">🌙</span></button>
           <button type="button" class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" title="منو">☰</button>
         </div>
       </div>
@@ -208,25 +207,6 @@
       var totalBtc = Number("{{ total_btc if total_btc is defined else 0 }}");
       var holdUsdEl = document.getElementById('hold_usd');
       var holdTmnEl = document.getElementById('hold_toman');
-      var themeBtn = document.getElementById('themeBtn');
-      var themeIcon = document.getElementById('themeIcon');
-
-      function applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        if (themeIcon) {
-          themeIcon.textContent = theme === 'light' ? '🌙' : '☀️';
-        }
-        try { localStorage.setItem('theme', theme); } catch (e) {}
-      }
-      function toggleTheme() {
-        var current = document.documentElement.getAttribute('data-theme');
-        applyTheme(current === 'light' ? 'dark' : 'light');
-      }
-      try {
-        var saved = localStorage.getItem('theme');
-        if (saved) { applyTheme(saved); }
-      } catch (e) {}
-      if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
 
       async function fetchPrice() {
         try {
