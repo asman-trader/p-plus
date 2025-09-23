@@ -494,7 +494,7 @@
     return fetch('/api/price')
       .then(response => response.json())
       .then(data => {
-        usdToToman = data.usdt_irt || usdToToman;  // Update toman rate
+        // نرخ تبدیل از تنظیمات استفاده می‌شود (usdToToman از سرور)
         return data.btc_usdt;
       })
       .catch(() => 50000);

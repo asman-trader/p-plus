@@ -516,7 +516,7 @@
           var res = await fetch('/api/price', { cache: 'no-store' });
           if (!res.ok) throw new Error('bad status');
           var data = await res.json();
-          usdToToman = Number(data.usdt_irt) || usdToToman;
+          // نرخ تبدیل از تنظیمات استفاده می‌شود (usdToToman از سرور)
           var price = Number(data.btc_usdt);
           if (!isFinite(price)) throw new Error('bad price');
           

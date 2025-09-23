@@ -514,15 +514,10 @@
 
       async function fetchPrice() {
         try {
-          // دریافت قیمت BTC و نرخ تبدیل از API جدید
+          // دریافت قیمت BTC از API
           var res = await fetch('/api/price', { cache: 'no-store' });
           if (!res.ok) throw new Error('bad status');
           var data = await res.json();
-          
-          // به‌روزرسانی نرخ تبدیل
-          if (data.usdt_irt) {
-            usdToToman = Number(data.usdt_irt);
-          }
           
           var price = Number(data.btc_usdt);
           if (!isFinite(price)) throw new Error('bad price');
@@ -531,12 +526,12 @@
           usdEl.textContent = price.toFixed(2);
           usdEl.classList.remove('skeleton');
           
-          // محاسبه و نمایش قیمت تومان
+          // محاسبه و نمایش قیمت تومان (با نرخ ثابت از تنظیمات)
           var toman = Math.round(price * usdToToman);
           tomanEl.textContent = toman.toLocaleString('fa-IR') + ' تومان';
           tomanEl.classList.remove('skeleton');
           
-          // نمایش نرخ تبدیل
+          // نمایش نرخ تبدیل (از تنظیمات)
           if (rateEl) {
             rateEl.textContent = usdToToman.toLocaleString('fa-IR');
             rateEl.classList.remove('skeleton');

@@ -56,17 +56,10 @@ def panel_index():
 	current_btc_balance = total_purchased_btc - total_withdrawn_btc
 	net_invested_usd = total_purchased_usd - total_withdrawn_usd
 	
-	# نرخ تبدیل
-	# cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-	# usd_to_toman = float(cur.fetchone()[0])
-	usd_to_toman = 60000  # Default
-	try:
-		response = requests.post('https://api.nobitex.ir/market/stats', json={"srcCurrency": "usdt", "dstCurrency": "rls"}, timeout=3)
-		if response.status_code == 200:
-			data = response.json()["stats"]["usdt-rls"]
-			usd_to_toman = float(data["latest"])
-	except Exception:
-		pass
+	# نرخ تبدیل از تنظیمات
+	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+	row = cur.fetchone()
+	usd_to_toman = float(row[0]) if row else 60000.0
 	
 	# محاسبه ROI دقیق با در نظر گیری معاملات بسته و باز
 	roi_percentage = 0
@@ -325,17 +318,10 @@ def balance_page():
 	total_withdrawn_usd = float(cur.fetchone()[0] or 0)
 	net_invested_usd = total_invested_usd - total_withdrawn_usd
 	
-	# نرخ تبدیل
-	# cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-	# usd_to_toman = float(cur.fetchone()[0])
-	usd_to_toman = 60000  # Default
-	try:
-		response = requests.post('https://api.nobitex.ir/market/stats', json={"srcCurrency": "usdt", "dstCurrency": "rls"}, timeout=3)
-		if response.status_code == 200:
-			data = response.json()["stats"]["usdt-rls"]
-			usd_to_toman = float(data["latest"])
-	except Exception:
-		pass
+	# نرخ تبدیل از تنظیمات
+	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+	row = cur.fetchone()
+	usd_to_toman = float(row[0]) if row else 60000.0
 	
 	# تاریخ آخرین تراکنش
 	cur.execute("SELECT MAX(created_at) FROM (SELECT created_at FROM purchases UNION ALL SELECT created_at FROM withdrawals)")
