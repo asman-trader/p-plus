@@ -667,7 +667,7 @@
       fetchUsdtPriceBtn.disabled = true;
       fetchUsdtPriceBtn.textContent = '⏳ در حال دریافت...';
       
-      const response = await fetch('/api/usdt_toman_price', { cache: 'no-store' });
+      const response = await fetch('/api/price', { cache: 'no-store' });
       if (!response.ok) throw new Error('Network error');
       
       const data = await response.json();
