@@ -104,10 +104,13 @@ def get_prices():
 			# دریافت قیمت تتر به تومان از async fetcher
 			usdt_price_info = get_price_info()
 			usdt_toman = usdt_price_info.get("usdt_price", 60000)
+			
+			# دریافت نرخ USD از async fetcher
+			usd_rate = usdt_price_info.get("usd_rate", 600000)  # fallback to 600,000 IRT
 
 			return jsonify({
 				"btc_irt": btc_irt,
-				"usdt_irt": usdt_irt,
+				"usdt_irt": usd_rate,  # Use USD rate instead of USDT price
 				"btc_usdt": btc_usdt,
 				"usdt_toman": usdt_toman,
 				"timestamp": datetime.utcnow().isoformat(),
@@ -118,7 +121,7 @@ def get_prices():
 	except Exception as e:
 		return jsonify({
 			"btc_irt": 3000000000,
-			"usdt_irt": 60000,
+			"usdt_irt": 600000,  # fallback USD rate
 			"btc_usdt": 50000,
 			"usdt_toman": 60000,
 			"timestamp": datetime.utcnow().isoformat(),

@@ -20,10 +20,11 @@ price_cache = {
 # ------------------------------
 async def fetch_prices_from_wallex():
     """Fetch both USDT price and USD rate from Wallex"""
-    url = "https://api.wallex.ir/v1/markets"
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=10) as resp:
+            # Get USDT price from markets API
+            markets_url = "https://api.wallex.ir/v1/markets"
+            async with session.get(markets_url, timeout=10) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     markets = data.get("result", {}).get("symbols", {})
@@ -36,13 +37,20 @@ async def fetch_prices_from_wallex():
                         if last_price and last_price != "-":
                             usdt_price = int(float(last_price))
                     
-                    # Get USD rate (USD/IRT)
-                    usd_market = markets.get("USDIRT")
+                    # Get USD rate from currencies/stats API
                     usd_rate = None
-                    if usd_market:
-                        last_price = usd_market.get("stats", {}).get("lastPrice")
-                        if last_price and last_price != "-":
-                            usd_rate = float(last_price)
+                    try:
+                        stats_url = "https://api.wallex.ir/v1/currencies/stats"
+                        async with session.get(stats_url, timeout=10) as stats_resp:
+                            if stats_resp.status == 200:
+                                stats_data = await stats_resp.json()
+                                result = stats_data.get("result", [])
+                                for item in result:
+                                    if item.get("key") == "USDT":
+                                        usd_rate = float(item.get("price", 0))
+                                        break
+                    except Exception as e:
+                        print(f"Error fetching USD rate: {e}")
                     
                     return usdt_price, usd_rate
     except Exception as e:

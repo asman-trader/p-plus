@@ -681,6 +681,7 @@
       
       const data = await response.json();
       
+      // Use usdt_irt as USD rate (it's already in IRT)
       if (data.usdt_irt && data.usdt_irt > 0) {
         // Convert IRT to Toman (divide by 10)
         const usdToToman = Math.round(data.usdt_irt / 10);
