@@ -324,7 +324,61 @@
       
       <div class="form-actions">
         <button type="submit" class="btn-primary">
-          💾 ذخیره تنظیمات
+          💾 ذخیره نرخ تبدیل
+        </button>
+        <a href="{{ url_for('panel_bp.panel_index') }}" class="btn-outline">
+          ← بازگشت به داشبورد
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Wallet Address Settings -->
+  <div class="settings-container">
+    <h2 class="settings-title">💼 آدرس کیف پول‌ها</h2>
+    
+    <form method="post" action="{{ url_for('panel_bp.panel_update_wallet_addresses') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      
+      <div class="form-group">
+        <label class="form-label" for="btc_wallet_address">
+          آدرس کیف پول بیت‌کوین
+        </label>
+        <input 
+          type="text" 
+          id="btc_wallet_address"
+          name="btc_wallet_address" 
+          placeholder="مثلاً 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+          value="{{ btc_wallet_address }}"
+          class="form-input"
+        >
+        <div class="form-help">
+          <span class="form-help-icon">💡</span>
+          آدرس کیف پول بیت‌کوین برای دریافت موجودی واقعی از بلاک‌چین
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="usdt_wallet_address">
+          آدرس کیف پول تتر (USDT)
+        </label>
+        <input 
+          type="text" 
+          id="usdt_wallet_address"
+          name="usdt_wallet_address" 
+          placeholder="مثلاً 0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"
+          value="{{ usdt_wallet_address }}"
+          class="form-input"
+        >
+        <div class="form-help">
+          <span class="form-help-icon">💡</span>
+          آدرس کیف پول تتر (ERC-20) برای دریافت موجودی واقعی از اتریوم
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">
+          💾 ذخیره آدرس‌ها
         </button>
         <a href="{{ url_for('panel_bp.panel_index') }}" class="btn-outline">
           ← بازگشت به داشبورد

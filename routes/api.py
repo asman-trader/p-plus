@@ -8,6 +8,74 @@ import requests
 api_bp = Blueprint("api_bp", __name__, url_prefix="/api")
 
 
+@api_bp.get("/wallet_balance")
+def get_wallet_balance():
+	try:
+		conn = get_db_connection()
+		cur = conn.cursor()
+		
+		# دریافت آدرس کیف پول‌ها
+		cur.execute("SELECT value FROM settings WHERE key='btc_wallet_address'")
+		btc_row = cur.fetchone()
+		btc_address = btc_row[0] if btc_row and btc_row[0] else None
+		
+		cur.execute("SELECT value FROM settings WHERE key='usdt_wallet_address'")
+		usdt_row = cur.fetchone()
+		usdt_address = usdt_row[0] if usdt_row and usdt_row[0] else None
+		
+		conn.close()
+		
+		# اگر آدرس‌ها تنظیم نشده باشند
+		if not btc_address and not usdt_address:
+			return jsonify({
+				"btc_balance": 0,
+				"usdt_balance": 0,
+				"error": "آدرس کیف پول‌ها تنظیم نشده است"
+			})
+		
+		# دریافت موجودی بیت‌کوین
+		btc_balance = 0
+		if btc_address:
+			try:
+				# استفاده از BlockCypher API برای بیت‌کوین
+				response = requests.get(f'https://api.blockcypher.com/v1/btc/main/addrs/{btc_address}/balance', timeout=10)
+				if response.status_code == 200:
+					data = response.json()
+					btc_balance = data.get('balance', 0) / 100000000  # تبدیل از satoshi به BTC
+			except Exception as e:
+				print(f"Error fetching BTC balance: {e}")
+		
+		# دریافت موجودی تتر (USDT)
+		usdt_balance = 0
+		if usdt_address:
+			try:
+				# استفاده از Etherscan API برای USDT (ERC-20)
+				# این فقط برای آدرس‌های Ethereum کار می‌کند
+				response = requests.get(f'https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=0xdAC17F958D2ee523a2206206994597C13D831ec7&address={usdt_address}&tag=latest&apikey=YourApiKeyToken', timeout=10)
+				if response.status_code == 200:
+					data = response.json()
+					if data.get('status') == '1':
+						usdt_balance = int(data.get('result', 0)) / 1000000  # USDT has 6 decimals
+			except Exception as e:
+				print(f"Error fetching USDT balance: {e}")
+		
+		return jsonify({
+			"btc_balance": btc_balance,
+			"usdt_balance": usdt_balance,
+			"btc_address": btc_address,
+			"usdt_address": usdt_address,
+			"timestamp": datetime.utcnow().isoformat()
+		})
+		
+	except Exception as e:
+		return jsonify({
+			"btc_balance": 0,
+			"usdt_balance": 0,
+			"error": str(e),
+			"timestamp": datetime.utcnow().isoformat()
+		})
+
+
 @api_bp.get("/price")
 def get_prices():
     try:

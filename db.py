@@ -117,6 +117,23 @@ def ensure_db() -> None:
 			("60000",),
 		)
 	
+	# اضافه کردن آدرس کیف پول‌ها
+	cur.execute("SELECT value FROM settings WHERE key='btc_wallet_address'")
+	row = cur.fetchone()
+	if row is None:
+		cur.execute(
+			"INSERT INTO settings(key, value) VALUES('btc_wallet_address', ?)",
+			("",),
+		)
+	
+	cur.execute("SELECT value FROM settings WHERE key='usdt_wallet_address'")
+	row = cur.fetchone()
+	if row is None:
+		cur.execute(
+			"INSERT INTO settings(key, value) VALUES('usdt_wallet_address', ?)",
+			("",),
+		)
+	
 	# ایجاد کیف پول پیش‌فرض
 	cur.execute("SELECT COUNT(*) FROM wallets")
 	wallet_count = cur.fetchone()[0]

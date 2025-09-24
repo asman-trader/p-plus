@@ -347,6 +347,35 @@ def panel_create_risk_limit():
 		return redirect(url_for("panel_bp.portfolio_page"))
 
 
+@panel_bp.post("/panel/update_wallet_addresses")
+def panel_update_wallet_addresses():
+	try:
+		btc_address = request.form.get("btc_wallet_address", "").strip()
+		usdt_address = request.form.get("usdt_wallet_address", "").strip()
+		
+		conn = get_db_connection()
+		cur = conn.cursor()
+		
+		# به‌روزرسانی آدرس بیت‌کوین
+		cur.execute("UPDATE settings SET value = ? WHERE key = 'btc_wallet_address'", (btc_address,))
+		if cur.rowcount == 0:
+			cur.execute("INSERT INTO settings(key, value) VALUES('btc_wallet_address', ?)", (btc_address,))
+		
+		# به‌روزرسانی آدرس تتر
+		cur.execute("UPDATE settings SET value = ? WHERE key = 'usdt_wallet_address'", (usdt_address,))
+		if cur.rowcount == 0:
+			cur.execute("INSERT INTO settings(key, value) VALUES('usdt_wallet_address', ?)", (usdt_address,))
+		
+		conn.commit()
+		conn.close()
+		flash("آدرس کیف پول‌ها با موفقیت به‌روزرسانی شد.", "success")
+		return redirect(url_for("panel_bp.settings_page"))
+	except Exception as e:
+		print("[panel_update_wallet_addresses] error:", e)
+		flash("خطای داخلی هنگام به‌روزرسانی آدرس کیف پول‌ها.", "error")
+		return redirect(url_for("panel_bp.settings_page"))
+
+
 @panel_bp.post("/panel/rate")
 def panel_update_rate():
 	try:
@@ -379,14 +408,30 @@ def healthz():
 
 @panel_bp.get("/settings")
 def settings_page():
-	# Load current rate
+	# Load current settings
 	conn = get_db_connection()
 	cur = conn.cursor()
+	
+	# نرخ تبدیل
 	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
 	row = cur.fetchone()
 	usd_to_toman = float(row[0]) if row else 60000.0
+	
+	# آدرس کیف پول بیت‌کوین
+	cur.execute("SELECT value FROM settings WHERE key='btc_wallet_address'")
+	row = cur.fetchone()
+	btc_wallet_address = row[0] if row else ""
+	
+	# آدرس کیف پول تتر
+	cur.execute("SELECT value FROM settings WHERE key='usdt_wallet_address'")
+	row = cur.fetchone()
+	usdt_wallet_address = row[0] if row else ""
+	
 	conn.close()
-	return render_template("settings.html", usd_to_toman=usd_to_toman)
+	return render_template("settings.html", 
+		usd_to_toman=usd_to_toman,
+		btc_wallet_address=btc_wallet_address,
+		usdt_wallet_address=usdt_wallet_address)
 
 
 @panel_bp.get("/portfolio")

@@ -290,7 +290,8 @@
       <div class="balance-grid">
         <div class="balance-item">
           <div class="balance-value" id="current_btc">{{ '%.8f' % current_btc_balance }}</div>
-          <div class="balance-label">بیت‌کوین</div>
+          <div class="balance-label">بیت‌کوین (سیستم)</div>
+          <div class="balance-subtitle" id="real_btc_balance" style="font-size: 12px; color: var(--muted);">...</div>
         </div>
         
         <div class="balance-item">
@@ -308,6 +309,39 @@
         <div class="balance-item">
           <div class="balance-value" id="roi_percentage">{{ '%.1f' % roi_percentage }}%</div>
           <div class="balance-label">بازده کل</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Real Wallet Balance -->
+  <div class="main-card">
+    <div class="balance-overview">
+      <h1 class="balance-title">💼 موجودی واقعی کیف پول‌ها</h1>
+      
+      <div class="balance-grid">
+        <div class="balance-item">
+          <div class="balance-value" id="real_btc">...</div>
+          <div class="balance-label">بیت‌کوین واقعی</div>
+          <div class="balance-subtitle" id="btc_address_display" style="font-size: 10px; color: var(--muted);">...</div>
+        </div>
+        
+        <div class="balance-item">
+          <div class="balance-value" id="real_usdt">...</div>
+          <div class="balance-label">تتر واقعی</div>
+          <div class="balance-subtitle" id="usdt_address_display" style="font-size: 10px; color: var(--muted);">...</div>
+        </div>
+        
+        <div class="balance-item">
+          <div class="balance-value" id="real_btc_usd">...</div>
+          <div class="balance-label">ارزش BTC (USD)</div>
+          <div class="balance-subtitle" id="real_btc_toman">...</div>
+        </div>
+        
+        <div class="balance-item">
+          <div class="balance-value" id="real_total_usd">...</div>
+          <div class="balance-label">کل ارزش (USD)</div>
+          <div class="balance-subtitle" id="real_total_toman">...</div>
         </div>
       </div>
     </div>
@@ -423,6 +457,98 @@
   var profitLossTomanEl = document.getElementById('profit_loss_toman');
   var roiPercentageEl = document.getElementById('roi_percentage');
   var currentPriceEl = document.getElementById('current_price');
+  
+  // Real wallet balance elements
+  var realBtcEl = document.getElementById('real_btc');
+  var realUsdtEl = document.getElementById('real_usdt');
+  var realBtcUsdEl = document.getElementById('real_btc_usd');
+  var realBtcTomanEl = document.getElementById('real_btc_toman');
+  var realTotalUsdEl = document.getElementById('real_total_usd');
+  var realTotalTomanEl = document.getElementById('real_total_toman');
+  var btcAddressEl = document.getElementById('btc_address_display');
+  var usdtAddressEl = document.getElementById('usdt_address_display');
+
+  async function fetchRealBalance() {
+    try {
+      var res = await fetch('/api/wallet_balance', { cache: 'no-store' });
+      if (!res.ok) throw new Error('bad status');
+      var data = await res.json();
+      
+      var realBtc = Number(data.btc_balance) || 0;
+      var realUsdt = Number(data.usdt_balance) || 0;
+      var btcAddress = data.btc_address || '';
+      var usdtAddress = data.usdt_address || '';
+      
+      // Update real BTC balance
+      if (realBtcEl) {
+        realBtcEl.textContent = realBtc.toFixed(8);
+        realBtcEl.classList.remove('loading');
+      }
+      
+      // Update real USDT balance
+      if (realUsdtEl) {
+        realUsdtEl.textContent = realUsdt.toFixed(2);
+        realUsdtEl.classList.remove('loading');
+      }
+      
+      // Update addresses
+      if (btcAddressEl) {
+        btcAddressEl.textContent = btcAddress ? btcAddress.substring(0, 10) + '...' : 'تنظیم نشده';
+      }
+      
+      if (usdtAddressEl) {
+        usdtAddressEl.textContent = usdtAddress ? usdtAddress.substring(0, 10) + '...' : 'تنظیم نشده';
+      }
+      
+      // Calculate real BTC value in USD
+      var currentPrice = 0;
+      try {
+        var priceRes = await fetch('/api/price', { cache: 'no-store' });
+        if (priceRes.ok) {
+          var priceData = await priceRes.json();
+          currentPrice = Number(priceData.btc_usdt) || 0;
+        }
+      } catch (e) {
+        console.error('Error fetching price for real balance:', e);
+      }
+      
+      if (currentPrice > 0) {
+        var realBtcUsd = realBtc * currentPrice;
+        var realBtcToman = realBtcUsd * usdToToman;
+        var realTotalUsd = realBtcUsd + realUsdt;
+        var realTotalToman = realTotalUsd * usdToToman;
+        
+        if (realBtcUsdEl) {
+          realBtcUsdEl.textContent = '$' + realBtcUsd.toFixed(2);
+          realBtcUsdEl.classList.remove('loading');
+        }
+        
+        if (realBtcTomanEl) {
+          realBtcTomanEl.textContent = realBtcToman.toLocaleString('fa-IR') + ' تومان';
+          realBtcTomanEl.classList.remove('loading');
+        }
+        
+        if (realTotalUsdEl) {
+          realTotalUsdEl.textContent = '$' + realTotalUsd.toFixed(2);
+          realTotalUsdEl.classList.remove('loading');
+        }
+        
+        if (realTotalTomanEl) {
+          realTotalTomanEl.textContent = realTotalToman.toLocaleString('fa-IR') + ' تومان';
+          realTotalTomanEl.classList.remove('loading');
+        }
+      }
+      
+    } catch (e) {
+      console.error('Error fetching real balance:', e);
+      if (realBtcEl) realBtcEl.textContent = '—';
+      if (realUsdtEl) realUsdtEl.textContent = '—';
+      if (realBtcUsdEl) realBtcUsdEl.textContent = '—';
+      if (realBtcTomanEl) realBtcTomanEl.textContent = '—';
+      if (realTotalUsdEl) realTotalUsdEl.textContent = '—';
+      if (realTotalTomanEl) realTotalTomanEl.textContent = '—';
+    }
+  }
 
   async function fetchPrice() {
     try {
@@ -492,9 +618,11 @@
   
   // Initial load
   fetchPrice();
+  fetchRealBalance();
   
   // Update every 30 seconds
   setInterval(fetchPrice, 30000);
+  setInterval(fetchRealBalance, 60000); // Update real balance every minute
 
   // Auto-hide flashes after 3 seconds
   var fb = document.getElementById('flashBox');
@@ -507,7 +635,7 @@
   }
 
   // Add loading animation to elements that will be updated
-  var loadingElements = [currentUsdEl, currentTomanEl, profitLossEl, profitLossTomanEl, currentPriceEl];
+  var loadingElements = [currentUsdEl, currentTomanEl, profitLossEl, profitLossTomanEl, currentPriceEl, realBtcEl, realUsdtEl, realBtcUsdEl, realBtcTomanEl, realTotalUsdEl, realTotalTomanEl];
   loadingElements.forEach(function(el) {
     if (el) el.classList.add('loading');
   });
