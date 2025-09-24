@@ -109,13 +109,8 @@ def ensure_db() -> None:
 		)
 		"""
 	)
-	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-	row = cur.fetchone()
-	if row is None:
-		cur.execute(
-			"INSERT INTO settings(key, value) VALUES('usd_to_toman', ?)",
-			("60000",),
-		)
+	# USD to Toman rate is now automatically fetched from Wallex API
+	# No need to store in database
 	
 	# اضافه کردن آدرس کیف پول‌ها
 	cur.execute("SELECT value FROM settings WHERE key='btc_wallet_address'")

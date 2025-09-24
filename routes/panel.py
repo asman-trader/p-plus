@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request 
 from datetime import datetime
 from db import get_db_connection
 import requests
+from price_fetcher import get_current_usd_rate
 
 panel_bp = Blueprint("panel_bp", __name__)
 
@@ -29,6 +30,19 @@ def _to_float(txt: str) -> float:
 		return float(s)
 	except Exception:
 		return float("nan")
+
+def _get_usd_to_toman(conn) -> float:
+	"""Get USD to Toman rate from async fetcher, fallback to settings"""
+	# First try to get from async fetcher
+	usd_rate = get_current_usd_rate()
+	if usd_rate and usd_rate > 0:
+		return usd_rate
+	
+	# Fallback to database settings
+	cur = conn.cursor()
+	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+	row = cur.fetchone()
+	return float(row[0]) if row else 60000.0
 
 @panel_bp.get("/panel")
 def panel_index():
@@ -63,10 +77,8 @@ def panel_index():
 	current_btc_balance = total_purchased_btc - total_withdrawn_btc
 	net_invested_usd = total_purchased_usd - total_withdrawn_usd + total_usd_deposits
 	
-	# نرخ تبدیل از تنظیمات
-	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-	row = cur.fetchone()
-	usd_to_toman = float(row[0]) if row else 60000.0
+	# نرخ تبدیل از async fetcher
+	usd_to_toman = _get_usd_to_toman(conn)
 	
 	# محاسبه ROI دقیق با در نظر گیری معاملات بسته و باز
 	roi_percentage = 0
@@ -376,25 +388,8 @@ def panel_update_wallet_addresses():
 		return redirect(url_for("panel_bp.settings_page"))
 
 
-@panel_bp.post("/panel/rate")
-def panel_update_rate():
-	try:
-		new_rate = float(request.form.get("usd_to_toman", "0").strip())
-	except ValueError:
-		flash("نرخ نامعتبر است.", "error")
-		return redirect(url_for("panel_bp.panel_index"))
-
-	if new_rate <= 0:
-		flash("نرخ باید بزرگ‌تر از صفر باشد.", "error")
-		return redirect(url_for("panel_bp.panel_index"))
-
-	conn = get_db_connection()
-	cur = conn.cursor()
-	cur.execute("INSERT INTO settings(key, value) VALUES('usd_to_toman', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (str(new_rate),))
-	conn.commit()
-	conn.close()
-	flash("نرخ با موفقیت به‌روزرسانی شد.", "success")
-	return redirect(url_for("panel_bp.settings_page"))
+# USD to Toman rate is now automatically fetched from Wallex API
+# No manual update needed
 
 
 @panel_bp.get("/")
@@ -620,8 +615,7 @@ def deposits_page():
 	total_usd = total_btc_usd + total_usd_deposits
 	
 	# نرخ تبدیل
-	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-	usd_to_toman = float(cur.fetchone()[0])
+	usd_to_toman = _get_usd_to_toman(conn)
 	total_toman = total_usd * usd_to_toman + total_usd_toman
 	
 	# لیست واریزهای دلاری
@@ -659,8 +653,7 @@ def withdrawals_page():
 	total_withdraw_usd = cur.fetchone()[0] or 0
 	cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM withdrawals")
 	total_withdraw_btc = float(cur.fetchone()[0] or 0)
-	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-	usd_to_toman = float(cur.fetchone()[0])
+	usd_to_toman = _get_usd_to_toman(conn)
 	conn.close()
 	
 	# Convert sqlite3.Row to plain dicts for JSON serialization
@@ -696,10 +689,8 @@ def balance_page():
 	total_withdrawn_usd = float(cur.fetchone()[0] or 0)
 	net_invested_usd = total_invested_usd - total_withdrawn_usd
 	
-	# نرخ تبدیل از تنظیمات
-	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-	row = cur.fetchone()
-	usd_to_toman = float(row[0]) if row else 60000.0
+	# نرخ تبدیل از async fetcher
+	usd_to_toman = _get_usd_to_toman(conn)
 	
 	# تاریخ آخرین تراکنش
 	cur.execute("SELECT MAX(created_at) FROM (SELECT created_at FROM purchases UNION ALL SELECT created_at FROM withdrawals)")

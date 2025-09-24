@@ -187,6 +187,57 @@
       font-size: 16px;
     }
     
+    /* Auto Rate Info Styles */
+    .auto-rate-info {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 24px;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 2px solid #bae6fd;
+      border-radius: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .info-icon {
+      font-size: 48px;
+      opacity: 0.8;
+    }
+    
+    .info-content h4 {
+      margin: 0 0 8px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .info-content p {
+      margin: 0 0 16px 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    
+    .rate-display {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .rate-label {
+      font-weight: 600;
+      color: var(--muted);
+    }
+    
+    .rate-value {
+      font-weight: 700;
+      font-size: 16px;
+      color: #059669;
+    }
+    
     /* Info Cards */
     .info-grid {
       display: grid;
@@ -488,54 +539,19 @@
 
   <!-- Settings Form -->
   <div class="settings-container">
-    <h2 class="settings-title">🔧 تنظیم نرخ تبدیل</h2>
+    <h2 class="settings-title">💱 نرخ تبدیل خودکار</h2>
     
-    <form method="post" action="{{ url_for('panel_bp.panel_update_rate') }}">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      
-      <div class="form-group">
-        <label class="form-label" for="usd_to_toman">
-          نرخ تبدیل (تومان برای هر دلار) <span style="color: #ef4444;">*</span>
-        </label>
-        <div class="input-with-button">
-          <input 
-            type="number" 
-            id="usd_to_toman"
-            name="usd_to_toman" 
-            step="1" 
-            min="1" 
-            value="{{ '%.0f' % usd_to_toman }}" 
-            required 
-            inputmode="numeric" 
-            placeholder="مثلاً 60000"
-            class="form-input"
-          >
-          <button type="button" class="btn-fetch-price" id="fetchUsdtPrice">
-            💰 دریافت قیمت تتر
-          </button>
-        </div>
-        <div class="price-info" id="priceInfo" style="display: none;">
-          <span class="price-label">قیمت فعلی تتر:</span>
-          <span class="price-value" id="currentUsdtPrice">...</span>
-          <span class="price-source" id="priceSource">...</span>
+    <div class="auto-rate-info">
+      <div class="info-icon">🔄</div>
+      <div class="info-content">
+        <h4>نرخ تبدیل خودکار</h4>
+        <p>نرخ تبدیل دلار به تومان به صورت خودکار از والکس دریافت و به‌روزرسانی می‌شود.</p>
+        <div class="rate-display">
+          <span class="rate-label">نرخ فعلی:</span>
+          <span class="rate-value" id="currentUsdRate">در حال دریافت...</span>
         </div>
       </div>
-      
-      <div class="form-help">
-        <span class="form-help-icon">💡</span>
-        این مقدار برای تبدیل‌ها و نمایش ارزش‌های تومانی در تمام بخش‌های سیستم استفاده می‌شود.
-        تغییر این مقدار بر روی تمام محاسبات قبلی تأثیر نمی‌گذارد.
-      </div>
-      
-      <div class="form-actions">
-        <button type="submit" class="btn-primary">
-          💾 ذخیره نرخ تبدیل
-        </button>
-        <a href="{{ url_for('panel_bp.panel_index') }}" class="btn-outline">
-          ← بازگشت به داشبورد
-        </a>
-      </div>
-    </form>
+    </div>
   </div>
 
   <!-- Wallet Address Settings -->
@@ -654,65 +670,36 @@
   const resetBtn = document.getElementById('resetBtn');
   const resetForm = document.getElementById('resetForm');
   
-  // Price fetch elements
-  const fetchUsdtPriceBtn = document.getElementById('fetchUsdtPrice');
-  const usdToTomanInput = document.getElementById('usd_to_toman');
-  const priceInfo = document.getElementById('priceInfo');
-  const currentUsdtPrice = document.getElementById('currentUsdtPrice');
-  const priceSource = document.getElementById('priceSource');
+  // Auto rate display
+  const currentUsdRate = document.getElementById('currentUsdRate');
   
-  // Fetch USDT price function
-  async function fetchUsdtPrice() {
+  // Fetch current USD rate
+  async function fetchCurrentUsdRate() {
     try {
-      fetchUsdtPriceBtn.disabled = true;
-      fetchUsdtPriceBtn.textContent = '⏳ در حال دریافت...';
-      
-      const response = await fetch('/api/usdt-price', { cache: 'no-store' });
+      const response = await fetch('/api/price', { cache: 'no-store' });
       if (!response.ok) throw new Error('Network error');
       
       const data = await response.json();
       
-      if (data.price_toman && data.price_toman > 0) {
-        // Update input field
-        usdToTomanInput.value = Math.round(data.price_toman);
-        
-        // Show price info
-        currentUsdtPrice.textContent = data.formatted || (data.price_toman.toLocaleString('fa-IR') + ' تومان');
-        priceSource.textContent = 'والکس (Async)';
-        priceInfo.style.display = 'flex';
-        
-        // Flash success
-        priceInfo.style.background = '#f0fdf4';
-        priceInfo.style.borderColor = '#bbf7d0';
-        setTimeout(() => {
-          priceInfo.style.background = '#f0f9ff';
-          priceInfo.style.borderColor = '#bae6fd';
-        }, 2000);
-        
+      if (data.usdt_irt && data.usdt_irt > 0) {
+        // Convert IRT to Toman (divide by 10)
+        const usdToToman = Math.round(data.usdt_irt / 10);
+        currentUsdRate.textContent = usdToToman.toLocaleString('fa-IR') + ' تومان';
+        currentUsdRate.style.color = '#059669';
       } else {
-        throw new Error('Invalid price data');
+        throw new Error('Invalid rate data');
       }
       
     } catch (error) {
-      console.error('Error fetching USDT price:', error);
-      
-      // Show error
-      currentUsdtPrice.textContent = 'خطا در دریافت';
-      priceSource.textContent = 'خطا';
-      priceInfo.style.display = 'flex';
-      priceInfo.style.background = '#fef2f2';
-      priceInfo.style.borderColor = '#fecaca';
-      
-      alert('خطا در دریافت قیمت تتر! لطفاً دوباره تلاش کنید.');
-    } finally {
-      fetchUsdtPriceBtn.disabled = false;
-      fetchUsdtPriceBtn.textContent = '💰 دریافت قیمت تتر';
+      console.error('Error fetching USD rate:', error);
+      currentUsdRate.textContent = 'خطا در دریافت';
+      currentUsdRate.style.color = '#ef4444';
     }
   }
   
-  // Event listeners
-  if (fetchUsdtPriceBtn) {
-    fetchUsdtPriceBtn.addEventListener('click', fetchUsdtPrice);
+  // Load current rate on page load
+  if (currentUsdRate) {
+    fetchCurrentUsdRate();
   }
   
   // Enable/disable reset button based on confirmation text

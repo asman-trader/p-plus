@@ -4,7 +4,7 @@ from db import get_db_connection
 import json
 import urllib.request
 import requests
-from price_fetcher import get_price_info
+from price_fetcher import get_price_info, get_current_usd_rate
 
 api_bp = Blueprint("api_bp", __name__, url_prefix="/api")
 
@@ -103,7 +103,7 @@ def get_prices():
 
 			# دریافت قیمت تتر به تومان از async fetcher
 			usdt_price_info = get_price_info()
-			usdt_toman = usdt_price_info.get("price", 60000)
+			usdt_toman = usdt_price_info.get("usdt_price", 60000)
 
 			return jsonify({
 				"btc_irt": btc_irt,
@@ -130,11 +130,11 @@ def get_prices():
 def get_usdt_price():
 	"""دریافت قیمت تتر به تومان از async fetcher"""
 	price_info = get_price_info()
-	if price_info.get("price"):
+	if price_info.get("usdt_price"):
 		return jsonify({
 			"symbol": "USDTTMN",
-			"price_toman": price_info["price"],
-			"formatted": price_info["formatted"],
+			"price_toman": price_info["usdt_price"],
+			"formatted": price_info["usdt_formatted"],
 			"updated_at": price_info["updated_at"],
 			"timestamp": datetime.utcnow().isoformat()
 		})
@@ -144,10 +144,17 @@ def get_usdt_price():
 
 
 def _get_usd_to_toman(conn) -> float:
+	"""Get USD to Toman rate from async fetcher, fallback to settings"""
+	# First try to get from async fetcher
+	usd_rate = get_current_usd_rate()
+	if usd_rate and usd_rate > 0:
+		return usd_rate
+	
+	# Fallback to database settings
 	cur = conn.cursor()
 	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
 	row = cur.fetchone()
-	return float(row[0]) if row else 0.0
+	return float(row[0]) if row else 60000.0
 
 
 @api_bp.get("/purchases")
