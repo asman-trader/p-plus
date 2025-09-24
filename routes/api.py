@@ -49,15 +49,28 @@ def get_wallet_balance():
 		usdt_balance = 0
 		if usdt_address:
 			try:
-				# استفاده از Etherscan API برای USDT (ERC-20)
-				# این فقط برای آدرس‌های Ethereum کار می‌کند
-				response = requests.get(f'https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=0xdAC17F958D2ee523a2206206994597C13D831ec7&address={usdt_address}&tag=latest&apikey=YourApiKeyToken', timeout=10)
+				# استفاده از Covalent API برای USDT (ERC-20) - رایگان
+				# این API نیازی به API key ندارد
+				response = requests.get(f'https://api.covalenthq.com/v1/1/address/{usdt_address}/balances_v2/?key=ckey_demo', timeout=10)
 				if response.status_code == 200:
 					data = response.json()
-					if data.get('status') == '1':
-						usdt_balance = int(data.get('result', 0)) / 1000000  # USDT has 6 decimals
+					if data.get('data') and data['data'].get('items'):
+						for item in data['data']['items']:
+							if item.get('contract_ticker_symbol') == 'USDT':
+								usdt_balance = float(item.get('balance', 0)) / (10 ** int(item.get('contract_decimals', 6)))
+								break
 			except Exception as e:
-				print(f"Error fetching USDT balance: {e}")
+				print(f"Error fetching USDT balance from Covalent: {e}")
+				# Fallback: استفاده از Etherscan API (نیاز به API key)
+				try:
+					api_key = "YourApiKeyToken"  # باید از etherscan.io دریافت شود
+					response = requests.get(f'https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=0xdAC17F958D2ee523a2206206994597C13D831ec7&address={usdt_address}&tag=latest&apikey={api_key}', timeout=10)
+					if response.status_code == 200:
+						data = response.json()
+						if data.get('status') == '1':
+							usdt_balance = int(data.get('result', 0)) / 1000000  # USDT has 6 decimals
+				except Exception as e2:
+					print(f"Error fetching USDT balance from Etherscan: {e2}")
 		
 		return jsonify({
 			"btc_balance": btc_balance,
