@@ -7,6 +7,7 @@ from routes.auth import auth_bp
 from routes.api import api_bp
 from routes.webhook import webhook_bp
 from flask_wtf.csrf import CSRFProtect, generate_csrf  # type: ignore
+from price_fetcher import start_price_fetcher
 
 # ----------------------------------------------------------------------------
 # App factory and configuration
@@ -18,6 +19,9 @@ app.config["LOGIN_PASSWORD"] = os.environ.get("LOGIN_PASSWORD", "0430128185")
 
 # اطمینان از وجود دیتابیس و جداول
 ensure_db()
+
+# شروع price fetcher
+start_price_fetcher()
 
 
 # ----------------------------------------------------------------------------

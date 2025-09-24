@@ -667,18 +667,18 @@
       fetchUsdtPriceBtn.disabled = true;
       fetchUsdtPriceBtn.textContent = '⏳ در حال دریافت...';
       
-      const response = await fetch('/api/price', { cache: 'no-store' });
+      const response = await fetch('/api/usdt-price', { cache: 'no-store' });
       if (!response.ok) throw new Error('Network error');
       
       const data = await response.json();
       
-      if (data.usdt_toman && data.usdt_toman > 0) {
+      if (data.price_toman && data.price_toman > 0) {
         // Update input field
-        usdToTomanInput.value = Math.round(data.usdt_toman);
+        usdToTomanInput.value = Math.round(data.price_toman);
         
         // Show price info
-        currentUsdtPrice.textContent = data.usdt_toman.toLocaleString('fa-IR') + ' تومان';
-        priceSource.textContent = data.source || 'والکس';
+        currentUsdtPrice.textContent = data.formatted || (data.price_toman.toLocaleString('fa-IR') + ' تومان');
+        priceSource.textContent = 'والکس (Async)';
         priceInfo.style.display = 'flex';
         
         // Flash success

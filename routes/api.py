@@ -4,6 +4,7 @@ from db import get_db_connection
 import json
 import urllib.request
 import requests
+from price_fetcher import get_price_info
 
 api_bp = Blueprint("api_bp", __name__, url_prefix="/api")
 
@@ -100,14 +101,9 @@ def get_prices():
 			usdt_irt = next((float(item['price']) for item in result if item['key'] == 'USDT'), 0)
 			btc_usdt = btc_irt / usdt_irt if usdt_irt > 0 else 0
 
-			# محاسبه قیمت تتر به تومان (USDT در والکس به دلار است، پس باید در نرخ دلار ضرب شود)
-			# از تنظیمات نرخ دلار به تومان را دریافت می‌کنیم
-			conn = get_db_connection()
-			usd_to_toman_rate = _get_usd_to_toman(conn)
-			conn.close()
-			
-			usdt_toman = usdt_irt * usd_to_toman_rate if usd_to_toman_rate > 0 else 60000
-			print(f"Debug: usdt_irt={usdt_irt}, usd_to_toman_rate={usd_to_toman_rate}, usdt_toman={usdt_toman}")
+			# دریافت قیمت تتر به تومان از async fetcher
+			usdt_price_info = get_price_info()
+			usdt_toman = usdt_price_info.get("price", 60000)
 
 			return jsonify({
 				"btc_irt": btc_irt,
@@ -115,7 +111,7 @@ def get_prices():
 				"btc_usdt": btc_usdt,
 				"usdt_toman": usdt_toman,
 				"timestamp": datetime.utcnow().isoformat(),
-				"source": "wallex_calculated"
+				"source": "wallex_async"
 			})
 		else:
 			raise Exception(f"API returned status {response.status_code}")
@@ -129,6 +125,21 @@ def get_prices():
 			"source": "fallback",
 			"error": str(e)
 		})
+
+@api_bp.get("/usdt-price")
+def get_usdt_price():
+	"""دریافت قیمت تتر به تومان از async fetcher"""
+	price_info = get_price_info()
+	if price_info.get("price"):
+		return jsonify({
+			"symbol": "USDTTMN",
+			"price_toman": price_info["price"],
+			"formatted": price_info["formatted"],
+			"updated_at": price_info["updated_at"],
+			"timestamp": datetime.utcnow().isoformat()
+		})
+	else:
+		return jsonify({"error": "قیمت در دسترس نیست"}), 500
 
 
 
