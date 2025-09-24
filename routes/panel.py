@@ -41,7 +41,7 @@ def panel_index():
 	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM withdrawals ORDER BY id DESC LIMIT 5")
 	withdrawals = cur.fetchall()
 	
-	# محاسبه آمار کلی
+	# محاسبه آمار کلی BTC
 	cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM purchases")
 	total_purchased_usd = float(cur.fetchone()[0] or 0)
 	cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM purchases")
@@ -52,9 +52,16 @@ def panel_index():
 	cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM withdrawals")
 	total_withdrawn_btc = float(cur.fetchone()[0] or 0)
 	
+	# محاسبه آمار واریزهای دلاری
+	cur.execute("SELECT COALESCE(SUM(amount_usd), 0) FROM usd_deposits")
+	total_usd_deposits = float(cur.fetchone()[0] or 0)
+	
+	cur.execute("SELECT COALESCE(SUM(amount_toman), 0) FROM usd_deposits")
+	total_usd_toman = float(cur.fetchone()[0] or 0)
+	
 	# محاسبه موجودی فعلی
 	current_btc_balance = total_purchased_btc - total_withdrawn_btc
-	net_invested_usd = total_purchased_usd - total_withdrawn_usd
+	net_invested_usd = total_purchased_usd - total_withdrawn_usd + total_usd_deposits
 	
 	# نرخ تبدیل از تنظیمات
 	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
@@ -155,6 +162,8 @@ def panel_index():
 		total_purchased_btc=total_purchased_btc,
 		total_withdrawn_usd=total_withdrawn_usd,
 		total_withdrawn_btc=total_withdrawn_btc,
+		total_usd_deposits=total_usd_deposits,
+		total_usd_toman=total_usd_toman,
 		current_btc_balance=current_btc_balance,
 		net_invested_usd=net_invested_usd,
 		usd_to_toman=usd_to_toman,
@@ -215,6 +224,36 @@ def panel_withdraw():
 		return redirect(url_for("panel_bp.withdrawals_page"))
 
 
+@panel_bp.post("/panel/usd_deposit")
+def panel_usd_deposit():
+	try:
+		amount_usd = _to_float(request.form.get("amount_usd", "0"))
+		price_toman_per_usd = _to_float(request.form.get("price_toman_per_usd", "0"))
+		if not (amount_usd == amount_usd and price_toman_per_usd == price_toman_per_usd):
+			flash("مقادیر وارد شده نامعتبر است.", "error")
+			return redirect(url_for("panel_bp.deposits_page"))
+
+		if amount_usd <= 0 or price_toman_per_usd <= 0:
+			flash("مقادیر باید بزرگ‌تر از صفر باشند.", "error")
+			return redirect(url_for("panel_bp.deposits_page"))
+
+		# محاسبه مقدار تومان
+		amount_toman = amount_usd * price_toman_per_usd
+
+		conn = get_db_connection()
+		cur = conn.cursor()
+		cur.execute("INSERT INTO usd_deposits(created_at, amount_usd, price_toman_per_usd, amount_toman) VALUES(?,?,?,?)", 
+			(datetime.utcnow().isoformat(timespec="seconds"), amount_usd, price_toman_per_usd, amount_toman))
+		conn.commit()
+		conn.close()
+		flash(f"واریز دلاری {amount_usd:,.0f} دلار ({amount_toman:,.0f} تومان) با موفقیت ثبت شد.", "success")
+		return redirect(url_for("panel_bp.deposits_page"))
+	except Exception as e:
+		print("[panel_usd_deposit] error:", e)
+		flash("خطای داخلی هنگام ثبت واریز دلاری.", "error")
+		return redirect(url_for("panel_bp.deposits_page"))
+
+
 @panel_bp.post("/panel/rate")
 def panel_update_rate():
 	try:
@@ -262,13 +301,49 @@ def settings_page():
 def deposits_page():
 	conn = get_db_connection()
 	cur = conn.cursor()
+	
+	# محاسبه واریزهای BTC
 	cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM purchases")
-	total_usd = cur.fetchone()[0] or 0
+	total_btc_usd = cur.fetchone()[0] or 0
+	
+	# محاسبه واریزهای دلاری
+	cur.execute("SELECT COALESCE(SUM(amount_usd), 0) FROM usd_deposits")
+	total_usd_deposits = cur.fetchone()[0] or 0
+	
+	cur.execute("SELECT COALESCE(SUM(amount_toman), 0) FROM usd_deposits")
+	total_usd_toman = cur.fetchone()[0] or 0
+	
+	# کل واریزها
+	total_usd = total_btc_usd + total_usd_deposits
+	
+	# نرخ تبدیل
 	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
 	usd_to_toman = float(cur.fetchone()[0])
-	total_toman = total_usd * usd_to_toman
+	total_toman = total_usd * usd_to_toman + total_usd_toman
+	
+	# لیست واریزهای دلاری
+	cur.execute("SELECT id, created_at, amount_usd, price_toman_per_usd, amount_toman FROM usd_deposits ORDER BY id DESC")
+	usd_deposits_rows = cur.fetchall()
+	usd_deposits = [
+		{
+			"id": r["id"],
+			"created_at": r["created_at"],
+			"amount_usd": float(r["amount_usd"]),
+			"price_toman_per_usd": float(r["price_toman_per_usd"]),
+			"amount_toman": float(r["amount_toman"]),
+		}
+		for r in usd_deposits_rows
+	]
+	
 	conn.close()
-	return render_template("deposits.html", total_usd=total_usd, usd_to_toman=usd_to_toman, total_toman=total_toman)
+	return render_template("deposits.html", 
+		total_usd=total_usd, 
+		total_btc_usd=total_btc_usd,
+		total_usd_deposits=total_usd_deposits,
+		total_usd_toman=total_usd_toman,
+		usd_to_toman=usd_to_toman, 
+		total_toman=total_toman,
+		usd_deposits=usd_deposits)
 
 
 @panel_bp.get("/withdrawals")

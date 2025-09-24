@@ -388,11 +388,11 @@
           <h3 class="kpi-title">واریزی کل</h3>
         </div>
       </div>
-      <div class="kpi-value">${{ '%.2f' % total_purchased_usd }}</div>
-      <p class="kpi-subtitle">{{ '{:,.0f}'.format(total_purchased_usd * usd_to_toman) }} تومان</p>
+      <div class="kpi-value">${{ '%.2f' % (total_purchased_usd + total_usd_deposits) }}</div>
+      <p class="kpi-subtitle">{{ '{:,.0f}'.format((total_purchased_usd + total_usd_deposits) * usd_to_toman + total_usd_toman) }} تومان</p>
       <div class="kpi-trend positive">
         <span class="kpi-trend-icon">📈</span>
-        <span>سرمایه‌گذاری شده</span>
+        <span>BTC: ${{ '%.0f' % total_purchased_usd }} | USD: ${{ '%.0f' % total_usd_deposits }}</span>
       </div>
     </a>
 

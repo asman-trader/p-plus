@@ -42,6 +42,17 @@ def ensure_db() -> None:
 	)
 	cur.execute(
 		"""
+		CREATE TABLE IF NOT EXISTS usd_deposits (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			created_at TEXT NOT NULL,
+			amount_usd REAL NOT NULL,
+			price_toman_per_usd REAL NOT NULL,
+			amount_toman REAL NOT NULL
+		)
+		"""
+	)
+	cur.execute(
+		"""
 		CREATE TABLE IF NOT EXISTS settings (
 			key TEXT PRIMARY KEY,
 			value TEXT NOT NULL

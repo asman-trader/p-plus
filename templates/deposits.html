@@ -214,6 +214,52 @@
       font-size: 16px;
     }
     
+    /* Table Styles */
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+    }
+    
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+    
+    .table th,
+    .table td {
+      padding: 16px;
+      border-bottom: 1px solid var(--card-border);
+      text-align: right;
+    }
+    
+    .table th {
+      background: var(--pill-bg);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 14px;
+      position: sticky;
+      top: 0;
+    }
+    
+    .table tbody tr {
+      transition: all 0.2s ease;
+    }
+    
+    .table tbody tr:hover {
+      background: var(--pill-bg);
+    }
+    
+    .table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .muted {
+      color: var(--muted);
+    }
+    
     /* Responsive Design */
     @media (max-width: 640px) {
       .page-header {
@@ -264,78 +310,167 @@
       <h1 class="page-title">💰 واریزی جدید</h1>
       <p class="page-subtitle">ثبت خرید بیت‌کوین جدید در پورتفولیو</p>
       
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-value">${{ '%.2f' % total_usd }}</div>
-          <div class="stat-label">کل واریزی USD</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">{{ '{:,.0f}'.format(total_toman) }}</div>
-          <div class="stat-label">کل واریزی تومان</div>
-        </div>
+             <div class="stats-grid">
+               <div class="stat-card">
+                 <div class="stat-value">${{ '%.2f' % total_usd }}</div>
+                 <div class="stat-label">کل واریزی USD</div>
+               </div>
+               <div class="stat-card">
+                 <div class="stat-value">${{ '%.2f' % total_btc_usd }}</div>
+                 <div class="stat-label">واریز BTC (USD)</div>
+               </div>
+               <div class="stat-card">
+                 <div class="stat-value">${{ '%.2f' % total_usd_deposits }}</div>
+                 <div class="stat-label">واریز دلاری</div>
+               </div>
+               <div class="stat-card">
+                 <div class="stat-value">{{ '{:,.0f}'.format(total_toman) }}</div>
+                 <div class="stat-label">کل واریزی تومان</div>
+      </div>
       </div>
     </div>
   </div>
 
-  <!-- Form Container -->
-  <div class="form-container">
-    <h2 class="form-title">📝 ثبت واریزی جدید</h2>
-    
-    <form method="post" action="{{ url_for('panel_bp.panel_add') }}">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label" for="amount_btc">
-            مقدار بیت‌کوین <span style="color: #ef4444;">*</span>
-          </label>
-          <input 
-            type="number" 
-            id="amount_btc"
-            name="amount_btc" 
-            step="0.00000001" 
-            min="0" 
-            required 
-            inputmode="decimal" 
-            placeholder="مثلاً 0.005"
-            class="form-input"
-          >
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label" for="price_usd_per_btc">
-            قیمت دلار هر BTC <span style="color: #ef4444;">*</span>
-          </label>
-          <input 
-            type="number" 
-            id="price_usd_per_btc"
-            name="price_usd_per_btc" 
-            step="0.01" 
-            min="0" 
-            required 
-            inputmode="decimal" 
-            placeholder="مثلاً 61234.50"
-            class="form-input"
-          >
-        </div>
-      </div>
-      
-      <button type="submit" class="form-button">
-        💰 ثبت واریزی
-      </button>
-    </form>
-  </div>
+         <!-- BTC Deposit Form -->
+         <div class="form-container">
+           <h2 class="form-title">₿ ثبت واریز بیت‌کوین</h2>
+  
+  <form method="post" action="{{ url_for('panel_bp.panel_add') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+             
+             <div class="form-grid">
+               <div class="form-group">
+                 <label class="form-label" for="amount_btc">
+                   مقدار بیت‌کوین <span style="color: #ef4444;">*</span>
+                 </label>
+                 <input 
+                   type="number" 
+                   id="amount_btc"
+                   name="amount_btc" 
+                   step="0.00000001" 
+                   min="0" 
+                   required 
+                   inputmode="decimal" 
+                   placeholder="مثلاً 0.005"
+                   class="form-input"
+                 >
+               </div>
+               
+               <div class="form-group">
+                 <label class="form-label" for="price_usd_per_btc">
+                   قیمت دلار هر BTC <span style="color: #ef4444;">*</span>
+                 </label>
+                 <input 
+                   type="number" 
+                   id="price_usd_per_btc"
+                   name="price_usd_per_btc" 
+                   step="0.01" 
+                   min="0" 
+                   required 
+                   inputmode="decimal" 
+                   placeholder="مثلاً 61234.50"
+                   class="form-input"
+                 >
+               </div>
+             </div>
+             
+             <button type="submit" class="form-button">
+               ₿ ثبت واریز بیت‌کوین
+             </button>
+           </form>
+         </div>
 
-  <!-- Info Card -->
-  <div class="info-card">
-    <h3 class="info-title">
-      <span class="info-icon">💡</span>
-      راهنمای واریزی
-    </h3>
-    <p class="info-text">
-      برای ثبت واریزی جدید، مقدار بیت‌کوین خریداری شده و قیمت خرید را وارد کنید. 
-      سیستم به‌طور خودکار ارزش دلاری و تومانی را محاسبه می‌کند. 
-      برای مشاهده لیست کامل واریزی‌ها به صفحه "دارایی" مراجعه کنید.
-    </p>
-  </div>
+         <!-- USD Deposit Form -->
+         <div class="form-container">
+           <h2 class="form-title">💵 ثبت واریز دلاری</h2>
+           
+           <form method="post" action="{{ url_for('panel_bp.panel_usd_deposit') }}">
+             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+             
+    <div class="form-grid">
+               <div class="form-group">
+                 <label class="form-label" for="amount_usd">
+                   مقدار دلار <span style="color: #ef4444;">*</span>
+      </label>
+                 <input 
+                   type="number" 
+                   id="amount_usd"
+                   name="amount_usd" 
+                   step="0.01" 
+                   min="0" 
+                   required 
+                   inputmode="decimal" 
+                   placeholder="مثلاً 1000"
+                   class="form-input"
+                 >
+               </div>
+               
+               <div class="form-group">
+                 <label class="form-label" for="price_toman_per_usd">
+                   قیمت تومان هر دلار <span style="color: #ef4444;">*</span>
+      </label>
+                 <input 
+                   type="number" 
+                   id="price_toman_per_usd"
+                   name="price_toman_per_usd" 
+                   step="1" 
+                   min="0" 
+                   required 
+                   inputmode="numeric" 
+                   placeholder="مثلاً 80000"
+                   class="form-input"
+                 >
+    </div>
+    </div>
+             
+             <button type="submit" class="form-button">
+               💵 ثبت واریز دلاری
+             </button>
+  </form>
+</div>
+
+         <!-- USD Deposits List -->
+         {% if usd_deposits %}
+         <div class="form-container">
+           <h2 class="form-title">💵 لیست واریزهای دلاری</h2>
+           
+           <div class="table-scroll">
+             <table class="table">
+               <thead>
+                 <tr>
+                   <th>شناسه</th>
+                   <th>تاریخ</th>
+                   <th>مقدار USD</th>
+                   <th>قیمت تومان/دلار</th>
+                   <th>مبلغ تومان</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {% for deposit in usd_deposits %}
+                   <tr>
+                     <td><strong>#{{ deposit.id }}</strong></td>
+                     <td class="muted">{{ deposit.created_at }}</td>
+                     <td><strong>${{ '%.2f' % deposit.amount_usd }}</strong></td>
+                     <td>{{ '{:,.0f}'.format(deposit.price_toman_per_usd) }}</td>
+                     <td><strong>{{ '{:,.0f}'.format(deposit.amount_toman) }}</strong></td>
+                   </tr>
+                 {% endfor %}
+               </tbody>
+             </table>
+           </div>
+         </div>
+         {% endif %}
+
+         <!-- Info Card -->
+         <div class="info-card">
+           <h3 class="info-title">
+             <span class="info-icon">💡</span>
+             راهنمای واریزی
+           </h3>
+           <p class="info-text">
+             <strong>واریز بیت‌کوین:</strong> مقدار بیت‌کوین خریداری شده و قیمت خرید را وارد کنید.<br>
+             <strong>واریز دلاری:</strong> مقدار دلار واریزی و نرخ تبدیل به تومان را وارد کنید.<br>
+             سیستم به‌طور خودکار ارزش‌ها را محاسبه می‌کند. برای مشاهده لیست کامل واریزی‌ها به صفحه "دارایی" مراجعه کنید.
+           </p>
+         </div>
 {% endblock %}
