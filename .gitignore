@@ -21,11 +21,17 @@ server.out
 stderr.log
 
 # SQLite and local data
-*.sqlite3
-pplus.sqlite3
+# Note: pplus.sqlite3 contains user data and settings - keep it in version control
+# *.sqlite3
+# pplus.sqlite3
 instance/
 data/
 var/
+
+# Backup databases (exclude from version control)
+*.sqlite3.backup
+*.db.backup
+pplus.sqlite3.backup
 
 # Runtime / temp
 tmp/
@@ -47,3 +53,38 @@ Thumbs.db
 
 # Node (if present)
 node_modules/
+
+# Configuration files that should be tracked
+# Keep these files in version control for deployment
+!config/
+!config/*.py
+!config/*.json
+!config/*.yaml
+!config/*.yml
+
+# Environment-specific files (keep examples, ignore actual secrets)
+# .env.example  # Keep this file in version control
+.env.local.example
+config.example.py
+!config.example.py
+
+# User-specific settings and data
+# Keep database with user data
+!pplus.sqlite3
+
+# API keys and secrets (create .env.local for these)
+.env.local
+secrets.json
+api_keys.json
+credentials.json
+
+# Development and testing
+test_data/
+test_*.sqlite3
+*_test.db
+*_dev.db
+
+# Production deployment files
+deploy/
+deployment/
+production/
