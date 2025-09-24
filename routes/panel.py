@@ -406,6 +406,59 @@ def home():
 def healthz():
 	return "ok", 200
 
+@panel_bp.post("/reset_system")
+def panel_reset_system():
+    """ریست کامل سیستم - حذف تمام داده‌ها"""
+    try:
+        # بررسی تایید
+        reset_confirmation = request.form.get('reset_confirmation', '').strip()
+        if reset_confirmation != 'RESET SYSTEM':
+            flash('عبارت تایید اشتباه است!', 'error')
+            return redirect(url_for('panel_bp.settings_page'))
+        
+        # ایجاد پشتیبان قبل از ریست
+        import shutil
+        from datetime import datetime
+        
+        backup_name = f"pplus_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sqlite3"
+        try:
+            shutil.copy2('pplus.sqlite3', backup_name)
+            print(f"Backup created: {backup_name}")
+        except Exception as e:
+            print(f"Backup failed: {e}")
+        
+        # ریست دیتابیس
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # حذف تمام جداول
+        tables = [
+            'purchases', 'withdrawals', 'usd_deposits', 
+            'wallets', 'portfolio_goals', 'risk_limits', 'settings'
+        ]
+        
+        for table in tables:
+            try:
+                cur.execute(f"DROP TABLE IF EXISTS {table}")
+                print(f"Dropped table: {table}")
+            except Exception as e:
+                print(f"Error dropping table {table}: {e}")
+        
+        conn.commit()
+        conn.close()
+        
+        # ایجاد دیتابیس جدید
+        from db import ensure_db
+        ensure_db()
+        
+        flash('✅ سیستم با موفقیت ریست شد! تمام داده‌ها حذف شدند.', 'success')
+        return redirect(url_for('auth_bp.login'))
+        
+    except Exception as e:
+        print(f"Reset system error: {e}")
+        flash('❌ خطا در ریست سیستم! لطفاً دوباره تلاش کنید.', 'error')
+        return redirect(url_for('panel_bp.settings_page'))
+
 @panel_bp.get("/settings")
 def settings_page():
 	# Load current settings

@@ -235,6 +235,100 @@
       margin: 0;
     }
     
+    /* Danger Zone Styles */
+    .danger-zone {
+      border: 2px solid #ef4444;
+      background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    }
+    
+    .settings-title.danger {
+      color: #dc2626;
+      border-bottom: 2px solid #ef4444;
+    }
+    
+    .danger-warning {
+      display: flex;
+      gap: 16px;
+      padding: 20px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+    
+    .warning-icon {
+      font-size: 48px;
+      flex-shrink: 0;
+    }
+    
+    .warning-content {
+      flex: 1;
+    }
+    
+    .warning-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #dc2626;
+      margin: 0 0 12px 0;
+    }
+    
+    .warning-text {
+      font-size: 16px;
+      color: #7f1d1d;
+      margin: 0 0 16px 0;
+      line-height: 1.6;
+    }
+    
+    .warning-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .warning-list li {
+      padding: 8px 0;
+      font-size: 14px;
+      color: #7f1d1d;
+      border-bottom: 1px solid #fecaca;
+    }
+    
+    .warning-list li:last-child {
+      border-bottom: none;
+    }
+    
+    .reset-form {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid #fecaca;
+    }
+    
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+      border: 1px solid #b91c1c;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 16px;
+    }
+    
+    .btn-danger:hover:not(:disabled) {
+      background: #b91c1c;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(220, 38, 38, 0.3);
+    }
+    
+    .btn-danger:disabled {
+      background: #9ca3af;
+      border-color: #9ca3af;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
     /* Responsive Design */
     @media (max-width: 640px) {
       .page-header {
@@ -402,4 +496,124 @@
       </div>
     </form>
   </div>
+
+  <!-- System Reset -->
+  <div class="settings-container danger-zone">
+    <h2 class="settings-title danger">⚠️ منطقه خطر</h2>
+    
+    <div class="danger-warning">
+      <div class="warning-icon">🚨</div>
+      <div class="warning-content">
+        <h3 class="warning-title">ریست کامل سیستم</h3>
+        <p class="warning-text">
+          این عمل تمام داده‌ها، معاملات، تنظیمات و پورتفولیو را حذف می‌کند.
+          <strong>این عمل غیرقابل بازگشت است!</strong>
+        </p>
+        <ul class="warning-list">
+          <li>✅ تمام معاملات (خرید و فروش) حذف می‌شود</li>
+          <li>✅ تمام واریزها و برداشت‌ها حذف می‌شود</li>
+          <li>✅ تمام تنظیمات (نرخ تبدیل، آدرس کیف پول‌ها) حذف می‌شود</li>
+          <li>✅ تمام پورتفولیو (کیف پول‌ها، اهداف، محدودیت‌ها) حذف می‌شود</li>
+          <li>✅ دیتابیس به حالت اولیه بازمی‌گردد</li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="reset-form">
+      <form method="post" action="{{ url_for('panel_bp.panel_reset_system') }}" id="resetForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="form-group">
+          <label class="form-label" for="reset_confirmation">
+            برای تایید، عبارت "RESET SYSTEM" را تایپ کنید:
+          </label>
+          <input 
+            type="text" 
+            id="reset_confirmation"
+            name="reset_confirmation" 
+            placeholder="RESET SYSTEM"
+            class="form-input"
+            required
+          >
+          <div class="form-help">
+            <span class="form-help-icon">⚠️</span>
+            این عبارت باید دقیقاً مطابق باشد تا ریست انجام شود
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn-danger" id="resetBtn" disabled>
+            🗑️ ریست کامل سیستم
+          </button>
+          <a href="{{ url_for('panel_bp.panel_index') }}" class="btn-outline">
+            ← بازگشت به داشبورد
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script>
+(function() {
+  const resetConfirmation = document.getElementById('reset_confirmation');
+  const resetBtn = document.getElementById('resetBtn');
+  const resetForm = document.getElementById('resetForm');
+  
+  // Enable/disable reset button based on confirmation text
+  resetConfirmation.addEventListener('input', function() {
+    if (this.value === 'RESET SYSTEM') {
+      resetBtn.disabled = false;
+      resetBtn.textContent = '🗑️ ریست کامل سیستم';
+    } else {
+      resetBtn.disabled = true;
+      resetBtn.textContent = '🗑️ ریست کامل سیستم';
+    }
+  });
+  
+  // Double confirmation before reset
+  resetBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    if (resetConfirmation.value !== 'RESET SYSTEM') {
+      alert('لطفاً عبارت "RESET SYSTEM" را دقیقاً تایپ کنید!');
+      return;
+    }
+    
+    // First confirmation
+    const firstConfirm = confirm(
+      '⚠️ هشدار: این عمل تمام داده‌های شما را حذف می‌کند!\n\n' +
+      'آیا مطمئن هستید که می‌خواهید سیستم را ریست کنید؟\n\n' +
+      'این عمل غیرقابل بازگشت است!'
+    );
+    
+    if (!firstConfirm) return;
+    
+    // Second confirmation
+    const secondConfirm = confirm(
+      '🚨 تایید نهایی:\n\n' +
+      'تمام معاملات، واریزها، برداشت‌ها، تنظیمات و پورتفولیو حذف خواهد شد!\n\n' +
+      'آیا واقعاً مطمئن هستید؟'
+    );
+    
+    if (!secondConfirm) return;
+    
+    // Third confirmation with typing
+    const finalConfirm = prompt(
+      'برای تایید نهایی، عبارت "DELETE ALL DATA" را تایپ کنید:'
+    );
+    
+    if (finalConfirm !== 'DELETE ALL DATA') {
+      alert('عبارت اشتباه! ریست لغو شد.');
+      return;
+    }
+    
+    // Show loading state
+    resetBtn.disabled = true;
+    resetBtn.textContent = '⏳ در حال ریست...';
+    
+    // Submit form
+    resetForm.submit();
+  });
+})();
+</script>
 {% endblock %}
