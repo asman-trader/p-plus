@@ -8,7 +8,7 @@ from functools import wraps
 import time
 
 from db import get_db_connection, get_db_context
-from price_fetcher import get_price_info, get_current_usd_rate
+from price_fetcher import get_price_info, get_current_usd_rate, get_api_health, get_best_api, force_price_update
 
 api_bp = Blueprint("api_bp", __name__, url_prefix="/api")
 
@@ -160,6 +160,8 @@ def get_prices():
         })
 
 @api_bp.get("/usdt-price")
+@cached_response("usdt_price", 15)  # Cache for 15 seconds
+@handle_api_errors
 def get_usdt_price():
 	"""دریافت قیمت تتر به تومان از async fetcher"""
 	price_info = get_price_info()
@@ -169,10 +171,50 @@ def get_usdt_price():
 			"price_toman": price_info["usdt_price"],
 			"formatted": price_info["usdt_formatted"],
 			"updated_at": price_info["updated_at"],
+			"source": price_info.get("source", "unknown"),
+			"cache_valid": price_info.get("cache_valid", False),
 			"timestamp": datetime.utcnow().isoformat()
 		})
 	else:
 		return jsonify({"error": "قیمت در دسترس نیست"}), 500
+
+@api_bp.get("/api-health")
+@cached_response("api_health", 30)  # Cache for 30 seconds
+@handle_api_errors
+def get_api_health_status():
+	"""Get health status of all price APIs."""
+	health = get_api_health()
+	best_api = get_best_api()
+	
+	return jsonify({
+		"apis": health,
+		"best_api": best_api,
+		"timestamp": datetime.utcnow().isoformat()
+	})
+
+@api_bp.post("/force-update")
+@handle_api_errors
+def force_update_prices():
+	"""Force an immediate price update."""
+	success = force_price_update()
+	
+	if success:
+		# Clear relevant caches
+		_api_cache.pop("price_data", None)
+		_api_cache.pop("usdt_price", None)
+		_api_cache.pop("wallet_balance", None)
+		
+		return jsonify({
+			"success": True,
+			"message": "Price update initiated successfully",
+			"timestamp": datetime.utcnow().isoformat()
+		})
+	else:
+		return jsonify({
+			"success": False,
+			"message": "Failed to update prices",
+			"timestamp": datetime.utcnow().isoformat()
+		}), 500
 
 
 
