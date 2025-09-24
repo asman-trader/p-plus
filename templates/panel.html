@@ -160,82 +160,6 @@
     margin: 0;
   }
   
-  .recent-activity {
-    background: var(--card);
-    border: 1px solid var(--card-border);
-    border-radius: 16px;
-    padding: 24px;
-  }
-  
-  .activity-title {
-    font-size: 18px;
-    font-weight: 700;
-    margin: 0 0 20px 0;
-    color: var(--text);
-  }
-  
-  .activity-list {
-    display: grid;
-    gap: 12px;
-  }
-  
-  .activity-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    background: var(--pill-bg);
-    border-radius: 12px;
-    transition: all 0.3s ease;
-  }
-  
-  .activity-item:hover {
-    background: var(--card);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  }
-  
-  .activity-icon {
-    font-size: 20px;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--primary);
-    color: white;
-    border-radius: 8px;
-  }
-  
-  .activity-content {
-    flex: 1;
-  }
-  
-  .activity-text {
-    font-size: 14px;
-    font-weight: 500;
-    margin: 0 0 4px 0;
-    color: var(--text);
-  }
-  
-  .activity-date {
-    font-size: 12px;
-    color: var(--muted);
-    margin: 0;
-  }
-  
-  .activity-value {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-  }
-  
-  .positive {
-    color: #10b981;
-  }
-  
-  .negative {
-    color: #ef4444;
-  }
   
   .loading {
     opacity: 0.6;
@@ -399,48 +323,6 @@
     </a>
   </div>
 
-  <!-- Recent Activity -->
-  <div class="recent-activity">
-    <h2 class="activity-title">📊 فعالیت‌های اخیر</h2>
-    
-    <div class="activity-list">
-      {% if purchases %}
-        {% for purchase in purchases[:3] %}
-          <div class="activity-item">
-            <div class="activity-icon">💰</div>
-            <div class="activity-content">
-              <div class="activity-text">خرید {{ '%.8f' % purchase.amount_btc }} BTC</div>
-              <div class="activity-date">{{ purchase.created_at }}</div>
-            </div>
-            <div class="activity-value positive">${{ '%.2f' % (purchase.amount_btc * purchase.price_usd_per_btc) }}</div>
-          </div>
-        {% endfor %}
-      {% endif %}
-      
-      {% if withdrawals %}
-        {% for withdrawal in withdrawals[:3] %}
-          <div class="activity-item">
-            <div class="activity-icon">💸</div>
-            <div class="activity-content">
-              <div class="activity-text">فروش {{ '%.8f' % withdrawal.amount_btc }} BTC</div>
-              <div class="activity-date">{{ withdrawal.created_at }}</div>
-            </div>
-            <div class="activity-value negative">${{ '%.2f' % (withdrawal.amount_btc * withdrawal.price_usd_per_btc) }}</div>
-          </div>
-        {% endfor %}
-      {% endif %}
-      
-      {% if not purchases and not withdrawals %}
-        <div class="activity-item">
-          <div class="activity-icon">📝</div>
-          <div class="activity-content">
-            <div class="activity-text">هیچ فعالیتی ثبت نشده</div>
-            <div class="activity-date">اولین معامله خود را ثبت کنید</div>
-          </div>
-        </div>
-      {% endif %}
-    </div>
-  </div>
 </div>
 
 <script>
