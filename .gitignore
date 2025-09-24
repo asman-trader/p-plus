@@ -38,6 +38,10 @@ tmp/
 cache/
 *.pid
 
+# Price cache and local data
+price_cache.json
+*.cache
+
 # Build artifacts
 *.egg-info/
 dist/
