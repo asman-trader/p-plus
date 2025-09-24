@@ -538,21 +538,21 @@
   </div>
 
   <!-- Settings Form -->
-  <div class="settings-container">
-    <h2 class="settings-title">💱 نرخ تبدیل خودکار</h2>
-    
-    <div class="auto-rate-info">
-      <div class="info-icon">🔄</div>
-      <div class="info-content">
-        <h4>نرخ تبدیل خودکار</h4>
-        <p>نرخ تبدیل دلار به تومان به صورت خودکار از والکس دریافت و به‌روزرسانی می‌شود.</p>
-        <div class="rate-display">
-          <span class="rate-label">نرخ فعلی:</span>
-          <span class="rate-value" id="currentUsdRate">در حال دریافت...</span>
+    <div class="settings-container">
+      <h2 class="settings-title">💱 قیمت تتر خودکار</h2>
+      
+      <div class="auto-rate-info">
+        <div class="info-icon">🔄</div>
+        <div class="info-content">
+          <h4>قیمت تتر خودکار</h4>
+          <p>قیمت تتر (USDT) به تومان به صورت خودکار از والکس دریافت و به‌روزرسانی می‌شود.</p>
+          <div class="rate-display">
+            <span class="rate-label">قیمت فعلی تتر:</span>
+            <span class="rate-value" id="currentUsdRate">در حال دریافت...</span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
   <!-- Wallet Address Settings -->
   <div class="settings-container">
@@ -673,34 +673,31 @@
   // Auto rate display
   const currentUsdRate = document.getElementById('currentUsdRate');
   
-  // Fetch current USD rate
-  async function fetchCurrentUsdRate() {
+  // Fetch current USDT price
+  async function fetchCurrentUsdtPrice() {
     try {
-      const response = await fetch('/api/price', { cache: 'no-store' });
+      const response = await fetch('/api/usdt-price', { cache: 'no-store' });
       if (!response.ok) throw new Error('Network error');
       
       const data = await response.json();
       
-      // Use usdt_irt as USD rate (it's already in IRT)
-      if (data.usdt_irt && data.usdt_irt > 0) {
-        // Convert IRT to Toman (divide by 10)
-        const usdToToman = Math.round(data.usdt_irt / 10);
-        currentUsdRate.textContent = usdToToman.toLocaleString('fa-IR') + ' تومان';
+      if (data.price_toman && data.price_toman > 0) {
+        currentUsdRate.textContent = data.formatted || (data.price_toman.toLocaleString('fa-IR') + ' تومان');
         currentUsdRate.style.color = '#059669';
       } else {
-        throw new Error('Invalid rate data');
+        throw new Error('Invalid price data');
       }
       
     } catch (error) {
-      console.error('Error fetching USD rate:', error);
+      console.error('Error fetching USDT price:', error);
       currentUsdRate.textContent = 'خطا در دریافت';
       currentUsdRate.style.color = '#ef4444';
     }
   }
   
-  // Load current rate on page load
+  // Load current price on page load
   if (currentUsdRate) {
-    fetchCurrentUsdRate();
+    fetchCurrentUsdtPrice();
   }
   
   // Enable/disable reset button based on confirmation text

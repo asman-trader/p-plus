@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request 
 from datetime import datetime
 from db import get_db_connection
 import requests
-from price_fetcher import get_current_usd_rate
+from price_fetcher import get_current_usdt_price
 
 panel_bp = Blueprint("panel_bp", __name__)
 
@@ -32,17 +32,19 @@ def _to_float(txt: str) -> float:
 		return float("nan")
 
 def _get_usd_to_toman(conn) -> float:
-	"""Get USD to Toman rate from async fetcher, fallback to settings"""
-	# First try to get from async fetcher
-	usd_rate = get_current_usd_rate()
-	if usd_rate and usd_rate > 0:
-		return usd_rate
+	"""Get USD to Toman rate from USDT price (divide by 10)"""
+	# Get USDT price and convert to USD rate
+	usdt_price = get_current_usdt_price()
+	if usdt_price and usdt_price > 0:
+		# Convert USDT price to USD rate (USDT price is in Toman, USD rate should be in IRT)
+		# So we multiply by 10 to convert from Toman to IRT
+		return usdt_price * 10
 	
 	# Fallback to database settings
 	cur = conn.cursor()
 	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
 	row = cur.fetchone()
-	return float(row[0]) if row else 60000.0
+	return float(row[0]) if row else 600000.0
 
 @panel_bp.get("/panel")
 def panel_index():

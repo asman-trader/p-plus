@@ -11,15 +11,14 @@ from threading import Thread
 CACHE_FILE = "price_cache.json"
 price_cache = {
     "usdt_price": None, 
-    "usd_rate": None, 
     "updated_at": None
 }
 
 # ------------------------------
 # تابع Async برای گرفتن قیمت از والکس
 # ------------------------------
-async def fetch_prices_from_wallex():
-    """Fetch both USDT price and USD rate from Wallex"""
+async def fetch_usdt_price_from_wallex():
+    """Fetch USDT price from Wallex"""
     try:
         async with aiohttp.ClientSession() as session:
             # Get USDT price from markets API
@@ -31,32 +30,14 @@ async def fetch_prices_from_wallex():
                     
                     # Get USDT price
                     usdt_market = markets.get("USDTTMN")
-                    usdt_price = None
                     if usdt_market:
                         last_price = usdt_market.get("stats", {}).get("lastPrice")
                         if last_price and last_price != "-":
-                            usdt_price = int(float(last_price))
-                    
-                    # Get USD rate from currencies/stats API
-                    usd_rate = None
-                    try:
-                        stats_url = "https://api.wallex.ir/v1/currencies/stats"
-                        async with session.get(stats_url, timeout=10) as stats_resp:
-                            if stats_resp.status == 200:
-                                stats_data = await stats_resp.json()
-                                result = stats_data.get("result", [])
-                                for item in result:
-                                    if item.get("key") == "USDT":
-                                        usd_rate = float(item.get("price", 0))
-                                        break
-                    except Exception as e:
-                        print(f"Error fetching USD rate: {e}")
-                    
-                    return usdt_price, usd_rate
+                            return int(float(last_price))
     except Exception as e:
-        print(f"Error fetching prices from Wallex: {e}")
+        print(f"Error fetching USDT price from Wallex: {e}")
     
-    return None, None
+    return None
 
 # ------------------------------
 # ذخیره/بازیابی کش در فایل
@@ -70,14 +51,11 @@ def load_cache():
                 # Ensure all keys exist
                 if "usdt_price" not in price_cache:
                     price_cache["usdt_price"] = None
-                if "usd_rate" not in price_cache:
-                    price_cache["usd_rate"] = None
                 if "updated_at" not in price_cache:
                     price_cache["updated_at"] = None
             except:
                 price_cache = {
                     "usdt_price": None, 
-                    "usd_rate": None, 
                     "updated_at": None
                 }
 
@@ -92,21 +70,14 @@ async def update_price():
     global price_cache
     while True:
         try:
-            usdt_price, usd_rate = await fetch_prices_from_wallex()
-            if usdt_price or usd_rate:
-                if usdt_price:
-                    price_cache["usdt_price"] = usdt_price
-                if usd_rate:
-                    price_cache["usd_rate"] = usd_rate
+            usdt_price = await fetch_usdt_price_from_wallex()
+            if usdt_price:
+                price_cache["usdt_price"] = usdt_price
                 price_cache["updated_at"] = int(time.time())
                 save_cache()
-                
-                if usdt_price:
-                    print(f"✅ قیمت USDT آپدیت شد: {usdt_price:,} تومان")
-                if usd_rate:
-                    print(f"✅ نرخ USD آپدیت شد: {usd_rate:,.0f} ریال")
+                print(f"✅ قیمت USDT آپدیت شد: {usdt_price:,} تومان")
             else:
-                print("❌ خطا در دریافت قیمت‌ها از والکس")
+                print("❌ خطا در دریافت قیمت USDT از والکس")
         except Exception as e:
             print(f"❌ خطا در به‌روزرسانی قیمت: {e}")
         
@@ -123,16 +94,11 @@ def start_scheduler():
 def get_current_usdt_price():
     return price_cache.get("usdt_price")
 
-def get_current_usd_rate():
-    return price_cache.get("usd_rate")
-
 def get_price_info():
     return {
         "usdt_price": price_cache.get("usdt_price"),
-        "usd_rate": price_cache.get("usd_rate"),
         "updated_at": price_cache.get("updated_at"),
-        "usdt_formatted": f"{price_cache['usdt_price']:,} تومان" if price_cache.get("usdt_price") else "نامشخص",
-        "usd_formatted": f"{price_cache['usd_rate']:,.0f} ریال" if price_cache.get("usd_rate") else "نامشخص"
+        "usdt_formatted": f"{price_cache['usdt_price']:,} تومان" if price_cache.get("usdt_price") else "نامشخص"
     }
 
 # ------------------------------
