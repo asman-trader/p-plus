@@ -398,15 +398,20 @@
         <div class="drawer-nav-text">برداشت</div>
       </a>
       
-      <a href="{{ url_for('panel_bp.balance_page') }}"{% if request.path == url_for('panel_bp.balance_page') %} aria-current="page"{% endif %}>
-        <div class="drawer-nav-icon">💎</div>
-        <div class="drawer-nav-text">دارایی</div>
-      </a>
-      
-      <a href="{{ url_for('panel_bp.settings_page') }}"{% if request.path == url_for('panel_bp.settings_page') %} aria-current="page"{% endif %}>
-        <div class="drawer-nav-icon">⚙️</div>
-        <div class="drawer-nav-text">تنظیمات</div>
-      </a>
+             <a href="{{ url_for('panel_bp.balance_page') }}"{% if request.path == url_for('panel_bp.balance_page') %} aria-current="page"{% endif %}>
+               <div class="drawer-nav-icon">💎</div>
+               <div class="drawer-nav-text">دارایی</div>
+             </a>
+             
+             <a href="{{ url_for('panel_bp.portfolio_page') }}"{% if request.path == url_for('panel_bp.portfolio_page') %} aria-current="page"{% endif %}>
+               <div class="drawer-nav-icon">🎯</div>
+               <div class="drawer-nav-text">پورتفولیو</div>
+             </a>
+             
+             <a href="{{ url_for('panel_bp.settings_page') }}"{% if request.path == url_for('panel_bp.settings_page') %} aria-current="page"{% endif %}>
+               <div class="drawer-nav-icon">⚙️</div>
+               <div class="drawer-nav-text">تنظیمات</div>
+             </a>
     </nav>
     
     <div class="drawer-footer">

@@ -177,6 +177,9 @@ def panel_add():
 	try:
 		amount_btc = _to_float(request.form.get("amount_btc", "0"))
 		price_usd_per_btc = _to_float(request.form.get("price_usd_per_btc", "0"))
+		wallet_id = int(request.form.get("wallet_id", 1))
+		notes = request.form.get("notes", "").strip()
+		
 		if not (amount_btc == amount_btc and price_usd_per_btc == price_usd_per_btc):  # NaN check
 			flash("مقادیر وارد شده نامعتبر است.", "error")
 			return redirect(url_for("panel_bp.deposits_page"))
@@ -187,7 +190,8 @@ def panel_add():
 
 		conn = get_db_connection()
 		cur = conn.cursor()
-		cur.execute("INSERT INTO purchases(created_at, amount_btc, price_usd_per_btc) VALUES(?,?,?)", (datetime.utcnow().isoformat(timespec="seconds"), amount_btc, price_usd_per_btc))
+		cur.execute("INSERT INTO purchases(created_at, amount_btc, price_usd_per_btc, wallet_id, notes) VALUES(?,?,?,?,?)", 
+			(datetime.utcnow().isoformat(timespec="seconds"), amount_btc, price_usd_per_btc, wallet_id, notes))
 		conn.commit()
 		conn.close()
 		flash("خرید با موفقیت ثبت شد.", "success")
@@ -203,6 +207,9 @@ def panel_withdraw():
 	try:
 		amount_btc = _to_float(request.form.get("amount_btc", "0"))
 		price_usd_per_btc = _to_float(request.form.get("price_usd_per_btc", "0"))
+		wallet_id = int(request.form.get("wallet_id", 1))
+		notes = request.form.get("notes", "").strip()
+		
 		if not (amount_btc == amount_btc and price_usd_per_btc == price_usd_per_btc):
 			flash("مقادیر وارد شده نامعتبر است.", "error")
 			return redirect(url_for("panel_bp.withdrawals_page"))
@@ -213,7 +220,8 @@ def panel_withdraw():
 
 		conn = get_db_connection()
 		cur = conn.cursor()
-		cur.execute("INSERT INTO withdrawals(created_at, amount_btc, price_usd_per_btc) VALUES(?,?,?)", (datetime.utcnow().isoformat(timespec="seconds"), amount_btc, price_usd_per_btc))
+		cur.execute("INSERT INTO withdrawals(created_at, amount_btc, price_usd_per_btc, wallet_id, notes) VALUES(?,?,?,?,?)", 
+			(datetime.utcnow().isoformat(timespec="seconds"), amount_btc, price_usd_per_btc, wallet_id, notes))
 		conn.commit()
 		conn.close()
 		flash("برداشت با موفقیت ثبت شد.", "success")
@@ -252,6 +260,91 @@ def panel_usd_deposit():
 		print("[panel_usd_deposit] error:", e)
 		flash("خطای داخلی هنگام ثبت واریز دلاری.", "error")
 		return redirect(url_for("panel_bp.deposits_page"))
+
+
+@panel_bp.post("/panel/create_wallet")
+def panel_create_wallet():
+	try:
+		name = request.form.get("name", "").strip()
+		description = request.form.get("description", "").strip()
+		wallet_type = request.form.get("wallet_type", "main")
+		color = request.form.get("color", "#3b82f6")
+		
+		if not name:
+			flash("نام کیف پول الزامی است.", "error")
+			return redirect(url_for("panel_bp.portfolio_page"))
+		
+		conn = get_db_connection()
+		cur = conn.cursor()
+		cur.execute(
+			"INSERT INTO wallets(name, description, wallet_type, color, created_at) VALUES(?, ?, ?, ?, ?)",
+			(name, description, wallet_type, color, datetime.utcnow().isoformat(timespec="seconds"))
+		)
+		conn.commit()
+		conn.close()
+		flash(f"کیف پول '{name}' با موفقیت ایجاد شد.", "success")
+		return redirect(url_for("panel_bp.portfolio_page"))
+	except Exception as e:
+		print("[panel_create_wallet] error:", e)
+		flash("خطای داخلی هنگام ایجاد کیف پول.", "error")
+		return redirect(url_for("panel_bp.portfolio_page"))
+
+
+@panel_bp.post("/panel/create_goal")
+def panel_create_goal():
+	try:
+		wallet_id = int(request.form.get("wallet_id", 0))
+		goal_name = request.form.get("goal_name", "").strip()
+		goal_type = request.form.get("goal_type", "value")
+		target_value = _to_float(request.form.get("target_value", "0"))
+		target_date = request.form.get("target_date", "")
+		
+		if not goal_name or target_value <= 0:
+			flash("نام هدف و مقدار هدف الزامی است.", "error")
+			return redirect(url_for("panel_bp.portfolio_page"))
+		
+		conn = get_db_connection()
+		cur = conn.cursor()
+		cur.execute(
+			"INSERT INTO portfolio_goals(wallet_id, goal_name, goal_type, target_value, target_date, created_at) VALUES(?, ?, ?, ?, ?, ?)",
+			(wallet_id, goal_name, goal_type, target_value, target_date, datetime.utcnow().isoformat(timespec="seconds"))
+		)
+		conn.commit()
+		conn.close()
+		flash(f"هدف '{goal_name}' با موفقیت ایجاد شد.", "success")
+		return redirect(url_for("panel_bp.portfolio_page"))
+	except Exception as e:
+		print("[panel_create_goal] error:", e)
+		flash("خطای داخلی هنگام ایجاد هدف.", "error")
+		return redirect(url_for("panel_bp.portfolio_page"))
+
+
+@panel_bp.post("/panel/create_risk_limit")
+def panel_create_risk_limit():
+	try:
+		wallet_id = int(request.form.get("wallet_id", 0))
+		limit_type = request.form.get("limit_type", "max_loss")
+		limit_value = _to_float(request.form.get("limit_value", "0"))
+		alert_threshold = _to_float(request.form.get("alert_threshold", "0.8"))
+		
+		if limit_value <= 0:
+			flash("مقدار محدودیت باید بزرگ‌تر از صفر باشد.", "error")
+			return redirect(url_for("panel_bp.portfolio_page"))
+		
+		conn = get_db_connection()
+		cur = conn.cursor()
+		cur.execute(
+			"INSERT INTO risk_limits(wallet_id, limit_type, limit_value, alert_threshold, created_at) VALUES(?, ?, ?, ?, ?)",
+			(wallet_id, limit_type, limit_value, alert_threshold, datetime.utcnow().isoformat(timespec="seconds"))
+		)
+		conn.commit()
+		conn.close()
+		flash("محدودیت ریسک با موفقیت ایجاد شد.", "success")
+		return redirect(url_for("panel_bp.portfolio_page"))
+	except Exception as e:
+		print("[panel_create_risk_limit] error:", e)
+		flash("خطای داخلی هنگام ایجاد محدودیت ریسک.", "error")
+		return redirect(url_for("panel_bp.portfolio_page"))
 
 
 @panel_bp.post("/panel/rate")
@@ -294,6 +387,113 @@ def settings_page():
 	usd_to_toman = float(row[0]) if row else 60000.0
 	conn.close()
 	return render_template("settings.html", usd_to_toman=usd_to_toman)
+
+
+@panel_bp.get("/portfolio")
+def portfolio_page():
+	conn = get_db_connection()
+	cur = conn.cursor()
+	
+	# دریافت کیف پول‌ها
+	cur.execute("SELECT id, name, description, wallet_type, color, is_active FROM wallets ORDER BY id")
+	wallets_rows = cur.fetchall()
+	wallets = [
+		{
+			"id": r["id"],
+			"name": r["name"],
+			"description": r["description"],
+			"wallet_type": r["wallet_type"],
+			"color": r["color"],
+			"is_active": bool(r["is_active"])
+		}
+		for r in wallets_rows
+	]
+	
+	# محاسبه موجودی هر کیف پول
+	wallet_balances = {}
+	for wallet in wallets:
+		wallet_id = wallet["id"]
+		
+		# محاسبه موجودی BTC
+		cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM purchases WHERE wallet_id = ?", (wallet_id,))
+		total_btc = float(cur.fetchone()[0] or 0)
+		cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM withdrawals WHERE wallet_id = ?", (wallet_id,))
+		withdrawn_btc = float(cur.fetchone()[0] or 0)
+		current_btc = total_btc - withdrawn_btc
+		
+		# محاسبه ارزش USD
+		cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM purchases WHERE wallet_id = ?", (wallet_id,))
+		total_invested_usd = float(cur.fetchone()[0] or 0)
+		cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM withdrawals WHERE wallet_id = ?", (wallet_id,))
+		total_withdrawn_usd = float(cur.fetchone()[0] or 0)
+		net_invested_usd = total_invested_usd - total_withdrawn_usd
+		
+		wallet_balances[wallet_id] = {
+			"btc_balance": current_btc,
+			"invested_usd": net_invested_usd,
+			"total_purchased_usd": total_invested_usd,
+			"total_withdrawn_usd": total_withdrawn_usd
+		}
+	
+	# دریافت اهداف پورتفولیو
+	cur.execute("""
+		SELECT pg.id, pg.wallet_id, pg.goal_name, pg.goal_type, pg.target_value, 
+		       pg.current_value, pg.target_date, pg.is_achieved, w.name as wallet_name
+		FROM portfolio_goals pg
+		LEFT JOIN wallets w ON pg.wallet_id = w.id
+		ORDER BY pg.created_at DESC
+	""")
+	goals_rows = cur.fetchall()
+	goals = [
+		{
+			"id": r["id"],
+			"wallet_id": r["wallet_id"],
+			"goal_name": r["goal_name"],
+			"goal_type": r["goal_type"],
+			"target_value": float(r["target_value"]),
+			"current_value": float(r["current_value"]),
+			"target_date": r["target_date"],
+			"is_achieved": bool(r["is_achieved"]),
+			"wallet_name": r["wallet_name"]
+		}
+		for r in goals_rows
+	]
+	
+	# دریافت محدودیت‌های ریسک
+	cur.execute("""
+		SELECT rl.id, rl.wallet_id, rl.limit_type, rl.limit_value, 
+		       rl.alert_threshold, rl.is_active, w.name as wallet_name
+		FROM risk_limits rl
+		LEFT JOIN wallets w ON rl.wallet_id = w.id
+		WHERE rl.is_active = 1
+		ORDER BY rl.created_at DESC
+	""")
+	limits_rows = cur.fetchall()
+	risk_limits = [
+		{
+			"id": r["id"],
+			"wallet_id": r["wallet_id"],
+			"limit_type": r["limit_type"],
+			"limit_value": float(r["limit_value"]),
+			"alert_threshold": float(r["alert_threshold"]),
+			"is_active": bool(r["is_active"]),
+			"wallet_name": r["wallet_name"]
+		}
+		for r in limits_rows
+	]
+	
+	# نرخ تبدیل
+	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+	row = cur.fetchone()
+	usd_to_toman = float(row[0]) if row else 60000.0
+	
+	conn.close()
+	return render_template("portfolio.html", 
+		wallets=wallets, 
+		wallet_balances=wallet_balances,
+		goals=goals,
+		risk_limits=risk_limits,
+		usd_to_toman=usd_to_toman)
 
 
 

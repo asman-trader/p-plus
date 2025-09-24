@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Allow overriding DB location via env so webhook resets do not affect data
@@ -26,7 +27,10 @@ def ensure_db() -> None:
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			created_at TEXT NOT NULL,
 			amount_btc REAL NOT NULL,
-			price_usd_per_btc REAL NOT NULL
+			price_usd_per_btc REAL NOT NULL,
+			wallet_id INTEGER DEFAULT 1,
+			notes TEXT,
+			FOREIGN KEY (wallet_id) REFERENCES wallets (id)
 		)
 		"""
 	)
@@ -36,7 +40,10 @@ def ensure_db() -> None:
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			created_at TEXT NOT NULL,
 			amount_btc REAL NOT NULL,
-			price_usd_per_btc REAL NOT NULL
+			price_usd_per_btc REAL NOT NULL,
+			wallet_id INTEGER DEFAULT 1,
+			notes TEXT,
+			FOREIGN KEY (wallet_id) REFERENCES wallets (id)
 		)
 		"""
 	)
@@ -48,6 +55,49 @@ def ensure_db() -> None:
 			amount_usd REAL NOT NULL,
 			price_toman_per_usd REAL NOT NULL,
 			amount_toman REAL NOT NULL
+		)
+		"""
+	)
+	cur.execute(
+		"""
+		CREATE TABLE IF NOT EXISTS wallets (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
+			description TEXT,
+			wallet_type TEXT NOT NULL,
+			color TEXT DEFAULT '#3b82f6',
+			is_active BOOLEAN DEFAULT 1,
+			created_at TEXT NOT NULL
+		)
+		"""
+	)
+	cur.execute(
+		"""
+		CREATE TABLE IF NOT EXISTS portfolio_goals (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			wallet_id INTEGER,
+			goal_name TEXT NOT NULL,
+			goal_type TEXT NOT NULL,
+			target_value REAL NOT NULL,
+			current_value REAL DEFAULT 0,
+			target_date TEXT,
+			is_achieved BOOLEAN DEFAULT 0,
+			created_at TEXT NOT NULL,
+			FOREIGN KEY (wallet_id) REFERENCES wallets (id)
+		)
+		"""
+	)
+	cur.execute(
+		"""
+		CREATE TABLE IF NOT EXISTS risk_limits (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			wallet_id INTEGER,
+			limit_type TEXT NOT NULL,
+			limit_value REAL NOT NULL,
+			alert_threshold REAL DEFAULT 0.8,
+			is_active BOOLEAN DEFAULT 1,
+			created_at TEXT NOT NULL,
+			FOREIGN KEY (wallet_id) REFERENCES wallets (id)
 		)
 		"""
 	)
@@ -66,6 +116,16 @@ def ensure_db() -> None:
 			"INSERT INTO settings(key, value) VALUES('usd_to_toman', ?)",
 			("60000",),
 		)
+	
+	# ایجاد کیف پول پیش‌فرض
+	cur.execute("SELECT COUNT(*) FROM wallets")
+	wallet_count = cur.fetchone()[0]
+	if wallet_count == 0:
+		cur.execute(
+			"INSERT INTO wallets(name, description, wallet_type, color, created_at) VALUES(?, ?, ?, ?, ?)",
+			("کیف پول اصلی", "کیف پول اصلی برای معاملات", "main", "#3b82f6", datetime.utcnow().isoformat(timespec="seconds"))
+		)
+	
 	conn.commit()
 	conn.close()
 
