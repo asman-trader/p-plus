@@ -391,109 +391,114 @@ def settings_page():
 
 @panel_bp.get("/portfolio")
 def portfolio_page():
-	conn = get_db_connection()
-	cur = conn.cursor()
-	
-	# دریافت کیف پول‌ها
-	cur.execute("SELECT id, name, description, wallet_type, color, is_active FROM wallets ORDER BY id")
-	wallets_rows = cur.fetchall()
-	wallets = [
-		{
-			"id": r["id"],
-			"name": r["name"],
-			"description": r["description"],
-			"wallet_type": r["wallet_type"],
-			"color": r["color"],
-			"is_active": bool(r["is_active"])
-		}
-		for r in wallets_rows
-	]
-	
-	# محاسبه موجودی هر کیف پول
-	wallet_balances = {}
-	for wallet in wallets:
-		wallet_id = wallet["id"]
+	try:
+		conn = get_db_connection()
+		cur = conn.cursor()
 		
-		# محاسبه موجودی BTC
-		cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM purchases WHERE wallet_id = ?", (wallet_id,))
-		total_btc = float(cur.fetchone()[0] or 0)
-		cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM withdrawals WHERE wallet_id = ?", (wallet_id,))
-		withdrawn_btc = float(cur.fetchone()[0] or 0)
-		current_btc = total_btc - withdrawn_btc
+		# دریافت کیف پول‌ها
+		cur.execute("SELECT id, name, description, wallet_type, color, is_active FROM wallets ORDER BY id")
+		wallets_rows = cur.fetchall()
+		wallets = [
+			{
+				"id": r["id"],
+				"name": r["name"],
+				"description": r["description"],
+				"wallet_type": r["wallet_type"],
+				"color": r["color"],
+				"is_active": bool(r["is_active"])
+			}
+			for r in wallets_rows
+		]
+	
+		# محاسبه موجودی هر کیف پول
+		wallet_balances = {}
+		for wallet in wallets:
+			wallet_id = wallet["id"]
+			
+			# محاسبه موجودی BTC
+			cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM purchases WHERE wallet_id = ?", (wallet_id,))
+			total_btc = float(cur.fetchone()[0] or 0)
+			cur.execute("SELECT COALESCE(SUM(amount_btc), 0) FROM withdrawals WHERE wallet_id = ?", (wallet_id,))
+			withdrawn_btc = float(cur.fetchone()[0] or 0)
+			current_btc = total_btc - withdrawn_btc
+			
+			# محاسبه ارزش USD
+			cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM purchases WHERE wallet_id = ?", (wallet_id,))
+			total_invested_usd = float(cur.fetchone()[0] or 0)
+			cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM withdrawals WHERE wallet_id = ?", (wallet_id,))
+			total_withdrawn_usd = float(cur.fetchone()[0] or 0)
+			net_invested_usd = total_invested_usd - total_withdrawn_usd
+			
+			wallet_balances[wallet_id] = {
+				"btc_balance": current_btc,
+				"invested_usd": net_invested_usd,
+				"total_purchased_usd": total_invested_usd,
+				"total_withdrawn_usd": total_withdrawn_usd
+			}
+	
+		# دریافت اهداف پورتفولیو
+		cur.execute("""
+			SELECT pg.id, pg.wallet_id, pg.goal_name, pg.goal_type, pg.target_value, 
+			       pg.current_value, pg.target_date, pg.is_achieved, w.name as wallet_name
+			FROM portfolio_goals pg
+			LEFT JOIN wallets w ON pg.wallet_id = w.id
+			ORDER BY pg.created_at DESC
+		""")
+		goals_rows = cur.fetchall()
+		goals = [
+			{
+				"id": r["id"],
+				"wallet_id": r["wallet_id"],
+				"goal_name": r["goal_name"],
+				"goal_type": r["goal_type"],
+				"target_value": float(r["target_value"]),
+				"current_value": float(r["current_value"]),
+				"target_date": r["target_date"],
+				"is_achieved": bool(r["is_achieved"]),
+				"wallet_name": r["wallet_name"]
+			}
+			for r in goals_rows
+		]
 		
-		# محاسبه ارزش USD
-		cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM purchases WHERE wallet_id = ?", (wallet_id,))
-		total_invested_usd = float(cur.fetchone()[0] or 0)
-		cur.execute("SELECT COALESCE(SUM(amount_btc * price_usd_per_btc), 0) FROM withdrawals WHERE wallet_id = ?", (wallet_id,))
-		total_withdrawn_usd = float(cur.fetchone()[0] or 0)
-		net_invested_usd = total_invested_usd - total_withdrawn_usd
+		# دریافت محدودیت‌های ریسک
+		cur.execute("""
+			SELECT rl.id, rl.wallet_id, rl.limit_type, rl.limit_value, 
+			       rl.alert_threshold, rl.is_active, w.name as wallet_name
+			FROM risk_limits rl
+			LEFT JOIN wallets w ON rl.wallet_id = w.id
+			WHERE rl.is_active = 1
+			ORDER BY rl.created_at DESC
+		""")
+		limits_rows = cur.fetchall()
+		risk_limits = [
+			{
+				"id": r["id"],
+				"wallet_id": r["wallet_id"],
+				"limit_type": r["limit_type"],
+				"limit_value": float(r["limit_value"]),
+				"alert_threshold": float(r["alert_threshold"]),
+				"is_active": bool(r["is_active"]),
+				"wallet_name": r["wallet_name"]
+			}
+			for r in limits_rows
+		]
 		
-		wallet_balances[wallet_id] = {
-			"btc_balance": current_btc,
-			"invested_usd": net_invested_usd,
-			"total_purchased_usd": total_invested_usd,
-			"total_withdrawn_usd": total_withdrawn_usd
-		}
-	
-	# دریافت اهداف پورتفولیو
-	cur.execute("""
-		SELECT pg.id, pg.wallet_id, pg.goal_name, pg.goal_type, pg.target_value, 
-		       pg.current_value, pg.target_date, pg.is_achieved, w.name as wallet_name
-		FROM portfolio_goals pg
-		LEFT JOIN wallets w ON pg.wallet_id = w.id
-		ORDER BY pg.created_at DESC
-	""")
-	goals_rows = cur.fetchall()
-	goals = [
-		{
-			"id": r["id"],
-			"wallet_id": r["wallet_id"],
-			"goal_name": r["goal_name"],
-			"goal_type": r["goal_type"],
-			"target_value": float(r["target_value"]),
-			"current_value": float(r["current_value"]),
-			"target_date": r["target_date"],
-			"is_achieved": bool(r["is_achieved"]),
-			"wallet_name": r["wallet_name"]
-		}
-		for r in goals_rows
-	]
-	
-	# دریافت محدودیت‌های ریسک
-	cur.execute("""
-		SELECT rl.id, rl.wallet_id, rl.limit_type, rl.limit_value, 
-		       rl.alert_threshold, rl.is_active, w.name as wallet_name
-		FROM risk_limits rl
-		LEFT JOIN wallets w ON rl.wallet_id = w.id
-		WHERE rl.is_active = 1
-		ORDER BY rl.created_at DESC
-	""")
-	limits_rows = cur.fetchall()
-	risk_limits = [
-		{
-			"id": r["id"],
-			"wallet_id": r["wallet_id"],
-			"limit_type": r["limit_type"],
-			"limit_value": float(r["limit_value"]),
-			"alert_threshold": float(r["alert_threshold"]),
-			"is_active": bool(r["is_active"]),
-			"wallet_name": r["wallet_name"]
-		}
-		for r in limits_rows
-	]
-	
-	# نرخ تبدیل
-	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-	row = cur.fetchone()
-	usd_to_toman = float(row[0]) if row else 60000.0
-	
-	conn.close()
-	return render_template("portfolio.html", 
-		wallets=wallets, 
-		wallet_balances=wallet_balances,
-		goals=goals,
-		risk_limits=risk_limits,
-		usd_to_toman=usd_to_toman)
+		# نرخ تبدیل
+		cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+		row = cur.fetchone()
+		usd_to_toman = float(row[0]) if row else 60000.0
+		
+		conn.close()
+		return render_template("portfolio.html", 
+			wallets=wallets, 
+			wallet_balances=wallet_balances,
+			goals=goals,
+			risk_limits=risk_limits,
+			usd_to_toman=usd_to_toman)
+	except Exception as e:
+		print(f"[portfolio_page] error: {e}")
+		flash("خطا در بارگذاری صفحه پورتفولیو", "error")
+		return redirect(url_for("panel_bp.panel_index"))
 
 
 
