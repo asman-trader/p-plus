@@ -101,10 +101,10 @@ async def get_session() -> aiohttp.ClientSession:
             limit_per_host=CONNECTION_POOL_SIZE,
             ttl_dns_cache=300,  # 5 minutes DNS cache
             use_dns_cache=True,
-            keepalive_timeout=30,
             enable_cleanup_closed=True,
-            force_close=True,  # Force close connections
-            resolver=aiohttp.AsyncResolver()  # Use async resolver
+            force_close=True  # Force close connections
+            # Removed AsyncResolver to avoid aiodns dependency
+            # Removed keepalive_timeout due to force_close conflict
         )
         
         timeout = aiohttp.ClientTimeout(
