@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime
+from contextlib import contextmanager
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Allow overriding DB location via env so webhook resets do not affect data
@@ -8,14 +9,40 @@ DB_PATH = os.environ.get("PPLUS_DB_PATH") or os.path.join(BASE_DIR, "pplus.sqlit
 
 
 def get_db_connection() -> sqlite3.Connection:
+    """Get a database connection with optimized settings."""
     # Ensure target directory exists when using external DB paths
     try:
         os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     except Exception:
         pass
-    conn = sqlite3.connect(DB_PATH)
+    
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
+    
+    # Optimize SQLite settings for better performance
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA cache_size=10000")
+    conn.execute("PRAGMA temp_store=MEMORY")
+    conn.execute("PRAGMA mmap_size=268435456")  # 256MB
+    
     return conn
+
+
+@contextmanager
+def get_db_context():
+    """Context manager for database connections with automatic cleanup."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        yield conn
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise e
+    finally:
+        if conn:
+            conn.close()
 
 
 def ensure_db() -> None:

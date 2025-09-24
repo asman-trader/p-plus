@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, render_template, redirect, url_for, flash, request, jsonify  # pyright: ignore[reportMissingImports]
 import os
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
+from flask_wtf.csrf import CSRFProtect, generate_csrf
+
 from db import get_db_connection, ensure_db
+from price_fetcher import start_price_fetcher
 from routes.panel import panel_bp
 from routes.auth import auth_bp
 from routes.api import api_bp
 from routes.webhook import webhook_bp
-from flask_wtf.csrf import CSRFProtect, generate_csrf  # type: ignore
-from price_fetcher import start_price_fetcher
 
 # ----------------------------------------------------------------------------
 # App factory and configuration
@@ -16,6 +17,12 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("APP_SECRET_KEY", "dev-secret-key")
 app.config["LOGIN_USERNAME"] = os.environ.get("LOGIN_USERNAME", "09121471301")
 app.config["LOGIN_PASSWORD"] = os.environ.get("LOGIN_PASSWORD", "0430128185")
+
+# Security configurations
+app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["PERMANENT_SESSION_LIFETIME"] = 3600  # 1 hour
 
 # اطمینان از وجود دیتابیس و جداول
 ensure_db()

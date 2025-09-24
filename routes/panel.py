@@ -1,8 +1,11 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request  # pyright: ignore[reportMissingImports]
+from flask import Blueprint, render_template, redirect, url_for, flash, request
 from datetime import datetime
-from db import get_db_connection
+from typing import Dict, List, Tuple, Any
 import requests
-from price_fetcher import get_current_usdt_price
+from functools import lru_cache
+
+from db import get_db_connection, get_db_context
+from price_fetcher import get_current_usdt_price, get_current_usd_rate
 
 panel_bp = Blueprint("panel_bp", __name__)
 
@@ -12,6 +15,11 @@ def _to_float(txt: str) -> float:
 	if txt is None:
 		return 0.0
 	s = str(txt).strip()
+	
+	# Input validation - reject if too long or contains suspicious characters
+	if len(s) > 50 or any(char in s for char in ['<', '>', '&', '"', "'", '\\', '/']):
+		return float("nan")
+	
 	# Convert Persian digits to ASCII
 	persian_digits = "۰۱۲۳۴۵۶۷۸۹"
 	for i, d in enumerate(persian_digits):
@@ -27,24 +35,125 @@ def _to_float(txt: str) -> float:
 	else:
 		s = s.replace(",", "")
 	try:
-		return float(s)
+		result = float(s)
+		# Additional validation - reject extremely large or small numbers
+		if abs(result) > 1e10 or (result != 0 and abs(result) < 1e-10):
+			return float("nan")
+		return result
 	except Exception:
 		return float("nan")
 
-def _get_usd_to_toman(conn) -> float:
-	"""Get USD to Toman rate from USDT price (divide by 10)"""
-	# Get USDT price and convert to USD rate
-	usdt_price = get_current_usdt_price()
-	if usdt_price and usdt_price > 0:
-		# Convert USDT price to USD rate (USDT price is in Toman, USD rate should be in IRT)
-		# So we multiply by 10 to convert from Toman to IRT
-		return usdt_price * 10
+def _validate_input(data: Dict[str, Any], required_fields: List[str]) -> Tuple[bool, str]:
+	"""Validate input data for required fields and basic security."""
+	for field in required_fields:
+		if field not in data or not data[field]:
+			return False, f"Field {field} is required"
 	
-	# Fallback to database settings
-	cur = conn.cursor()
-	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-	row = cur.fetchone()
-	return float(row[0]) if row else 600000.0
+	# Check for potential XSS or injection attempts
+	for key, value in data.items():
+		if isinstance(value, str) and any(char in value for char in ['<', '>', '&', '"', "'", '\\', '/', 'script', 'javascript']):
+			return False, f"Invalid characters in field {key}"
+	
+	return True, ""
+
+def _sanitize_string(text: str) -> str:
+	"""Sanitize string input to prevent XSS."""
+	if not text:
+		return ""
+	# Remove potentially dangerous characters
+	dangerous_chars = ['<', '>', '&', '"', "'", '\\', '/', 'script', 'javascript', 'onload', 'onerror']
+	for char in dangerous_chars:
+		text = text.replace(char, '')
+	return text.strip()
+
+@lru_cache(maxsize=1)
+def _get_usd_to_toman_cached() -> float:
+    """Get USD to Toman rate with caching."""
+    # Get USDT price and convert to USD rate
+    usdt_price = get_current_usdt_price()
+    if usdt_price and usdt_price > 0:
+        # Convert USDT price to USD rate (USDT price is in Toman, USD rate should be in IRT)
+        # So we multiply by 10 to convert from Toman to IRT
+        return usdt_price * 10
+    
+    # Fallback to database settings
+    with get_db_context() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+        row = cur.fetchone()
+        return float(row[0]) if row else 600000.0
+
+def _get_usd_to_toman(conn) -> float:
+    """Get USD to Toman rate from USDT price (divide by 10)"""
+    return _get_usd_to_toman_cached()
+
+@lru_cache(maxsize=1)
+def _get_current_btc_price() -> float:
+    """Get current BTC price with caching."""
+    try:
+        response = requests.post(
+            'https://api.nobitex.ir/market/stats', 
+            json={"srcCurrency": "btc", "dstCurrency": "usdt"}, 
+            timeout=3
+        )
+        if response.status_code == 200:
+            data = response.json()["stats"]["btc-usdt"]
+            return float(data["latest"])
+    except Exception:
+        pass
+    return 50000.0  # Default fallback
+
+def _calculate_roi_optimized(purchases: List[Tuple], withdrawals: List[Tuple], current_btc_price: float) -> Tuple[float, float]:
+    """Optimized ROI calculation using FIFO method."""
+    if not purchases:
+        return 0.0, 0.0
+    
+    # Convert to lists for easier manipulation
+    purchase_queue = [(p[0], p[1], float(p[2]), float(p[3])) for p in purchases]
+    withdrawal_queue = [(w[0], w[1], float(w[2]), float(w[3])) for w in withdrawals]
+    
+    closed_trades_profit = 0.0
+    open_trades_cost = 0.0
+    open_trades_value = 0.0
+    
+    # Process withdrawals (closed trades)
+    for withdrawal in withdrawal_queue:
+        remaining_withdrawal = withdrawal[2]
+        withdrawal_price = withdrawal[3]
+        
+        while remaining_withdrawal > 1e-12 and purchase_queue:
+            purchase = purchase_queue[0]
+            purchase_amount = purchase[2]
+            purchase_price = purchase[3]
+            
+            # Amount traded in this transaction
+            trade_amount = min(remaining_withdrawal, purchase_amount)
+            
+            # Calculate profit/loss for this trade
+            buy_cost = trade_amount * purchase_price
+            sell_value = trade_amount * withdrawal_price
+            trade_profit = sell_value - buy_cost
+            closed_trades_profit += trade_profit
+            
+            # Update remaining amounts
+            remaining_withdrawal -= trade_amount
+            purchase_queue[0] = (purchase[0], purchase[1], purchase[2] - trade_amount, purchase[3])
+            
+            # Remove fully consumed purchase
+            if purchase_queue[0][2] <= 1e-12:
+                purchase_queue.pop(0)
+    
+    # Calculate open trades (remaining purchases)
+    for purchase in purchase_queue:
+        purchase_amount = purchase[2]
+        purchase_price = purchase[3]
+        open_trades_cost += purchase_amount * purchase_price
+        open_trades_value += purchase_amount * current_btc_price
+    
+    open_trades_profit = open_trades_value - open_trades_cost
+    total_profit_loss = closed_trades_profit + open_trades_profit
+    
+    return total_profit_loss, open_trades_value
 
 @panel_bp.get("/panel")
 def panel_index():

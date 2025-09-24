@@ -1,130 +1,163 @@
-from flask import Blueprint, request, jsonify  # pyright: ignore[reportMissingImports]
+from flask import Blueprint, request, jsonify
 from datetime import datetime
-from db import get_db_connection
+from typing import Dict, Any, Optional, List
 import json
 import urllib.request
 import requests
-from price_fetcher import get_price_info
+from functools import wraps
+import time
+
+from db import get_db_connection, get_db_context
+from price_fetcher import get_price_info, get_current_usd_rate
 
 api_bp = Blueprint("api_bp", __name__, url_prefix="/api")
 
+# Simple in-memory cache for API responses
+_api_cache: Dict[str, Dict[str, Any]] = {}
+CACHE_DURATION = 30  # seconds
+
+def cached_response(cache_key: str, duration: int = CACHE_DURATION):
+    """Decorator for caching API responses."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            now = time.time()
+            if cache_key in _api_cache:
+                cached_data, timestamp = _api_cache[cache_key]
+                if now - timestamp < duration:
+                    return jsonify(cached_data)
+            
+            result = func(*args, **kwargs)
+            if hasattr(result, 'get_json'):
+                _api_cache[cache_key] = (result.get_json(), now)
+            return result
+        return wrapper
+    return decorator
+
+def handle_api_errors(func):
+    """Decorator for consistent API error handling."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            return jsonify({
+                "error": "Internal server error",
+                "message": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            }), 500
+    return wrapper
+
 
 @api_bp.get("/wallet_balance")
+@cached_response("wallet_balance", 60)  # Cache for 1 minute
+@handle_api_errors
 def get_wallet_balance():
-	try:
-		conn = get_db_connection()
-		cur = conn.cursor()
-		
-		# دریافت آدرس کیف پول‌ها
-		cur.execute("SELECT value FROM settings WHERE key='btc_wallet_address'")
-		btc_row = cur.fetchone()
-		btc_address = btc_row[0] if btc_row and btc_row[0] else None
-		
-		cur.execute("SELECT value FROM settings WHERE key='usdt_wallet_address'")
-		usdt_row = cur.fetchone()
-		usdt_address = usdt_row[0] if usdt_row and usdt_row[0] else None
-		
-		conn.close()
-		
-		# اگر آدرس‌ها تنظیم نشده باشند
-		if not btc_address and not usdt_address:
-			return jsonify({
-				"btc_balance": 0,
-				"usdt_balance": 0,
-				"error": "آدرس کیف پول‌ها تنظیم نشده است"
-			})
-		
-		# دریافت موجودی بیت‌کوین
-		btc_balance = 0
-		if btc_address:
-			try:
-				# استفاده از BlockCypher API برای بیت‌کوین
-				response = requests.get(f'https://api.blockcypher.com/v1/btc/main/addrs/{btc_address}/balance', timeout=10)
-				if response.status_code == 200:
-					data = response.json()
-					btc_balance = data.get('balance', 0) / 100000000  # تبدیل از satoshi به BTC
-			except Exception as e:
-				print(f"Error fetching BTC balance: {e}")
-		
-		# دریافت موجودی تتر (USDT)
-		usdt_balance = 0
-		if usdt_address:
-			try:
-				# استفاده از Covalent API برای USDT (ERC-20) - رایگان
-				# این API نیازی به API key ندارد
-				response = requests.get(f'https://api.covalenthq.com/v1/1/address/{usdt_address}/balances_v2/?key=ckey_demo', timeout=10)
-				if response.status_code == 200:
-					data = response.json()
-					if data.get('data') and data['data'].get('items'):
-						for item in data['data']['items']:
-							if item.get('contract_ticker_symbol') == 'USDT':
-								usdt_balance = float(item.get('balance', 0)) / (10 ** int(item.get('contract_decimals', 6)))
-								break
-			except Exception as e:
-				print(f"Error fetching USDT balance from Covalent: {e}")
-				# Fallback: استفاده از Etherscan API (نیاز به API key)
-				try:
-					api_key = "YourApiKeyToken"  # باید از etherscan.io دریافت شود
-					response = requests.get(f'https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=0xdAC17F958D2ee523a2206206994597C13D831ec7&address={usdt_address}&tag=latest&apikey={api_key}', timeout=10)
-					if response.status_code == 200:
-						data = response.json()
-						if data.get('status') == '1':
-							usdt_balance = int(data.get('result', 0)) / 1000000  # USDT has 6 decimals
-				except Exception as e2:
-					print(f"Error fetching USDT balance from Etherscan: {e2}")
-		
-		return jsonify({
-			"btc_balance": btc_balance,
-			"usdt_balance": usdt_balance,
-			"btc_address": btc_address,
-			"usdt_address": usdt_address,
-			"timestamp": datetime.utcnow().isoformat()
-		})
-		
-	except Exception as e:
-		return jsonify({
-			"btc_balance": 0,
-			"usdt_balance": 0,
-			"error": str(e),
-			"timestamp": datetime.utcnow().isoformat()
-		})
+    """Get wallet balances for BTC and USDT addresses."""
+    with get_db_context() as conn:
+        cur = conn.cursor()
+        
+        # Get wallet addresses in a single query
+        cur.execute("""
+            SELECT key, value FROM settings 
+            WHERE key IN ('btc_wallet_address', 'usdt_wallet_address')
+        """)
+        settings = {row[0]: row[1] for row in cur.fetchall()}
+        
+        btc_address = settings.get('btc_wallet_address')
+        usdt_address = settings.get('usdt_wallet_address')
+        
+        # If no addresses are configured
+        if not btc_address and not usdt_address:
+            return jsonify({
+                "btc_balance": 0,
+                "usdt_balance": 0,
+                "error": "آدرس کیف پول‌ها تنظیم نشده است"
+            })
+        
+        # Fetch balances concurrently
+        btc_balance = _fetch_btc_balance(btc_address) if btc_address else 0
+        usdt_balance = _fetch_usdt_balance(usdt_address) if usdt_address else 0
+        
+        return jsonify({
+            "btc_balance": btc_balance,
+            "usdt_balance": usdt_balance,
+            "btc_address": btc_address,
+            "usdt_address": usdt_address,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+
+def _fetch_btc_balance(address: str) -> float:
+    """Fetch BTC balance from BlockCypher API."""
+    try:
+        response = requests.get(
+            f'https://api.blockcypher.com/v1/btc/main/addrs/{address}/balance',
+            timeout=10
+        )
+        if response.status_code == 200:
+            data = response.json()
+            return data.get('balance', 0) / 100000000  # Convert satoshi to BTC
+    except Exception as e:
+        print(f"Error fetching BTC balance: {e}")
+    return 0.0
+
+def _fetch_usdt_balance(address: str) -> float:
+    """Fetch USDT balance from Covalent API."""
+    try:
+        response = requests.get(
+            f'https://api.covalenthq.com/v1/1/address/{address}/balances_v2/?key=ckey_demo',
+            timeout=10
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('data') and data['data'].get('items'):
+                for item in data['data']['items']:
+                    if item.get('contract_ticker_symbol') == 'USDT':
+                        return float(item.get('balance', 0)) / (10 ** int(item.get('contract_decimals', 6)))
+    except Exception as e:
+        print(f"Error fetching USDT balance: {e}")
+    return 0.0
 
 
 @api_bp.get("/price")
+@cached_response("price_data", 30)  # Cache for 30 seconds
+@handle_api_errors
 def get_prices():
-	try:
-		# دریافت قیمت از والکس
-		response = requests.get('https://api.wallex.ir/v1/currencies/stats', timeout=5)
-		if response.status_code == 200:
-			result = response.json()['result']
-			btc_irt = next((float(item['price']) for item in result if item['key'] == 'BTC'), 0)
-			usdt_irt = next((float(item['price']) for item in result if item['key'] == 'USDT'), 0)
-			btc_usdt = btc_irt / usdt_irt if usdt_irt > 0 else 0
+    """Get current cryptocurrency prices from multiple sources."""
+    try:
+        # Get prices from Wallex
+        response = requests.get('https://api.wallex.ir/v1/currencies/stats', timeout=5)
+        if response.status_code == 200:
+            result = response.json()['result']
+            btc_irt = next((float(item['price']) for item in result if item['key'] == 'BTC'), 0)
+            usdt_irt = next((float(item['price']) for item in result if item['key'] == 'USDT'), 0)
+            btc_usdt = btc_irt / usdt_irt if usdt_irt > 0 else 0
 
-			# دریافت قیمت تتر به تومان از async fetcher
-			usdt_price_info = get_price_info()
-			usdt_toman = usdt_price_info.get("usdt_price", 60000)
+            # Get USDT to Toman price from async fetcher
+            usdt_price_info = get_price_info()
+            usdt_toman = usdt_price_info.get("usdt_price", 60000)
 
-			return jsonify({
-				"btc_irt": btc_irt,
-				"usdt_irt": usdt_irt,
-				"btc_usdt": btc_usdt,
-				"usdt_toman": usdt_toman,
-				"timestamp": datetime.utcnow().isoformat(),
-				"source": "wallex_async"
-			})
-		else:
-			raise Exception(f"API returned status {response.status_code}")
-	except Exception as e:
-		return jsonify({
-			"btc_irt": 3000000000,
-			"usdt_irt": 60000,
-			"btc_usdt": 50000,
-			"usdt_toman": 60000,
-			"timestamp": datetime.utcnow().isoformat(),
-			"source": "fallback",
-			"error": str(e)
-		})
+            return jsonify({
+                "btc_irt": btc_irt,
+                "usdt_irt": usdt_irt,
+                "btc_usdt": btc_usdt,
+                "usdt_toman": usdt_toman,
+                "timestamp": datetime.utcnow().isoformat(),
+                "source": "wallex_async"
+            })
+        else:
+            raise Exception(f"Wallex API returned status {response.status_code}")
+    except Exception as e:
+        # Fallback prices
+        return jsonify({
+            "btc_irt": 3000000000,
+            "usdt_irt": 60000,
+            "btc_usdt": 50000,
+            "usdt_toman": 60000,
+            "timestamp": datetime.utcnow().isoformat(),
+            "source": "fallback",
+            "error": str(e)
+        })
 
 @api_bp.get("/usdt-price")
 def get_usdt_price():
@@ -144,68 +177,81 @@ def get_usdt_price():
 
 
 def _get_usd_to_toman(conn) -> float:
-	"""Get USD to Toman rate from async fetcher, fallback to settings"""
-	# First try to get from async fetcher
-	usd_rate = get_current_usd_rate()
-	if usd_rate and usd_rate > 0:
-		return usd_rate
-	
-	# Fallback to database settings
-	cur = conn.cursor()
-	cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
-	row = cur.fetchone()
-	return float(row[0]) if row else 60000.0
+    """Get USD to Toman rate from async fetcher, fallback to settings."""
+    # First try to get from async fetcher
+    usd_rate = get_current_usd_rate()
+    if usd_rate and usd_rate > 0:
+        return usd_rate
+    
+    # Fallback to database settings
+    cur = conn.cursor()
+    cur.execute("SELECT value FROM settings WHERE key='usd_to_toman'")
+    row = cur.fetchone()
+    return float(row[0]) if row else 60000.0
 
 
 @api_bp.get("/purchases")
+@cached_response("purchases_list", 10)  # Cache for 10 seconds
+@handle_api_errors
 def list_purchases():
-	conn = get_db_connection()
-	cur = conn.cursor()
-	cur.execute("SELECT id, created_at, amount_btc, price_usd_per_btc FROM purchases ORDER BY id DESC")
-	rows = cur.fetchall()
-	conn.close()
-	purchases = []
-	for r in rows:
-		amount_usd = float(r["amount_btc"]) * float(r["price_usd_per_btc"])
-		purchases.append({
-			"id": r["id"],
-			"created_at": r["created_at"],
-			"amount_btc": float(r["amount_btc"]),
-			"price_usd_per_btc": float(r["price_usd_per_btc"]),
-			"amount_usd": amount_usd,
-		})
-	return jsonify(purchases)
+    """Get list of all purchases."""
+    with get_db_context() as conn:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, created_at, amount_btc, price_usd_per_btc 
+            FROM purchases 
+            ORDER BY id DESC
+        """)
+        rows = cur.fetchall()
+        
+        purchases = []
+        for r in rows:
+            amount_usd = float(r["amount_btc"]) * float(r["price_usd_per_btc"])
+            purchases.append({
+                "id": r["id"],
+                "created_at": r["created_at"],
+                "amount_btc": float(r["amount_btc"]),
+                "price_usd_per_btc": float(r["price_usd_per_btc"]),
+                "amount_usd": amount_usd,
+            })
+        return jsonify(purchases)
 
 
 @api_bp.post("/purchases")
+@handle_api_errors
 def create_purchase():
-	payload = request.get_json(silent=True) or {}
-	try:
-		amount_btc = float(payload.get("amount_btc", 0))
-		price_usd_per_btc = float(payload.get("price_usd_per_btc", 0))
-	except (TypeError, ValueError):
-		return jsonify({"error": "invalid payload"}), 400
+    """Create a new purchase record."""
+    payload = request.get_json(silent=True) or {}
+    
+    try:
+        amount_btc = float(payload.get("amount_btc", 0))
+        price_usd_per_btc = float(payload.get("price_usd_per_btc", 0))
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid payload"}), 400
 
-	if amount_btc <= 0 or price_usd_per_btc <= 0:
-		return jsonify({"error": "amount_btc and price_usd_per_btc must be > 0"}), 400
+    if amount_btc <= 0 or price_usd_per_btc <= 0:
+        return jsonify({"error": "amount_btc and price_usd_per_btc must be > 0"}), 400
 
-	conn = get_db_connection()
-	cur = conn.cursor()
-	created_at = datetime.utcnow().isoformat(timespec="seconds")
-	cur.execute(
-		"INSERT INTO purchases(created_at, amount_btc, price_usd_per_btc) VALUES(?,?,?)",
-		(created_at, amount_btc, price_usd_per_btc),
-	)
-	new_id = cur.lastrowid
-	conn.commit()
-	conn.close()
-	return jsonify({
-		"id": new_id,
-		"created_at": created_at,
-		"amount_btc": amount_btc,
-		"price_usd_per_btc": price_usd_per_btc,
-		"amount_usd": amount_btc * price_usd_per_btc,
-	}), 201
+    with get_db_context() as conn:
+        cur = conn.cursor()
+        created_at = datetime.utcnow().isoformat(timespec="seconds")
+        cur.execute(
+            "INSERT INTO purchases(created_at, amount_btc, price_usd_per_btc) VALUES(?,?,?)",
+            (created_at, amount_btc, price_usd_per_btc),
+        )
+        new_id = cur.lastrowid
+        conn.commit()
+        
+        # Clear cache
+        _api_cache.pop("purchases_list", None)
+        
+        return jsonify({
+            "id": new_id,
+            "created_at": created_at,
+            "amount_btc": amount_btc,
+            "price_usd_per_btc": price_usd_per_btc,
+            "amount_usd": amount_btc * price_usd_per_btc,
+        }), 201
 
 
 @api_bp.delete("/purchases/<int:purchase_id>")
