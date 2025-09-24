@@ -327,7 +327,7 @@
 
 <script>
 (function () {
-  let usdToToman = Number("{{ '%.0f' % usd_to_toman }}");
+  let usdToToman = 600000; // Default fallback
   var currentBtcBalance = Number("{{ '%.8f' % current_btc_balance }}");
   var netInvestedUsd = Number("{{ '%.2f' % net_invested_usd }}");
   var inceptionDays = Number("{{ inception_days }}");
@@ -336,6 +336,53 @@
   var currentUsdEl = document.getElementById('current_usd');
   var currentTomanEl = document.getElementById('current_toman');
   var profitLossEl = document.getElementById('profit_loss');
+  
+  // Fetch USD rate from API
+  async function fetchUsdRate() {
+    try {
+      const response = await fetch('/api/price', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Network error');
+      
+      const data = await response.json();
+      
+      if (data.usdt_irt && data.usdt_irt > 0) {
+        // Convert IRT to Toman (divide by 10)
+        usdToToman = Math.round(data.usdt_irt / 10);
+        console.log('USD rate updated:', usdToToman);
+        
+        // Update all calculations with new rate
+        updateAllCalculations();
+      }
+    } catch (error) {
+      console.error('Error fetching USD rate:', error);
+    }
+  }
+  
+  // Update all calculations with current USD rate
+  function updateAllCalculations() {
+    // Update current balance display
+    if (currentUsdEl && currentTomanEl) {
+      var currentUsd = currentBtcBalance * (currentPriceEl ? parseFloat(currentPriceEl.textContent.replace(/,/g, '')) : 0);
+      var currentToman = Math.round(currentUsd * usdToToman);
+      
+      currentUsdEl.textContent = '$' + currentUsd.toFixed(2);
+      currentTomanEl.textContent = currentToman.toLocaleString('fa-IR') + ' تومان';
+    }
+    
+    // Update profit/loss display
+    if (profitLossEl && profitLossTomanEl) {
+      var plUsd = (currentBtcBalance * (currentPriceEl ? parseFloat(currentPriceEl.textContent.replace(/,/g, '')) : 0)) - netInvestedUsd;
+      var plToman = Math.round(plUsd * usdToToman);
+      
+      profitLossEl.textContent = (plUsd >= 0 ? '+' : '') + '$' + plUsd.toFixed(2);
+      profitLossTomanEl.textContent = (plToman >= 0 ? '+' : '') + plToman.toLocaleString('fa-IR') + ' تومان';
+      
+      // Update colors
+      var isPositive = plUsd >= 0;
+      profitLossEl.style.color = isPositive ? '#059669' : '#dc2626';
+      profitLossTomanEl.style.color = isPositive ? '#059669' : '#dc2626';
+    }
+  }
   var profitLossTomanEl = document.getElementById('profit_loss_toman');
   var roiPercentageEl = document.getElementById('roi_percentage');
   var currentPriceEl = document.getElementById('current_price');
@@ -500,10 +547,12 @@
   
   // Initial load
   fetchPrice();
+  fetchUsdRate(); // Fetch USD rate on page load
   fetchRealBalance();
   
   // Update every 30 seconds
   setInterval(fetchPrice, 30000);
+  setInterval(fetchUsdRate, 30000); // Update USD rate every 30 seconds
   setInterval(fetchRealBalance, 60000); // Update real balance every minute
 
   // Auto-hide flashes after 3 seconds
