@@ -91,32 +91,81 @@ def get_wallet_balance():
 
 @api_bp.get("/price")
 def get_prices():
-    try:
-        response = requests.get('https://api.wallex.ir/v1/currencies/stats', timeout=5)
-        if response.status_code == 200:
-            result = response.json()['result']
-            btc_irt = next((float(item['price']) for item in result if item['key'] == 'BTC'), 0)
-            usdt_irt = next((float(item['price']) for item in result if item['key'] == 'USDT'), 0)
-            btc_usdt = btc_irt / usdt_irt if usdt_irt > 0 else 0
+	try:
+		response = requests.get('https://api.wallex.ir/v1/currencies/stats', timeout=5)
+		if response.status_code == 200:
+			result = response.json()['result']
+			btc_irt = next((float(item['price']) for item in result if item['key'] == 'BTC'), 0)
+			usdt_irt = next((float(item['price']) for item in result if item['key'] == 'USDT'), 0)
+			btc_usdt = btc_irt / usdt_irt if usdt_irt > 0 else 0
 
-            return jsonify({
-                "btc_irt": btc_irt,
-                "usdt_irt": usdt_irt,
-                "btc_usdt": btc_usdt,
-                "timestamp": datetime.utcnow().isoformat(),
-                "source": "wallex"
-            })
-        else:
-            raise Exception(f"API returned status {response.status_code}")
-    except Exception as e:
-        return jsonify({
-            "btc_irt": 3000000000,
-            "usdt_irt": 60000,
-            "btc_usdt": 50000,
-            "timestamp": datetime.utcnow().isoformat(),
-            "source": "fallback",
-            "error": str(e)
-        })
+			return jsonify({
+				"btc_irt": btc_irt,
+				"usdt_irt": usdt_irt,
+				"btc_usdt": btc_usdt,
+				"timestamp": datetime.utcnow().isoformat(),
+				"source": "wallex"
+			})
+		else:
+			raise Exception(f"API returned status {response.status_code}")
+	except Exception as e:
+		return jsonify({
+			"btc_irt": 3000000000,
+			"usdt_irt": 60000,
+			"btc_usdt": 50000,
+			"timestamp": datetime.utcnow().isoformat(),
+			"source": "fallback",
+			"error": str(e)
+		})
+
+@api_bp.get("/usdt_toman_price")
+def get_usdt_toman_price():
+	"""دریافت قیمت تتر به تومان از API والکس"""
+	try:
+		# دریافت قیمت USDT/TMN از والکس
+		response = requests.get('https://api.wallex.ir/v1/account/otc/price?symbol=USDTTMN&side=BUY', timeout=5)
+		if response.status_code == 200:
+			data = response.json()
+			if data.get('result') and data['result'].get('price'):
+				usdt_toman_price = float(data['result']['price'])
+				return jsonify({
+					"usdt_toman": usdt_toman_price,
+					"symbol": "USDTTMN",
+					"side": "BUY",
+					"timestamp": datetime.utcnow().isoformat(),
+					"source": "wallex_otc"
+				})
+			else:
+				raise Exception("No price data in response")
+		else:
+			raise Exception(f"API returned status {response.status_code}")
+	except Exception as e:
+		print(f"Error fetching USDT/TMN price: {e}")
+		# Fallback: استفاده از قیمت USDT/IRT
+		try:
+			response = requests.get('https://api.wallex.ir/v1/currencies/stats', timeout=5)
+			if response.status_code == 200:
+				result = response.json()['result']
+				usdt_irt = next((float(item['price']) for item in result if item['key'] == 'USDT'), 0)
+				return jsonify({
+					"usdt_toman": usdt_irt,
+					"symbol": "USDTIRT",
+					"side": "market",
+					"timestamp": datetime.utcnow().isoformat(),
+					"source": "wallex_fallback"
+				})
+		except Exception as e2:
+			print(f"Fallback also failed: {e2}")
+		
+		# Final fallback
+		return jsonify({
+			"usdt_toman": 60000,
+			"symbol": "USDTTMN",
+			"side": "fallback",
+			"timestamp": datetime.utcnow().isoformat(),
+			"source": "fallback",
+			"error": str(e)
+		})
 
 
 def _get_usd_to_toman(conn) -> float:

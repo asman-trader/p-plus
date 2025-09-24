@@ -329,6 +329,75 @@
       box-shadow: none;
     }
     
+    /* Price Fetch Styles */
+    .input-with-button {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+    
+    .input-with-button .form-input {
+      flex: 1;
+    }
+    
+    .btn-fetch-price {
+      background: #10b981;
+      color: white;
+      border: 1px solid #059669;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    
+    .btn-fetch-price:hover:not(:disabled) {
+      background: #059669;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-fetch-price:disabled {
+      background: #9ca3af;
+      border-color: #9ca3af;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .price-info {
+      margin-top: 12px;
+      padding: 12px;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .price-label {
+      font-size: 14px;
+      color: #0369a1;
+      font-weight: 500;
+    }
+    
+    .price-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0c4a6e;
+    }
+    
+    .price-source {
+      font-size: 12px;
+      color: #64748b;
+      background: #e2e8f0;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    
     /* Responsive Design */
     @media (max-width: 640px) {
       .page-header {
@@ -354,6 +423,22 @@
       
       .info-grid {
         grid-template-columns: 1fr;
+      }
+      
+      .input-with-button {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .btn-fetch-price {
+        width: 100%;
+        text-align: center;
+      }
+      
+      .price-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
       }
     }
   </style>
@@ -412,18 +497,28 @@
         <label class="form-label" for="usd_to_toman">
           نرخ تبدیل (تومان برای هر دلار) <span style="color: #ef4444;">*</span>
         </label>
-        <input 
-          type="number" 
-          id="usd_to_toman"
-          name="usd_to_toman" 
-          step="1" 
-          min="1" 
-          value="{{ '%.0f' % usd_to_toman }}" 
-          required 
-          inputmode="numeric" 
-          placeholder="مثلاً 60000"
-          class="form-input"
-        >
+        <div class="input-with-button">
+          <input 
+            type="number" 
+            id="usd_to_toman"
+            name="usd_to_toman" 
+            step="1" 
+            min="1" 
+            value="{{ '%.0f' % usd_to_toman }}" 
+            required 
+            inputmode="numeric" 
+            placeholder="مثلاً 60000"
+            class="form-input"
+          >
+          <button type="button" class="btn-fetch-price" id="fetchUsdtPrice">
+            💰 دریافت قیمت تتر
+          </button>
+        </div>
+        <div class="price-info" id="priceInfo" style="display: none;">
+          <span class="price-label">قیمت فعلی تتر:</span>
+          <span class="price-value" id="currentUsdtPrice">...</span>
+          <span class="price-source" id="priceSource">...</span>
+        </div>
       </div>
       
       <div class="form-help">
@@ -559,61 +654,126 @@
   const resetBtn = document.getElementById('resetBtn');
   const resetForm = document.getElementById('resetForm');
   
-  // Enable/disable reset button based on confirmation text
-  resetConfirmation.addEventListener('input', function() {
-    if (this.value === 'RESET SYSTEM') {
-      resetBtn.disabled = false;
-      resetBtn.textContent = '🗑️ ریست کامل سیستم';
-    } else {
-      resetBtn.disabled = true;
-      resetBtn.textContent = '🗑️ ریست کامل سیستم';
+  // Price fetch elements
+  const fetchUsdtPriceBtn = document.getElementById('fetchUsdtPrice');
+  const usdToTomanInput = document.getElementById('usd_to_toman');
+  const priceInfo = document.getElementById('priceInfo');
+  const currentUsdtPrice = document.getElementById('currentUsdtPrice');
+  const priceSource = document.getElementById('priceSource');
+  
+  // Fetch USDT price function
+  async function fetchUsdtPrice() {
+    try {
+      fetchUsdtPriceBtn.disabled = true;
+      fetchUsdtPriceBtn.textContent = '⏳ در حال دریافت...';
+      
+      const response = await fetch('/api/usdt_toman_price', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Network error');
+      
+      const data = await response.json();
+      
+      if (data.usdt_toman && data.usdt_toman > 0) {
+        // Update input field
+        usdToTomanInput.value = Math.round(data.usdt_toman);
+        
+        // Show price info
+        currentUsdtPrice.textContent = data.usdt_toman.toLocaleString('fa-IR') + ' تومان';
+        priceSource.textContent = data.source || 'والکس';
+        priceInfo.style.display = 'flex';
+        
+        // Flash success
+        priceInfo.style.background = '#f0fdf4';
+        priceInfo.style.borderColor = '#bbf7d0';
+        setTimeout(() => {
+          priceInfo.style.background = '#f0f9ff';
+          priceInfo.style.borderColor = '#bae6fd';
+        }, 2000);
+        
+      } else {
+        throw new Error('Invalid price data');
+      }
+      
+    } catch (error) {
+      console.error('Error fetching USDT price:', error);
+      
+      // Show error
+      currentUsdtPrice.textContent = 'خطا در دریافت';
+      priceSource.textContent = 'خطا';
+      priceInfo.style.display = 'flex';
+      priceInfo.style.background = '#fef2f2';
+      priceInfo.style.borderColor = '#fecaca';
+      
+      alert('خطا در دریافت قیمت تتر! لطفاً دوباره تلاش کنید.');
+    } finally {
+      fetchUsdtPriceBtn.disabled = false;
+      fetchUsdtPriceBtn.textContent = '💰 دریافت قیمت تتر';
     }
-  });
+  }
+  
+  // Event listeners
+  if (fetchUsdtPriceBtn) {
+    fetchUsdtPriceBtn.addEventListener('click', fetchUsdtPrice);
+  }
+  
+  // Enable/disable reset button based on confirmation text
+  if (resetConfirmation) {
+    resetConfirmation.addEventListener('input', function() {
+      if (this.value === 'RESET SYSTEM') {
+        resetBtn.disabled = false;
+        resetBtn.textContent = '🗑️ ریست کامل سیستم';
+      } else {
+        resetBtn.disabled = true;
+        resetBtn.textContent = '🗑️ ریست کامل سیستم';
+      }
+    });
+  }
   
   // Double confirmation before reset
-  resetBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    
-    if (resetConfirmation.value !== 'RESET SYSTEM') {
-      alert('لطفاً عبارت "RESET SYSTEM" را دقیقاً تایپ کنید!');
-      return;
-    }
-    
-    // First confirmation
-    const firstConfirm = confirm(
-      '⚠️ هشدار: این عمل تمام داده‌های شما را حذف می‌کند!\n\n' +
-      'آیا مطمئن هستید که می‌خواهید سیستم را ریست کنید؟\n\n' +
-      'این عمل غیرقابل بازگشت است!'
-    );
-    
-    if (!firstConfirm) return;
-    
-    // Second confirmation
-    const secondConfirm = confirm(
-      '🚨 تایید نهایی:\n\n' +
-      'تمام معاملات، واریزها، برداشت‌ها، تنظیمات و پورتفولیو حذف خواهد شد!\n\n' +
-      'آیا واقعاً مطمئن هستید؟'
-    );
-    
-    if (!secondConfirm) return;
-    
-    // Third confirmation with typing
-    const finalConfirm = prompt(
-      'برای تایید نهایی، عبارت "DELETE ALL DATA" را تایپ کنید:'
-    );
-    
-    if (finalConfirm !== 'DELETE ALL DATA') {
-      alert('عبارت اشتباه! ریست لغو شد.');
-      return;
-    }
-    
-    // Show loading state
-    resetBtn.disabled = true;
-    resetBtn.textContent = '⏳ در حال ریست...';
-    
-    // Submit form
-    resetForm.submit();
-  });
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      if (resetConfirmation.value !== 'RESET SYSTEM') {
+        alert('لطفاً عبارت "RESET SYSTEM" را دقیقاً تایپ کنید!');
+        return;
+      }
+      
+      // First confirmation
+      const firstConfirm = confirm(
+        '⚠️ هشدار: این عمل تمام داده‌های شما را حذف می‌کند!\n\n' +
+        'آیا مطمئن هستید که می‌خواهید سیستم را ریست کنید؟\n\n' +
+        'این عمل غیرقابل بازگشت است!'
+      );
+      
+      if (!firstConfirm) return;
+      
+      // Second confirmation
+      const secondConfirm = confirm(
+        '🚨 تایید نهایی:\n\n' +
+        'تمام معاملات، واریزها، برداشت‌ها، تنظیمات و پورتفولیو حذف خواهد شد!\n\n' +
+        'آیا واقعاً مطمئن هستید؟'
+      );
+      
+      if (!secondConfirm) return;
+      
+      // Third confirmation with typing
+      const finalConfirm = prompt(
+        'برای تایید نهایی، عبارت "DELETE ALL DATA" را تایپ کنید:'
+      );
+      
+      if (finalConfirm !== 'DELETE ALL DATA') {
+        alert('عبارت اشتباه! ریست لغو شد.');
+        return;
+      }
+      
+      // Show loading state
+      resetBtn.disabled = true;
+      resetBtn.textContent = '⏳ در حال ریست...';
+      
+      // Submit form
+      resetForm.submit();
+    });
+  }
 })();
 </script>
 {% endblock %}
