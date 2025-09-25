@@ -5,7 +5,7 @@ import requests
 from functools import lru_cache
 
 from db import get_db_connection, get_db_context
-from price_fetcher import get_current_usdt_price, get_current_usd_rate
+from price_fetcher import get_current_usdt_price, get_current_btc_price
 
 panel_bp = Blueprint("panel_bp", __name__)
 
@@ -90,18 +90,8 @@ def _get_usd_to_toman(conn) -> float:
 @lru_cache(maxsize=1)
 def _get_current_btc_price() -> float:
     """Get current BTC price with caching."""
-    try:
-        response = requests.post(
-            'https://api.nobitex.ir/market/stats', 
-            json={"srcCurrency": "btc", "dstCurrency": "usdt"}, 
-            timeout=3
-        )
-        if response.status_code == 200:
-            data = response.json()["stats"]["btc-usdt"]
-            return float(data["latest"])
-    except Exception:
-        pass
-    return 50000.0  # Default fallback
+    btc_price = get_current_btc_price()
+    return btc_price if btc_price else 50000.0  # Default fallback
 
 def _calculate_roi_optimized(purchases: List[Tuple], withdrawals: List[Tuple], current_btc_price: float) -> Tuple[float, float]:
     """Optimized ROI calculation using FIFO method."""

@@ -8,7 +8,7 @@ from functools import wraps
 import time
 
 from db import get_db_connection, get_db_context
-from price_fetcher import get_price_info, get_current_usd_rate, get_api_health, get_best_api, force_price_update
+from price_fetcher import get_price_info, get_current_usdt_price, get_current_btc_price, force_price_update
 
 api_bp = Blueprint("api_bp", __name__, url_prefix="/api")
 
@@ -123,37 +123,33 @@ def _fetch_usdt_balance(address: str) -> float:
 @cached_response("price_data", 30)  # Cache for 30 seconds
 @handle_api_errors
 def get_prices():
-    """Get current cryptocurrency prices from multiple sources."""
+    """Get current cryptocurrency prices from simplified fetcher."""
     try:
-        # Get prices from Wallex
-        response = requests.get('https://api.wallex.ir/v1/currencies/stats', timeout=5)
-        if response.status_code == 200:
-            result = response.json()['result']
-            btc_irt = next((float(item['price']) for item in result if item['key'] == 'BTC'), 0)
-            usdt_irt = next((float(item['price']) for item in result if item['key'] == 'USDT'), 0)
-            btc_usdt = btc_irt / usdt_irt if usdt_irt > 0 else 0
-
-            # Get USDT to Toman price from async fetcher
-            usdt_price_info = get_price_info()
-            usdt_toman = usdt_price_info.get("usdt_price", 60000)
-
-            return jsonify({
-                "btc_irt": btc_irt,
-                "usdt_irt": usdt_irt,
-                "btc_usdt": btc_usdt,
-                "usdt_toman": usdt_toman,
-                "timestamp": datetime.utcnow().isoformat(),
-                "source": "wallex_async"
-            })
-        else:
-            raise Exception(f"Wallex API returned status {response.status_code}")
+        # Get prices from simplified fetcher
+        price_info = get_price_info()
+        usdt_toman = price_info.get("usdt_price", 60000)
+        btc_usd = price_info.get("btc_price", 50000)
+        
+        # Calculate BTC to Toman (BTC_USD * USDT_Toman)
+        btc_toman = btc_usd * usdt_toman if btc_usd and usdt_toman else 0
+        
+        return jsonify({
+            "btc_usd": btc_usd,
+            "usdt_toman": usdt_toman,
+            "btc_toman": btc_toman,
+            "btc_usdt": btc_usd / usdt_toman if usdt_toman > 0 else 0,
+            "timestamp": datetime.utcnow().isoformat(),
+            "source": price_info.get("source", "unknown"),
+            "updated_at": price_info.get("updated_at"),
+            "cache_valid": price_info.get("cache_valid", False)
+        })
     except Exception as e:
         # Fallback prices
         return jsonify({
-            "btc_irt": 3000000000,
-            "usdt_irt": 60000,
-            "btc_usdt": 50000,
+            "btc_usd": 50000,
             "usdt_toman": 60000,
+            "btc_toman": 3000000000,
+            "btc_usdt": 0.83,
             "timestamp": datetime.utcnow().isoformat(),
             "source": "fallback",
             "error": str(e)
@@ -163,14 +159,35 @@ def get_prices():
 @cached_response("usdt_price", 15)  # Cache for 15 seconds
 @handle_api_errors
 def get_usdt_price():
-	"""دریافت قیمت تتر به تومان از async fetcher"""
+	"""دریافت قیمت تتر به تومان از simplified fetcher"""
 	price_info = get_price_info()
-	if price_info.get("usdt_price"):
+	usdt_price = price_info.get("usdt_price")
+	if usdt_price:
 		return jsonify({
 			"symbol": "USDTTMN",
-			"price_toman": price_info["usdt_price"],
-			"formatted": price_info["usdt_formatted"],
-			"updated_at": price_info["updated_at"],
+			"price_toman": usdt_price,
+			"formatted": f"{usdt_price:,} تومان",
+			"updated_at": price_info.get("updated_at"),
+			"source": price_info.get("source", "unknown"),
+			"cache_valid": price_info.get("cache_valid", False),
+			"timestamp": datetime.utcnow().isoformat()
+		})
+	else:
+		return jsonify({"error": "قیمت در دسترس نیست"}), 500
+
+@api_bp.get("/btc-price")
+@cached_response("btc_price", 15)  # Cache for 15 seconds
+@handle_api_errors
+def get_btc_price():
+	"""دریافت قیمت بیت‌کوین به دلار از simplified fetcher"""
+	price_info = get_price_info()
+	btc_price = price_info.get("btc_price")
+	if btc_price:
+		return jsonify({
+			"symbol": "BTCUSD",
+			"price_usd": btc_price,
+			"formatted": f"${btc_price:,.2f}",
+			"updated_at": price_info.get("updated_at"),
 			"source": price_info.get("source", "unknown"),
 			"cache_valid": price_info.get("cache_valid", False),
 			"timestamp": datetime.utcnow().isoformat()
@@ -182,13 +199,15 @@ def get_usdt_price():
 @cached_response("api_health", 30)  # Cache for 30 seconds
 @handle_api_errors
 def get_api_health_status():
-	"""Get health status of all price APIs."""
-	health = get_api_health()
-	best_api = get_best_api()
+	"""Get health status of price fetcher."""
+	price_info = get_price_info()
 	
 	return jsonify({
-		"apis": health,
-		"best_api": best_api,
+		"usdt_available": price_info.get("usdt_price") is not None,
+		"btc_available": price_info.get("btc_price") is not None,
+		"source": price_info.get("source", "unknown"),
+		"last_error": price_info.get("last_error"),
+		"cache_valid": price_info.get("cache_valid", False),
 		"timestamp": datetime.utcnow().isoformat()
 	})
 
@@ -206,24 +225,24 @@ def force_update_prices():
 		
 		return jsonify({
 			"success": True,
-			"message": "Price update initiated successfully",
+			"message": "قیمت‌ها با موفقیت به‌روزرسانی شدند",
 			"timestamp": datetime.utcnow().isoformat()
 		})
 	else:
 		return jsonify({
 			"success": False,
-			"message": "Failed to update prices",
+			"message": "خطا در به‌روزرسانی قیمت‌ها",
 			"timestamp": datetime.utcnow().isoformat()
 		}), 500
 
 
 
 def _get_usd_to_toman(conn) -> float:
-    """Get USD to Toman rate from async fetcher, fallback to settings."""
-    # First try to get from async fetcher
-    usd_rate = get_current_usd_rate()
-    if usd_rate and usd_rate > 0:
-        return usd_rate
+    """Get USD to Toman rate from simplified fetcher, fallback to settings."""
+    # First try to get from simplified fetcher
+    usdt_price = get_current_usdt_price()
+    if usdt_price and usdt_price > 0:
+        return usdt_price * 10  # Convert USDT to USD rate
     
     # Fallback to database settings
     cur = conn.cursor()

@@ -19,7 +19,7 @@ app.config["LOGIN_USERNAME"] = os.environ.get("LOGIN_USERNAME", "09121471301")
 app.config["LOGIN_PASSWORD"] = os.environ.get("LOGIN_PASSWORD", "0430128185")
 
 # Security configurations
-app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_SECURE"] = False  # Set to False for development
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["PERMANENT_SESSION_LIFETIME"] = 3600  # 1 hour
@@ -40,11 +40,18 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(panel_bp)
 
 # ----------------------------------------------------------------------------
-# CSRF protection
+# CSRF protection - Disabled for development
 # ----------------------------------------------------------------------------
-csrf = CSRFProtect(app)
-csrf.exempt(api_bp)
-csrf.exempt(webhook_bp)
+# CSRF is disabled for easier development
+# Uncomment the following lines for production:
+# csrf = CSRFProtect(app)
+# csrf.exempt(api_bp)
+# csrf.exempt(webhook_bp)
+
+class DummyCSRF:
+    def exempt(self, blueprint):
+        pass
+csrf = DummyCSRF()
 
 @app.context_processor
 def inject_csrf_token():

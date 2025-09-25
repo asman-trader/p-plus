@@ -69,7 +69,7 @@ def login_post():
             expires = datetime.utcnow() + timedelta(days=30)
             session.permanent = True
             current_app.permanent_session_lifetime = timedelta(days=30)
-            resp.set_cookie("remember_me", "1", expires=expires, samesite="Lax", secure=True)
+            resp.set_cookie("remember_me", "1", expires=expires, samesite="Lax", secure=False)
         return resp
         # Redirect to next if stored
         next_url = session.pop("next_url", None)
